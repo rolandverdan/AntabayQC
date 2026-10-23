@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Bell, ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, Siren, FileText } from 'lucide-react'
-import { NAV_ITEMS, EXPORT_ITEM } from './navItems.js'
+import { NAV_ITEMS } from './navItems.js'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 
 export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLogout }) {
@@ -9,7 +9,7 @@ export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLo
   const { pathname } = useLocation()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
 
-  const title = [...NAV_ITEMS, EXPORT_ITEM].find((n) => pathname.startsWith(n.to))?.label || 'Admin'
+  const title = NAV_ITEMS.find((n) => pathname.startsWith(n.to))?.label || 'Admin'
   const activeEmergencies = emergencies.filter((e) => e.status !== 'Resolved').length
   const pendingReports = reports.filter((r) => r.status === 'Pending').length
   const alertCount = settings.notifications.emergency || settings.notifications.reports
