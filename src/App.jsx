@@ -21,6 +21,7 @@ import LandingPage from './commuter/pages/LandingPage.jsx'
 import CommuterHome from './commuter/pages/Home.jsx'
 import BusRoutes from './commuter/pages/BusRoutes.jsx'
 import Timetable from './commuter/pages/Timetable.jsx'
+import LiveTracking from './commuter/pages/LiveTracking.jsx'
 import MyTrip from './commuter/pages/MyTrip.jsx'
 import LostItem from './commuter/pages/LostItem.jsx'
 import LostItemReports from './commuter/pages/LostItemReports.jsx'
@@ -43,6 +44,7 @@ export default function App() {
                 <Route path="home" element={<CommuterHome />} />
                 <Route path="route-and-schedule" element={<BusRoutes />} />
                 <Route path="timetable" element={<Timetable />} />
+                <Route path="live-tracking" element={<LiveTracking />} />
                 <Route path="my-trip" element={<MyTrip />} />
                 <Route path="lost-item" element={<LostItem />} />
                 <Route path="lost-item-reports" element={<LostItemReports />} />
