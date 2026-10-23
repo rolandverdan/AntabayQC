@@ -15,6 +15,7 @@ import Logs from './admin/pages/Logs.jsx'
 import ReportLogs from './admin/pages/ReportLogs.jsx'
 import EmergencyLogs from './admin/pages/EmergencyLogs.jsx'
 import Settings from './admin/pages/Settings.jsx'
+import ExportData from './admin/pages/ExportData.jsx'
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
                 <Route path="report-logs" element={<ReportLogs />} />
                 <Route path="emergency-logs" element={<EmergencyLogs />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="export" element={<ExportData />} />
               </Route>
               <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </Routes>

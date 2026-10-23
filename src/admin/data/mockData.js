@@ -13,7 +13,7 @@ export const defaultSettings = {
   showRecentActivity: true,
   pageSize: 8,
   density: 'comfortable',
-  sidebarCollapsed: false,
+  sidebarCollapsed: true,
 }
 
 // ---------------------------------------------------------------------------

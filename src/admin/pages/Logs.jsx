@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Eye } from 'lucide-react'
+import { Download, Eye } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
+import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
 import Button, { IconButton } from '../components/Button.jsx'
 import Badge from '../components/Badge.jsx'
@@ -10,9 +11,12 @@ import Modal from '../components/Modal.jsx'
 import DetailGrid from '../components/DetailGrid.jsx'
 import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
 import { MODULES, SEVERITIES } from '../data/constants.js'
+import { downloadCsv, todayStamp } from '../utils/csv.js'
+import { LOG_COLUMNS } from '../utils/exportConfig.js'
 
 export default function Logs() {
   const { logs } = useAdminData()
+  const { notify } = useToast()
   const [q, setQ] = useState('')
   const [moduleF, setModuleF] = useState('')
   const [sev, setSev] = useState('')
@@ -30,6 +34,16 @@ export default function Logs() {
   )
   const view = logs.find((l) => l.id === viewId)
 
+  // Exports exactly what the table shows: same search query and filters.
+  const exportCsv = () => {
+    if (!rows.length) {
+      notify('No log records match the current search and filters, so nothing was exported.', 'error')
+      return
+    }
+    downloadCsv(`antabay-system-logs-${todayStamp()}.csv`, rows, LOG_COLUMNS)
+    notify(`Exported ${rows.length} record(s) to CSV.`, 'info')
+  }
+
   const columns = [
     { key: 'id', header: 'Log ID', render: (l) => <span className="font-mono text-xs font-semibold text-navy">{l.id}</span> },
     { key: 'timestamp', header: 'Timestamp', render: (l) => <span className="whitespace-nowrap">{fmtDateTime(l.timestamp)}</span> },
@@ -42,7 +56,11 @@ export default function Logs() {
 
   return (
     <>
-      <PageHeader title="System Logs" description="Administrative and system activity. New entries appear here when you perform actions in this session." />
+      <PageHeader
+        title="System Logs"
+        description="Administrative and system activity. New entries appear here when you perform actions in this session."
+        actions={<Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button>}
+      />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search keyword in logs…"
         filters={[

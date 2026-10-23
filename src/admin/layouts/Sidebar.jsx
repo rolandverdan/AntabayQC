@@ -1,20 +1,41 @@
 import { NavLink } from 'react-router-dom'
 import { Bus, X } from 'lucide-react'
-import { NAV_ITEMS, LOGOUT_ITEM } from './navItems.js'
+import { NAV_ITEMS, EXPORT_ITEM, LOGOUT_ITEM } from './navItems.js'
 
-export default function Sidebar({ collapsed, mobileOpen, onCloseMobile, onLogout }) {
-  const labelCls = collapsed ? 'lg:hidden' : ''
+// `expanded` is false only on desktop when the sidebar is collapsed and not hovered/focused.
+// On screens below lg the sidebar is an off-canvas drawer that always shows labels.
+export default function Sidebar({ expanded, mobileOpen, onCloseMobile, onLogout, onHoverChange }) {
   const LogoutIcon = LOGOUT_ITEM.icon
+  const labelCls = `truncate whitespace-nowrap transition-opacity duration-200 ${expanded ? '' : 'lg:pointer-events-none lg:opacity-0'}`
+  const itemBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150'
+  const navClass = ({ isActive }) =>
+    `${itemBase} ${isActive ? 'bg-white text-navy shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'}`
+
+  const renderLink = ({ to, label, icon: Icon }) => (
+    <NavLink key={to} to={to} title={label} className={navClass}>
+      {({ isActive }) => (
+        <>
+          <Icon size={19} className={`shrink-0 ${isActive ? 'text-brand' : ''}`} />
+          <span className={labelCls}>{label}</span>
+        </>
+      )}
+    </NavLink>
+  )
 
   return (
     <>
       {mobileOpen && <div className="fixed inset-0 z-30 bg-slate-900/50 lg:hidden" onClick={onCloseMobile} />}
       <aside
-        className={`fixed left-0 top-0 z-40 flex h-full w-64 flex-col bg-brand text-white shadow-xl transition-transform duration-200 lg:translate-x-0 ${
-          collapsed ? 'lg:w-[76px]' : 'lg:w-64'
+        // Hover only reacts to a real mouse; touch devices use the menu / pin buttons in the header.
+        onPointerEnter={(e) => e.pointerType === 'mouse' && onHoverChange(true)}
+        onPointerLeave={(e) => e.pointerType === 'mouse' && onHoverChange(false)}
+        onFocus={() => onHoverChange(true)}
+        onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) onHoverChange(false) }}
+        className={`fixed left-0 top-0 z-40 flex h-full w-64 flex-col overflow-hidden bg-brand text-white shadow-xl transition-[width,transform] duration-200 ease-out lg:translate-x-0 ${
+          expanded ? 'lg:w-64' : 'lg:w-[76px]'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-[18px]">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand">
             <Bus size={22} />
           </div>
@@ -27,32 +48,22 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile, onLogout
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={label}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  isActive ? 'bg-deep text-white shadow-inner' : 'text-blue-100 hover:bg-white/10 hover:text-white'
-                } ${collapsed ? 'lg:justify-center' : ''}`
-              }
-            >
-              <Icon size={19} className="shrink-0" />
-              <span className={`truncate ${labelCls}`}>{label}</span>
-            </NavLink>
-          ))}
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label="Admin navigation">
+          {NAV_ITEMS.map(renderLink)}
+        </nav>
+
+        <div className="shrink-0 space-y-1 border-t border-white/10 px-3 py-3">
+          {renderLink(EXPORT_ITEM)}
           <button
             type="button"
             onClick={onLogout}
             title={LOGOUT_ITEM.label}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-blue-100 transition hover:bg-red-500/90 hover:text-white ${collapsed ? 'lg:justify-center' : ''}`}
+            className={`${itemBase} w-full text-blue-100 hover:bg-red-500/90 hover:text-white`}
           >
             <LogoutIcon size={19} className="shrink-0" />
-            <span className={`truncate ${labelCls}`}>{LOGOUT_ITEM.label}</span>
+            <span className={labelCls}>{LOGOUT_ITEM.label}</span>
           </button>
-        </nav>
+        </div>
       </aside>
     </>
   )

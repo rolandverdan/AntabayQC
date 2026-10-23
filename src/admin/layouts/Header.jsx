@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Bell, ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, Siren, FileText } from 'lucide-react'
-import { NAV_ITEMS } from './navItems.js'
+import { NAV_ITEMS, EXPORT_ITEM } from './navItems.js'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 
 export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLogout }) {
@@ -9,7 +9,7 @@ export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLo
   const { pathname } = useLocation()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
 
-  const title = NAV_ITEMS.find((n) => pathname.startsWith(n.to))?.label || 'Admin'
+  const title = [...NAV_ITEMS, EXPORT_ITEM].find((n) => pathname.startsWith(n.to))?.label || 'Admin'
   const activeEmergencies = emergencies.filter((e) => e.status !== 'Resolved').length
   const pendingReports = reports.filter((r) => r.status === 'Pending').length
   const alertCount = settings.notifications.emergency || settings.notifications.reports
@@ -19,11 +19,11 @@ export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLo
   const close = () => setMenu(null)
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 bg-deep px-4 text-white shadow-md">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/10 bg-brand px-4 text-white shadow-md">
       <button type="button" onClick={onOpenMobile} aria-label="Open menu" className="rounded-md p-2 hover:bg-white/10 lg:hidden">
         <Menu size={20} />
       </button>
-      <button type="button" onClick={onToggleCollapse} aria-label="Toggle sidebar" className="hidden rounded-md p-2 hover:bg-white/10 lg:block">
+      <button type="button" onClick={onToggleCollapse} aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} title={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} className="hidden rounded-md p-2 hover:bg-white/10 lg:block">
         {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
       </button>
       <h1 className="truncate text-lg font-bold">{title}</h1>
@@ -60,7 +60,7 @@ export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLo
 
         <div className="relative z-20">
           <button type="button" onClick={() => setMenu(menu === 'profile' ? null : 'profile')} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-white/10" aria-label="Profile menu">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-deep">{initials}</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">{initials}</span>
             <span className="hidden text-left text-xs leading-tight sm:block">
               <span className="block max-w-32 truncate font-semibold">{settings.name}</span>
               <span className="block text-[10px] text-cyan-100">Administrator</span>

@@ -49,27 +49,48 @@ export default function Login() {
     }, 600)
   }
 
+  // Blue-toned silhouette of the provided photo: grayscale + luminosity blend over the brand blue, faded at the edges.
+  const silhouette = 'pointer-events-none select-none object-cover object-center grayscale contrast-125 mix-blend-luminosity'
+  const fade = { maskImage: 'linear-gradient(to bottom, transparent 0%, #000 25%, #000 75%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 25%, #000 75%, transparent 100%)' }
+
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between bg-brand p-10 text-white lg:flex">
-        <div className="flex items-center gap-3">
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-brand p-10 text-white lg:flex">
+        <img
+          src="/images/quezon-memorial-circle.png"
+          alt=""
+          aria-hidden="true"
+          style={fade}
+          className={`absolute inset-0 h-full w-full opacity-60 ${silhouette}`}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand/40 to-brand/70" />
+        <div className="relative z-10 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-brand"><Bus size={24} /></div>
           <div>
             <p className="text-lg font-bold tracking-wide">ANTABAY QC</p>
             <p className="text-xs text-blue-200">GIS-based Bus Tracking · Quezon City</p>
           </div>
         </div>
-        <div>
+        <div className="relative z-10">
           <h2 className="text-3xl font-bold leading-tight">Administrator Console</h2>
           <p className="mt-3 max-w-md text-sm text-blue-100">
             Manage buses, drivers, stops, and routes, and monitor operations, reports, and emergencies from one place.
           </p>
         </div>
-        <p className="text-xs text-blue-200">Administrator portal</p>
+        <p className="relative z-10 text-xs text-blue-200">Administrator portal</p>
       </div>
 
-      <div className="flex items-center justify-center bg-surface p-6">
-        <form onSubmit={submit} noValidate className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="relative flex items-center justify-center overflow-hidden bg-brand p-6 lg:bg-surface">
+        {/* Tablet / mobile: the same silhouette sits softly behind the form; hidden on desktop where it has its own panel. */}
+        <img
+          src="/images/quezon-memorial-circle.png"
+          alt=""
+          aria-hidden="true"
+          style={fade}
+          className={`absolute inset-0 h-full w-full opacity-40 lg:hidden ${silhouette}`}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand/60 to-brand-dark/80 lg:hidden" />
+        <form onSubmit={submit} noValidate className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8 lg:shadow-sm">
           <div className="mb-6 flex items-center gap-3 lg:hidden">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-white"><Bus size={22} /></div>
             <p className="font-bold text-navy">ANTABAY QC</p>

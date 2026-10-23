@@ -83,7 +83,7 @@ export default function Settings() {
             <div className="divide-y divide-slate-100">
               <Toggle label="Show map preview on dashboard" checked={draft.showMapPreview} onChange={(v) => setDraft((d) => ({ ...d, showMapPreview: v }))} />
               <Toggle label="Show recent activity cards" hint="Recent system, report, and emergency logs." checked={draft.showRecentActivity} onChange={(v) => setDraft((d) => ({ ...d, showRecentActivity: v }))} />
-              <Toggle label="Collapse sidebar by default" hint="Applies the next time you sign in or reload." checked={draft.sidebarCollapsed} onChange={(v) => setDraft((d) => ({ ...d, sidebarCollapsed: v }))} />
+              <Toggle label="Collapse sidebar by default" hint="Icons only; expands when you hover over it. Turn off to keep it open. Applies on next sign in or reload." checked={draft.sidebarCollapsed} onChange={(v) => setDraft((d) => ({ ...d, sidebarCollapsed: v }))} />
             </div>
             <div className="mt-3 grid gap-4 sm:grid-cols-2">
               <Field label="Table density"><select className={inputClass(false)} value={draft.density} onChange={upd('density')}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></Field>

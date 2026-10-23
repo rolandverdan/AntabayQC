@@ -14,7 +14,10 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
+  // `collapsed` = icon-only by default; hovering (or focusing) the sidebar expands it temporarily.
   const [collapsed, setCollapsed] = useState(settings.sidebarCollapsed)
+  const [hovered, setHovered] = useState(false)
+  const expanded = !collapsed || hovered
   const [mobileOpen, setMobileOpen] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
 
@@ -31,12 +34,13 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen" data-density={settings.density}>
       <Sidebar
-        collapsed={collapsed}
+        expanded={expanded}
+        onHoverChange={setHovered}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
         onLogout={() => setConfirmLogout(true)}
       />
-      <div className={`transition-[padding] duration-200 ${collapsed ? 'lg:pl-[76px]' : 'lg:pl-64'}`}>
+      <div className={`transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
         <Header
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed((c) => !c)}
