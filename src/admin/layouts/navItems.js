@@ -6,7 +6,7 @@ import {
 // Exact module order required for the sidebar. Logout is handled as an action, not a route.
 export const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/admin/accounts', label: 'Create Users', icon: UserPlus },
+  { to: '/admin/accounts', label: 'Users', icon: UserPlus },
   { to: '/admin/buses', label: 'Create Buses', icon: Bus },
   { to: '/admin/bus-stops', label: 'Create Bus Stops', icon: MapPin },
   { to: '/admin/routes', label: 'Create Routes', icon: Route },
