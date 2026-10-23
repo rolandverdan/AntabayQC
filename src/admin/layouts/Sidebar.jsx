@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Bus, X } from 'lucide-react'
-import { NAV_ITEMS, EXPORT_ITEM, LOGOUT_ITEM } from './navItems.js'
+import { NAV_ITEMS, LOGOUT_ITEM } from './navItems.js'
 
 // `expanded` is false only on desktop when the sidebar is collapsed and not hovered/focused.
 // On screens below lg the sidebar is an off-canvas drawer that always shows labels.
@@ -53,7 +53,6 @@ export default function Sidebar({ expanded, mobileOpen, onCloseMobile, onLogout,
         </nav>
 
         <div className="shrink-0 space-y-1 border-t border-white/10 px-3 py-3">
-          {renderLink(EXPORT_ITEM)}
           <button
             type="button"
             onClick={onLogout}

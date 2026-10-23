@@ -10,4 +10,3 @@ ATTENDANCE CHECH:
 1. Roland Verdan == 1
 2. Anthony Ariel Dela Vega == 1
 3. Marc Kenneth Malapo == 1
-4. Reneys - kasama po ba QA?
