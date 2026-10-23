@@ -4,7 +4,17 @@ import { NAV_ITEMS, LOGOUT_ITEM } from './navItems.js'
 
 // `expanded` is false only on desktop when the sidebar is collapsed and not hovered/focused.
 // On screens below lg the sidebar is an off-canvas drawer that always shows labels.
-export default function Sidebar({ expanded, mobileOpen, onCloseMobile, onLogout, onHoverChange }) {
+export default function Sidebar({
+  expanded,
+  mobileOpen,
+  onCloseMobile,
+  onLogout,
+  onHoverChange,
+  items = NAV_ITEMS,
+  commuterMode = false,
+  commuterTitle = 'ANTABAY QC',
+  commuterMeta = 'Commuter Console',
+}) {
   const LogoutIcon = LOGOUT_ITEM.icon
   const labelCls = `truncate whitespace-nowrap transition-opacity duration-200 ${expanded ? '' : 'lg:pointer-events-none lg:opacity-0'}`
   const itemBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150'
@@ -40,16 +50,16 @@ export default function Sidebar({ expanded, mobileOpen, onCloseMobile, onLogout,
             <Bus size={22} />
           </div>
           <div className={`min-w-0 leading-tight ${labelCls}`}>
-            <p className="truncate text-sm font-bold tracking-wide">ANTABAY QC</p>
-            <p className="truncate text-[11px] text-blue-200">Admin Console</p>
+            <p className="truncate text-sm font-bold tracking-wide">{commuterMode ? commuterTitle : 'ANTABAY QC'}</p>
+            <p className="truncate text-[11px] text-blue-200">{commuterMode ? commuterMeta : 'Admin Console'}</p>
           </div>
           <button type="button" onClick={onCloseMobile} aria-label="Close menu" className="ml-auto rounded-md p-1 hover:bg-white/10 lg:hidden">
             <X size={18} />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label="Admin navigation">
-          {NAV_ITEMS.map(renderLink)}
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label={commuterMode ? 'Commuter navigation' : 'Admin navigation'}>
+          {items.map(renderLink)}
         </nav>
 
         <div className="shrink-0 space-y-1 border-t border-white/10 px-3 py-3">
