@@ -214,7 +214,7 @@ export default function Notification() {
                   </div>
                 </div>
               </div>
-            )) : <p className="p-8 text-center text-sm text-slate-500">No notifications match this filter.</p>}
+            )) : <p role="status" className="p-8 text-center text-sm text-slate-500">No notifications match this filter.</p>}
           </div>
         </section>
 

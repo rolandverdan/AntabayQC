@@ -42,7 +42,7 @@ export default function CommuterHome() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {featureCards.map(({ title, subtitle, icon: Icon, href, tone }) => (
-              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
                 <div className="flex items-center gap-4">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
                     tone === 'amber' ? 'bg-yellow-100 text-yellow-700' :
@@ -64,7 +64,7 @@ export default function CommuterHome() {
             <h3 className="mb-4 text-lg font-bold text-navy">Quick Access</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               {quickAccess.map(({ title, subtitle, icon: Icon, href, tone }) => (
-                <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white">
+                <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
                   <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${
                     tone === 'red' ? 'bg-red-500 text-white' :
                     tone === 'blue' ? 'bg-blue-600 text-white' :

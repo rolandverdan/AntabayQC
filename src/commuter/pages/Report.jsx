@@ -138,44 +138,44 @@ export default function Report() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Report Category <span className="text-red-500">*</span></label>
-              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label htmlFor="incident-category" className="mb-2 block text-sm font-semibold text-slate-700">Report Category <span className="text-red-500">*</span></label>
+              <select id="incident-category" required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select concern category...</option>
                 {categoryGuide.map(({ label }) => <option key={label}>{label}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
-              <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label htmlFor="incident-bus" className="mb-2 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
+              <select id="incident-bus" value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Bus unknown / not listed</option>
                 {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
                 <option value="other">Other unit...</option>
               </select>
               {form.busId === 'other' && (
-                <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
+                <input aria-label="Other bus number or plate" required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
               )}
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Operational Date</label>
+              <label htmlFor="incident-date" className="mb-2 block text-sm font-semibold text-slate-700">Operational Date</label>
               <div className="relative">
-                <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
+                <input id="incident-date" required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
                 <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Time</label>
+              <label htmlFor="incident-time" className="mb-2 block text-sm font-semibold text-slate-700">Time</label>
               <div className="relative">
-                <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
+                <input id="incident-time" required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
                 <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Route</label>
-              <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label htmlFor="incident-route" className="mb-2 block text-sm font-semibold text-slate-700">Route</label>
+              <select id="incident-route" value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select route if known...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
                   <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
@@ -184,9 +184,9 @@ export default function Report() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
+              <label htmlFor="incident-location" className="mb-2 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
               <div className="relative">
-                <select value={form.location} onChange={updateForm('location')} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand">
+                <select id="incident-location" value={form.location} onChange={updateForm('location')} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand">
                   <option value="">Select stop or location if known...</option>
                   {availableStops.map((stop) => <option key={stop.id} value={stop.name}>{stop.name}</option>)}
                   <option value="other">Other location...</option>
@@ -194,20 +194,20 @@ export default function Report() {
                 <MapPin className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
               {form.location === 'other' && (
-                <input required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter terminal, stop, or landmark" />
+                <input aria-label="Other incident location" required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter terminal, stop, or landmark" />
               )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Incident Severity / Urgency <span className="text-red-500">*</span></label>
-              <div className="grid grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <label id="incident-severity-label" className="mb-2 block text-sm font-semibold text-slate-700">Incident Severity / Urgency <span className="text-red-500">*</span></label>
+              <div role="group" aria-labelledby="incident-severity-label" className="grid grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1">
                 {['Low', 'Mid', 'High'].map((level) => (
                   <button
                     key={level}
                     type="button"
                     onClick={() => setForm((current) => ({ ...current, severity: level }))}
                     aria-pressed={form.severity === level}
-                    className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                    className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                       form.severity === level
                         ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200'
                         : 'text-slate-600 hover:bg-white/70'
@@ -220,8 +220,9 @@ export default function Report() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Details &amp; Statement <span className="text-red-500">*</span></label>
+              <label htmlFor="incident-details" className="mb-2 block text-sm font-semibold text-slate-700">Details &amp; Statement <span className="text-red-500">*</span></label>
               <textarea
+                id="incident-details"
                 rows={5}
                 required
                 value={form.details}
@@ -232,8 +233,8 @@ export default function Report() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Photo / Video / Dashboard Ticket Evidence Upload</label>
-              <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,video/mp4,application/pdf" multiple onChange={handleEvidenceChange} className="sr-only" />
+              <label htmlFor="incident-evidence" className="mb-2 block text-sm font-semibold text-slate-700">Photo / Video / Dashboard Ticket Evidence Upload</label>
+              <input id="incident-evidence" ref={fileInputRef} type="file" accept="image/png,image/jpeg,video/mp4,application/pdf" multiple onChange={handleEvidenceChange} className="sr-only" tabIndex={-1} />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -291,8 +292,8 @@ export default function Report() {
 
           {!form.anonymous && (
             <div className="mt-4">
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Contact Phone <span className="text-slate-400">(optional)</span></label>
-              <input type="tel" inputMode="tel" value={form.phone} onChange={updateForm('phone')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="For follow-up about this report" />
+              <label htmlFor="incident-phone" className="mb-2 block text-sm font-semibold text-slate-700">Contact Phone <span className="text-slate-400">(optional)</span></label>
+              <input id="incident-phone" type="tel" inputMode="tel" value={form.phone} onChange={updateForm('phone')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="For follow-up about this report" />
             </div>
           )}
 
@@ -315,7 +316,7 @@ export default function Report() {
               Report Categories Guide
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {categoryGuide.map(({ label, desc }) => (
                 <button
                   key={label}
@@ -344,7 +345,7 @@ export default function Report() {
             </div>
 
             <div className="space-y-3">
-              {activeReports.map((report) => (
+              {activeReports.length ? activeReports.map((report) => (
                 <button
                   key={report.title}
                   type="button"
@@ -368,7 +369,11 @@ export default function Report() {
                     </p>
                   )}
                 </button>
-              ))}
+              )) : (
+                <p role="status" className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+                  No incident reports to show yet.
+                </p>
+              )}
             </div>
           </div>
 

@@ -106,9 +106,11 @@ export default function LostItemReports() {
       </section>
 
       <section className="flex flex-col gap-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
-        <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+        <label htmlFor="lost-report-search" className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
           <Search size={15} className="shrink-0 text-slate-500" />
+          <span className="sr-only">Search lost-item reports</span>
           <input
+            id="lost-report-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by Case ID, item brand, route..."

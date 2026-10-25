@@ -105,15 +105,16 @@ const ROUTE_TIMETABLE = {
   },
 }
 
-const buttonBase = 'rounded-xl px-3 py-2 text-sm font-semibold transition'
+const buttonBase = 'min-h-11 rounded-xl px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2'
 
 export default function Timetable() {
   const { routes } = useAdminData()
   const [selectedRouteId, setSelectedRouteId] = useState('R-01')
 
+  const timetableRoutes = routes.filter((route) => ROUTE_TIMETABLE[route.id])
   const selectedRoute = useMemo(
-    () => routes.find((route) => route.id === selectedRouteId) || routes[0],
-    [routes, selectedRouteId],
+    () => timetableRoutes.find((route) => route.id === selectedRouteId) || timetableRoutes[0],
+    [timetableRoutes, selectedRouteId],
   )
 
   const selectedTimetable = ROUTE_TIMETABLE[selectedRoute?.id] || ROUTE_TIMETABLE['R-01']
@@ -137,20 +138,23 @@ export default function Timetable() {
         </div>
 
         <div className="p-4">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            {['R-01', 'R-02', 'R-03', 'R-04', 'R-05', 'R-06', 'R-07', 'R-08'].map((routeId) => (
+          <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Select a timetable route">
+            {timetableRoutes.map((route) => (
               <button
-                key={routeId}
+                key={route.id}
                 type="button"
-                onClick={() => setSelectedRouteId(routeId)}
-                className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${selectedRoute?.id === routeId ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-slate-50 text-slate-600'}`}
+                onClick={() => setSelectedRouteId(route.id)}
+                aria-pressed={selectedRoute?.id === route.id}
+                className={`min-h-11 rounded-md border px-3 py-1.5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 ${selectedRoute?.id === route.id ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-slate-50 text-slate-600'}`}
               >
-                {routeId}
+                {route.id}
               </button>
             ))}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          {selectedRoute ? (
+          <div role="region" aria-label="Scrollable timetable" tabIndex={0} className="overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50">
+            <div className="min-w-[760px]">
             <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr] bg-[#1e6ea6] text-sm font-bold text-white">
               <div className="px-4 py-3">{selectedRoute?.id || 'R-01'}</div>
               <div className="px-4 py-3 text-center">Monday - Friday</div>
@@ -233,7 +237,13 @@ export default function Timetable() {
 
           <div className="mt-4 text-center text-xs text-slate-500">Official City Bus Timetable • Quezon City Government (QC Bus System)</div>
         </div>
+        ) : (
+          <p role="status" className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+            Timetable information is not available for any active route right now.
+          </p>
+        )}
       </div>
+    </div>
     </div>
   )
 }
