@@ -1,33 +1,111 @@
+import { useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { CheckCircle2, CircleAlert, Clock3, FileText, Hash, MapPin, Search, ShieldCheck, Ticket, BellRing, Phone } from 'lucide-react'
+import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { useToast } from '../../admin/context/ToastContext.jsx'
+import { PageHeader } from '../../admin/components/Card.jsx'
+import { CircleAlert, FileText, MapPin, ShieldCheck, Phone, Upload, X } from 'lucide-react'
 
-const stats = [
-  { label: 'Total reports', value: '4', tone: 'default' },
-  { label: 'Passed / matched', value: '1', tone: 'green' },
-  { label: 'In depot transit', value: '1', tone: 'blue' },
-  { label: 'Pending', value: '1', tone: 'amber' },
-  { label: 'Claimed', value: '1', tone: 'gray' },
+const itemCategories = [
+  'Bags & Backpacks',
+  'Wallets & Cards',
+  'Phones & Electronics',
+  'Clothing & Accessories',
+  'Keys',
+  'Documents',
+  'Other',
 ]
 
-const claims = [
-  { title: 'Backpack', status: 'Pending', route: 'R-01', bus: 'Bus #1234', date: 'Oct 8, 2026', badge: 'red' },
-  { title: 'Wallet & QC Resident Card', status: 'Ready for pickup', route: 'R-01', bus: 'Bus #1234', date: 'Filed Sep 30, 2026', badge: 'green' },
-]
+const localDate = () => {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
+const makeInitialForm = () => ({
+  category: '',
+  routeId: '',
+  busId: '',
+  otherBus: '',
+  identifyingDetails: '',
+  date: localDate(),
+  time: '',
+  location: '',
+  otherLocation: '',
+  description: '',
+  phone: '',
+})
 
 export default function LostItem() {
   const { pathname } = useLocation()
+  const { routes, buses, stops } = useAdminData()
+  const { notify } = useToast()
+  const fileInputRef = useRef(null)
+  const [form, setForm] = useState(makeInitialForm)
+  const [photo, setPhoto] = useState(null)
+  const [recentInquiries, setRecentInquiries] = useState([
+    {
+      id: 'QC-LR-2026-1008',
+      title: 'Backpack',
+      status: 'Pending',
+      bus: 'Bus #1234',
+      date: 'Oct 8, 2026',
+      details: 'Sample recent inquiry. This is demonstration data.',
+    },
+  ])
+  const [selectedInquiry, setSelectedInquiry] = useState(null)
   const isFormActive = pathname === '/commuter/lost-item'
   const isReportsActive = pathname === '/commuter/lost-item-reports'
+  const availableBuses = buses.filter((bus) => bus.status === 'Active' && (!form.routeId || bus.routeId === form.routeId))
+  const selectedRoute = routes.find((route) => route.id === form.routeId)
+  const availableStops = selectedRoute
+    ? selectedRoute.stopIds.map((stopId) => stops.find((stop) => stop.id === stopId)).filter(Boolean)
+    : stops.filter((stop) => stop.status === 'Active')
+
+  const updateForm = (field) => (event) => {
+    setForm((current) => ({ ...current, [field]: event.target.value }))
+  }
+
+  const resetForm = () => {
+    setForm(makeInitialForm())
+    setPhoto(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    notify('Lost-item form cleared.', 'info')
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    const route = routes.find((item) => item.id === form.routeId)
+    const bus = buses.find((item) => item.id === form.busId)
+    const caseId = `QC-LR-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
+    const inquiry = {
+      id: caseId,
+      title: form.category,
+      status: 'Pending',
+      bus: bus ? `${bus.id} · ${bus.plate}` : form.otherBus || 'Bus not specified',
+      date: new Date(`${form.date}T00:00:00`).toLocaleDateString(),
+      details: [
+        `${route?.name || 'Route not specified'} · ${form.location === 'other' ? form.otherLocation : form.location}`,
+        `Travel date/time: ${form.date} at ${form.time}`,
+        form.description,
+        form.identifyingDetails && `Additional details: ${form.identifyingDetails}`,
+      ].filter(Boolean).join('. '),
+    }
+
+    setRecentInquiries((items) => [inquiry, ...items])
+    setSelectedInquiry(inquiry)
+    setForm(makeInitialForm())
+    setPhoto(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    notify(`Demo report ${caseId} added to recent inquiries. It has not been sent to a service.`, 'success')
+  }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-        <div>
-          <h1 className="text-[clamp(2rem,2.3vw,2.8rem)] font-black uppercase tracking-tight text-navy">Lost Item</h1>
-          <p className="mt-1 text-sm text-slate-500">File automated inquiries, track real-time depot verification, and claim recovered personal items.</p>
-        </div>
-
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+      <PageHeader
+        title="Lost Item"
+        description="File an inquiry, track depot verification, and claim recovered items."
+        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
             <ShieldCheck size={16} />
           </div>
@@ -35,22 +113,22 @@ export default function LostItem() {
             <div className="font-bold text-slate-800">QC Central Terminal Depot</div>
             <div className="text-xs text-slate-500">Open Now • 08:00 – 17:00 PHT</div>
           </div>
-        </div>
-      </div>
+        </div>}
+      />
 
       <div className="border-b border-slate-200 bg-white px-4 py-3 shadow-sm">
         <div className="flex items-center gap-3">
           <Link to="/commuter/lost-item" className={`rounded-xl px-4 py-2 text-sm font-bold shadow-sm transition ${isFormActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
             Report Lost Item
           </Link>
-          <Link to="/commuter/report" className={`rounded-xl px-4 py-2 text-sm shadow-sm transition ${isReportsActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
+          <Link to="/commuter/lost-item-reports" className={`rounded-xl px-4 py-2 text-sm shadow-sm transition ${isReportsActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
             Check My Reports / Claims
           </Link>
         </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.5fr_0.75fr]">
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+        <form onSubmit={handleSubmit} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
               <FileText size={18} />
@@ -64,55 +142,81 @@ export default function LostItem() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Item Category</label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option>Transit Line / Route</option>
+              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+                <option value="">Select item category...</option>
+                {itemCategories.map((category) => <option key={category}>{category}</option>)}
               </select>
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Select Bus Route</label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option>Select Bus Route...</option>
+              <select required value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+                <option value="">Select Bus Route...</option>
+                {routes.filter((route) => route.status === 'Active').map((route) => (
+                  <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="e.g., Bus #1234 or plate letters" />
+              <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+                <option value="">Bus unknown / not listed</option>
+                {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
+                <option value="other">Other unit...</option>
+              </select>
+              {form.busId === 'other' && (
+                <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
+              )}
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Optional</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="" />
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Other identifying details <span className="font-normal text-slate-400">(optional)</span></label>
+              <input value={form.identifyingDetails} onChange={updateForm('identifyingDetails')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Color, brand, distinguishing marks..." />
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Date &amp; Travel Time Window</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" value="10/05/2026" readOnly />
+              <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Time</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" value="10:00 — 11:00 am" readOnly />
+              <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
             </div>
           </div>
 
           <div className="mt-4">
             <label className="mb-1 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <input className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" placeholder="Select where you might have left it..." />
+              <select required value={form.location} onChange={updateForm('location')} className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none">
+                <option value="">Choose a stop or terminal...</option>
+                {availableStops.map((stop) => <option key={stop.id} value={stop.name}>{stop.name}</option>)}
+                <option value="other">Other location...</option>
+              </select>
               <MapPin size={16} className="text-slate-400" />
             </div>
+            {form.location === 'other' && (
+              <input required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter location or seat position" />
+            )}
           </div>
 
           <div className="mt-4">
             <label className="mb-1 block text-sm font-semibold text-slate-700">Comprehensive Item Description</label>
-            <textarea rows={4} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="e.g. Navy blue Herschel Settlement backpack with brown faux-leather bottom. Inside has a silver laptop sleeve, a yellow spiral notebook, and QC University ID under name 'Juan Dela Cruz'." />
+            <textarea required rows={4} value={form.description} onChange={updateForm('description')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Describe the item, including color, brand, marks, and contents..." />
           </div>
 
           <div className="mt-4">
             <label className="mb-1 block text-sm font-semibold text-slate-700">Reference Photo or Proof of Ownership</label>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">Reference Photo or Proof of Ownership</div>
+            <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={(event) => setPhoto(event.target.files?.[0] || null)} className="sr-only" />
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3">
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                <Upload size={16} />
+                Choose a file
+              </button>
+              <span className="min-w-0 flex-1 truncate text-sm text-slate-500">{photo?.name || 'Image or PDF (optional)'}</span>
+              {photo && <button type="button" onClick={() => { setPhoto(null); fileInputRef.current.value = '' }} aria-label="Remove selected file" className="rounded-lg p-2 text-slate-500 hover:bg-slate-200"><X size={16} /></button>}
+            </div>
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -120,23 +224,21 @@ export default function LostItem() {
               <label className="mb-1 block text-sm font-semibold text-slate-700">Contact Phone (for SMS Claim Code)</label>
               <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
                 <span className="text-sm font-semibold text-slate-700">+63</span>
-                <input className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" placeholder="" />
+                <input required type="tel" inputMode="numeric" pattern="[0-9 +()-]{7,16}" value={form.phone} onChange={updateForm('phone')} className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" placeholder="9171234567" />
               </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Transit Line / Route</label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option>Select Bus Route...</option>
-              </select>
-            </div>
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-3">
-            <button className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">Clear Form</button>
-            <button className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm">Submit Lost Item Report</button>
+            <button type="button" onClick={resetForm} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-100 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
+              Clear Form
+            </button>
+            <button type="submit" className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
+              Submit Lost Item Report
+            </button>
           </div>
-        </div>
+        </form>
 
         <aside className="space-y-5">
           <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
@@ -160,18 +262,23 @@ export default function LostItem() {
             </div>
 
             <div className="space-y-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              {recentInquiries.map((inquiry) => (
+              <div key={inquiry.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-red-500 text-xs font-bold text-white">R</span>
-                    <span className="text-sm font-bold text-navy">Backpack</span>
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-brand text-xs font-bold text-white">R</span>
+                    <span className="text-sm font-bold text-navy">{inquiry.title}</span>
                   </div>
-                  <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-red-600">Pending</span>
+                  <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">{inquiry.status}</span>
                 </div>
-                <div className="mt-2 text-xs text-slate-500">Bus #1234 • Oct 8, 2026</div>
-                <div className="mt-2 text-xs text-slate-500">Found by Conductor #C-109</div>
-                <button className="mt-3 text-xs font-semibold text-brand">View details</button>
+                <div className="mt-2 text-xs text-slate-500">{inquiry.bus} · {inquiry.date}</div>
+                <div className="mt-1 text-xs text-slate-500">Case Ref: {inquiry.id}</div>
+                <button type="button" onClick={() => setSelectedInquiry(selectedInquiry?.id === inquiry.id ? null : inquiry)} className="mt-3 text-xs font-semibold text-brand hover:underline">
+                  {selectedInquiry?.id === inquiry.id ? 'Hide details' : 'View details'}
+                </button>
+                {selectedInquiry?.id === inquiry.id && <p className="mt-2 rounded-lg bg-white p-2 text-xs leading-5 text-slate-600">{inquiry.details}</p>}
               </div>
+              ))}
             </div>
           </div>
 

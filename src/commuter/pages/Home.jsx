@@ -8,12 +8,10 @@ import {
   Settings,
   UserRound,
   PackageSearch,
-  Shield,
+  PhoneCall,
+  Check,
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
-import Card from '../../admin/components/Card.jsx'
-import Button from '../../admin/components/Button.jsx'
-import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 
 const featureCards = [
   { title: 'Route and Schedule', subtitle: 'View bus routes, stops and schedule', icon: RouteIcon, href: '/commuter/route-and-schedule', tone: 'amber' },
@@ -29,33 +27,60 @@ const quickAccess = [
 ]
 
 export default function CommuterHome() {
-  const { buses, routes } = useAdminData()
-  const activeBuses = buses.filter((b) => b.status === 'Active').length
-  const activeRoutes = routes.filter((r) => r.status === 'Active').length
-
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <PageHeader title="Home" description="" />
-        <Link
-          to="/admin/login"
-          className="inline-flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/5 px-3 py-2 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white"
-        >
-          <Shield size={15} />
-          Admin Login
-        </Link>
-      </div>
-
-      <div className="space-y-5">
-        <div className="grid gap-5 md:grid-cols-[1.45fr_0.75fr]">
+      <PageHeader title="Home" description="Your quick access to QC Bus routes, trips, and commuter services." />
+      <div className="grid gap-5 lg:grid-cols-3">
+        <section className="space-y-5 lg:col-span-2">
           <div className="h-52 overflow-hidden rounded-2xl bg-[#0d54b8] p-0 shadow-sm ring-1 ring-blue-900/10">
             <img
-              src="/images/quezon-memorial-circle.png"
-              alt="Quezon Memorial Circle"
-              className="h-full w-full object-cover"
+              src="/images/bus1.jpeg"
+              alt="QC Bus"
+              className="h-full w-full object-cover object-[center_70%]"
             />
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            {featureCards.map(({ title, subtitle, icon: Icon, href, tone }) => (
+              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div className="flex items-center gap-4">
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                    tone === 'amber' ? 'bg-yellow-100 text-yellow-700' :
+                    tone === 'green' ? 'bg-green-100 text-green-700' :
+                    tone === 'blue' ? 'bg-blue-100 text-blue-700' : 'bg-sky-100 text-sky-700'
+                  }`}>
+                    <Icon size={24} />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-navy">{title}</h3>
+                    <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="mb-4 text-lg font-bold text-navy">Quick Access</h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {quickAccess.map(({ title, subtitle, icon: Icon, href, tone }) => (
+                <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white">
+                  <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${
+                    tone === 'red' ? 'bg-red-500 text-white' :
+                    tone === 'blue' ? 'bg-blue-600 text-white' :
+                    'bg-[#0d54b8] text-white'
+                  }`}>
+                    <Icon size={28} />
+                  </div>
+                  <p className="text-base font-bold text-navy">{title}</p>
+                  <p className="mt-2 text-sm leading-5 text-slate-500">{subtitle}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <aside className="space-y-5">
           <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-slate-700">
@@ -83,46 +108,29 @@ export default function CommuterHome() {
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {featureCards.map(({ title, subtitle, icon: Icon, href, tone }) => (
-            <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className="flex items-center gap-4">
-                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
-                  tone === 'amber' ? 'bg-yellow-100 text-yellow-700' :
-                  tone === 'green' ? 'bg-green-100 text-green-700' :
-                  tone === 'blue' ? 'bg-blue-100 text-blue-700' : 'bg-sky-100 text-sky-700'
-                }`}>
-                  <Icon size={24} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-2xl font-bold text-navy">{title}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
-                </div>
+          <div className="rounded-2xl bg-brand p-5 text-white shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                <PhoneCall size={22} />
               </div>
-            </Link>
-          ))}
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="mb-4 text-xl font-bold text-navy">Quick Access</h3>
-          <div className="grid gap-4 md:grid-cols-3">
-            {quickAccess.map(({ title, subtitle, icon: Icon, href, tone }) => (
-              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white">
-                <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${
-                  tone === 'red' ? 'bg-red-500 text-white' :
-                  tone === 'blue' ? 'bg-blue-600 text-white' :
-                  'bg-[#0d54b8] text-white'
-                }`}>
-                  <Icon size={28} />
-                </div>
-                <p className="text-lg font-bold text-navy">{title}</p>
-                <p className="mt-2 text-sm leading-5 text-slate-500">{subtitle}</p>
-              </Link>
-            ))}
+              <div>
+                <h3 className="text-lg font-bold">QC LGU Hotline</h3>
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-blue-100">
+                  <Check size={14} className="text-green-300" />
+                  Police Dispatch Active
+                </p>
+              </div>
+            </div>
+            <a
+              href="tel:122"
+              className="mt-5 flex items-center justify-between rounded-xl bg-white px-4 py-3 text-brand transition hover:bg-blue-50"
+            >
+              <span className="text-sm font-semibold">Call hotline</span>
+              <span className="text-xl font-bold">122</span>
+            </a>
           </div>
-        </div>
+        </aside>
       </div>
     </>
   )

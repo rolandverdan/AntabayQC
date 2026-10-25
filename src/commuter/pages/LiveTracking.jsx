@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Search, MapPinned, BusFront, Navigation, LocateFixed, Clock3, AlertTriangle } from 'lucide-react'
+import { Search, MapPinned, BusFront, LocateFixed, Clock3, AlertTriangle } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { PageHeader } from '../../admin/components/Card.jsx'
 
 const routeCodeMap = {
   all: 'ALL ACTIVE BUSES',
@@ -38,13 +39,10 @@ export default function LiveTracking() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Commuter operations</p>
-          <h1 className="text-[clamp(2rem,2.6vw,3rem)] font-black uppercase tracking-tight text-navy">Live Tracking</h1>
-        </div>
-
-        <div className="flex w-full max-w-md items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+      <PageHeader
+        title="Live Tracking"
+        description="See active buses and service updates across QC Bus routes."
+        actions={<div className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:w-auto sm:min-w-72">
           <Search size={16} className="text-slate-500" />
           <input
             value={query}
@@ -52,8 +50,8 @@ export default function LiveTracking() {
             placeholder="Search route or stop..."
             className="w-full border-0 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
           />
-        </div>
-      </div>
+        </div>}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
@@ -124,38 +122,16 @@ export default function LiveTracking() {
             </div>
           </div>
 
-          <div className="rounded-b-[18px] bg-[#dfeaf4] p-4">
-            <div className="relative h-[540px] overflow-hidden rounded-[14px] border border-slate-300 bg-[#dfeaf4] shadow-inner">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.35),_rgba(255,255,255,0)_60%)]" />
-
-              <div className="absolute inset-0">
-                <div className="absolute left-0 top-0 h-full w-full opacity-50">
-                  <div className="absolute left-0 top-0 h-full w-[2px] bg-white/80" />
-                  <div className="absolute left-1/3 top-0 h-full w-[2px] bg-white/80" />
-                  <div className="absolute left-[60%] top-0 h-full w-[2px] bg-white/80" />
-                  <div className="absolute right-0 top-0 h-full w-[2px] bg-white/80" />
-
-                  <div className="absolute left-0 top-6 h-[2px] w-full bg-white/80" />
-                  <div className="absolute left-0 top-1/3 h-[2px] w-full bg-white/80" />
-                  <div className="absolute left-0 top-2/3 h-[2px] w-full bg-white/80" />
-                  <div className="absolute left-0 bottom-6 h-[2px] w-full bg-white/80" />
-                </div>
-
-                <div className="absolute left-[14%] top-[18%] h-24 w-24 rounded-full border-[2px] border-slate-200/80 bg-white/10" />
-                <div className="absolute left-[52%] top-[22%] h-28 w-28 rounded-full border-[2px] border-slate-200/80 bg-white/10" />
-                <div className="absolute left-[68%] top-[52%] h-24 w-24 rounded-full border-[2px] border-slate-200/80 bg-white/10" />
-              </div>
-
-              <div className="absolute left-8 top-8 flex items-center gap-2 rounded-full border border-slate-200 bg-white/60 px-3 py-1.5 text-xs font-semibold text-slate-700 backdrop-blur-sm">
-                <Navigation size={12} />
-                {activeBusCount} active buses
-              </div>
-
-              <div className="absolute right-8 top-8 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-700 shadow-sm">
-                <LocateFixed size={18} />
-              </div>
-
-              <div className="absolute bottom-8 right-8 h-16 w-16 rounded-full border-[7px] border-slate-100 bg-brand/90 shadow-[0_0_0_4px_rgba(255,255,255,0.6)]" />
+          <div className="rounded-b-[18px] bg-white p-4">
+            <div className="relative h-[540px] overflow-hidden rounded-[14px] bg-slate-200">
+              <button
+                type="button"
+                aria-label="Locate me"
+                title="Locate me"
+                className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50"
+              >
+                <LocateFixed size={20} />
+              </button>
             </div>
           </div>
         </div>

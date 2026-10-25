@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { MapPinned, Search } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { PageHeader } from '../../admin/components/Card.jsx'
 
 const buttonBase = 'rounded-xl px-3 py-2 text-sm font-semibold transition'
 
@@ -25,18 +26,14 @@ export default function BusRoutes() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-[clamp(1.6rem,2vw,2.5rem)] font-bold leading-tight text-navy">Standard City Operations Schedule</h1>
-            <p className="mt-1 text-sm text-slate-500">Daily • Weekdays &amp; Weekends<br />Holiday operations may vary.</p>
-          </div>
+      <PageHeader title="Bus Routes" description="Explore QC Bus routes, stops, and daily service hours." />
 
-          <div className="rounded-xl border border-slate-200 bg-slate-100/80 px-5 py-4 text-center shadow-inner">
-            <p className="text-[2rem] font-bold leading-none text-navy">6:00 AM – 9:00 PM</p>
-            <p className="mt-2 text-base text-slate-600">Monday – Sunday</p>
-            <p className="text-sm text-slate-500">Except on holidays</p>
-          </div>
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-slate-500">Daily service · Weekdays &amp; weekends · Holiday operations may vary.</p>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center sm:min-w-[250px]">
+          <p className="text-xl font-bold leading-tight text-navy sm:text-2xl">6:00 AM – 9:00 PM</p>
+          <p className="mt-1.5 text-sm font-medium text-slate-600">Monday – Sunday</p>
+          <p className="text-xs text-slate-500">Except on holidays</p>
         </div>
       </div>
 
@@ -148,19 +145,19 @@ export default function BusRoutes() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Active Buses</p>
-              <p className="mt-2 text-3xl font-bold text-navy">8</p>
+              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">8</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Frequency</p>
-              <p className="mt-2 text-3xl font-bold text-navy">15–20</p>
-              <p className="text-sm text-slate-500">minutes</p>
+              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">15–20</p>
+              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Trip Duration</p>
-              <p className="mt-2 text-3xl font-bold text-navy">30–45</p>
-              <p className="text-sm text-slate-500">minutes</p>
+              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">30–45</p>
+              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
             </div>
           </div>
         </div>

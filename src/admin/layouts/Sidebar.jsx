@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Bus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { NAV_ITEMS, LOGOUT_ITEM } from './navItems.js'
 
 // `expanded` is false only on desktop when the sidebar is collapsed and not hovered/focused.
@@ -12,7 +12,6 @@ export default function Sidebar({
   onHoverChange,
   items = NAV_ITEMS,
   commuterMode = false,
-  commuterTitle = 'ANTABAY QC',
   commuterMeta = 'Commuter Console',
 }) {
   const LogoutIcon = LOGOUT_ITEM.icon
@@ -46,13 +45,17 @@ export default function Sidebar({
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-[18px]">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand">
-            <Bus size={22} />
-          </div>
-          <div className={`min-w-0 leading-tight ${labelCls}`}>
-            <p className="truncate text-sm font-bold tracking-wide">{commuterMode ? commuterTitle : 'ANTABAY QC'}</p>
-            <p className="truncate text-[11px] text-blue-200">{commuterMode ? commuterMeta : 'Admin Console'}</p>
-          </div>
+          <img
+            src="/images/Antabay QC Logo.png"
+            alt="Antabay QC"
+            className="h-14 w-auto max-w-[44px] shrink-0 object-contain"
+          />
+          {!commuterMode && (
+            <div className={`min-w-0 leading-tight ${labelCls}`}>
+              <p className="truncate text-sm font-bold tracking-wide">ANTABAY QC</p>
+              <p className="truncate text-[11px] text-blue-200">Admin Console</p>
+            </div>
+          )}
           <button type="button" onClick={onCloseMobile} aria-label="Close menu" className="ml-auto rounded-md p-1 hover:bg-white/10 lg:hidden">
             <X size={18} />
           </button>

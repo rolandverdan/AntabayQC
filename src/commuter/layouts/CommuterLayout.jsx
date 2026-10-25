@@ -20,11 +20,13 @@ export default function CommuterLayout() {
   const activeBuses = buses.filter((b) => b.status === 'Active').length
   const activeRoutes = routes.filter((r) => r.status === 'Active').length
 
-  const title = NAV_ITEMS.find((item) => pathname.startsWith(item.to))?.label || 'Home'
+  const title = NAV_ITEMS.find((item) => pathname === item.to)?.label
+    || NAV_ITEMS.find((item) => pathname.startsWith(item.to))?.label
+    || 'Home'
   const handleLogout = () => navigate('/', { replace: true })
 
   return (
-    <div className="min-h-screen bg-[#eef3f7]" data-density={settings.density}>
+    <div className="commuter-layout min-h-screen bg-[#eef3f7]" data-density={settings.density}>
       <Sidebar
         expanded={expanded}
         onHoverChange={setHovered}
@@ -32,8 +34,6 @@ export default function CommuterLayout() {
         onCloseMobile={() => setMobileOpen(false)}
         onLogout={handleLogout}
         commuterMode
-        commuterTitle="(QC BUS LOGO)"
-        commuterMeta=""
         items={NAV_ITEMS}
       />
 

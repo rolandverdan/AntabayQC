@@ -1,8 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, Siren, FileText } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, Siren, FileText, UserRound } from 'lucide-react'
 import { NAV_ITEMS } from './navItems.js'
 import { useAdminData } from '../context/AdminDataContext.jsx'
+
+const COMMUTER_SETTINGS_KEY = 'antabayqc_commuter_settings'
+const COMMUTER_SETTINGS_EVENT = 'antabayqc:commuter-settings-updated'
+const DEFAULT_COMMUTER_PROFILE = { name: 'Commuter', email: '' }
+
+function readCommuterProfile() {
+  try {
+    const stored = localStorage.getItem(COMMUTER_SETTINGS_KEY)
+    const profile = stored ? JSON.parse(stored).profile : null
+    return { ...DEFAULT_COMMUTER_PROFILE, ...profile }
+  } catch {
+    return DEFAULT_COMMUTER_PROFILE
+  }
+}
 
 export default function Header({
   collapsed,
@@ -16,6 +30,23 @@ export default function Header({
   const { settings, emergencies, reports } = useAdminData()
   const { pathname } = useLocation()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
+  const [commuterProfile, setCommuterProfile] = useState(readCommuterProfile)
+
+  useEffect(() => {
+    const syncProfile = (event) => {
+      setCommuterProfile(event.detail?.profile || readCommuterProfile())
+    }
+    const syncStoredProfile = (event) => {
+      if (event.key === COMMUTER_SETTINGS_KEY) setCommuterProfile(readCommuterProfile())
+    }
+
+    window.addEventListener(COMMUTER_SETTINGS_EVENT, syncProfile)
+    window.addEventListener('storage', syncStoredProfile)
+    return () => {
+      window.removeEventListener(COMMUTER_SETTINGS_EVENT, syncProfile)
+      window.removeEventListener('storage', syncStoredProfile)
+    }
+  }, [])
 
   const defaultTitle = NAV_ITEMS.find((n) => pathname.startsWith(n.to))?.label || 'Admin'
   const headerTitle = title || defaultTitle
@@ -25,6 +56,7 @@ export default function Header({
     ? (settings.notifications.emergency ? activeEmergencies : 0) + (settings.notifications.reports ? pendingReports : 0)
     : 0
   const initials = settings.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  const commuterInitials = commuterProfile.name.trim().split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || 'C'
   const close = () => setMenu(null)
 
   return (
@@ -66,6 +98,41 @@ export default function Header({
                 </Link>
                 {!settings.notifications.emergency && !settings.notifications.reports && (
                   <p className="px-2 py-1 text-xs text-slate-500">Alert badges are turned off in Settings.</p>
+                )}
+              </div>
+            )}
+
+            {commuterMode && (
+              <div className="relative z-20">
+                <button
+                  type="button"
+                  onClick={() => setMenu(menu === 'profile' ? null : 'profile')}
+                  className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  aria-label="Commuter profile menu"
+                  aria-expanded={menu === 'profile'}
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">
+                    {commuterInitials}
+                  </span>
+                  <span className="hidden max-w-36 text-left text-xs leading-tight sm:block">
+                    <span className="block truncate font-semibold">{commuterProfile.name}</span>
+                    <span className="block text-[10px] text-cyan-100">Commuter profile</span>
+                  </span>
+                  <ChevronDown size={14} />
+                </button>
+                {menu === 'profile' && (
+                  <div className="absolute right-0 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
+                    <div className="border-b border-slate-100 px-2 pb-2">
+                      <p className="truncate font-semibold text-navy">{commuterProfile.name}</p>
+                      <p className="truncate text-xs text-slate-500">{commuterProfile.email || 'Demo commuter profile'}</p>
+                    </div>
+                    <Link to="/commuter/settings" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-slate-50">
+                      <UserRound size={16} /> Profile &amp; Settings
+                    </Link>
+                    <button type="button" onClick={() => { close(); onLogout() }} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-red-600 transition hover:bg-red-50">
+                      <LogOut size={16} /> Exit commuter view
+                    </button>
+                  </div>
                 )}
               </div>
             )}

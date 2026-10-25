@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { PageHeader } from '../../admin/components/Card.jsx'
 
 const ROUTE_TIMETABLE = {
   'R-01': {
@@ -119,19 +120,10 @@ export default function Timetable() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-[clamp(1.6rem,2vw,2.5rem)] font-bold leading-tight text-navy">Standard City Operations Schedule</h1>
-            <p className="mt-1 text-sm text-slate-500">Daily • Weekdays &amp; Weekends<br />Holiday operations may vary.</p>
-          </div>
+      <PageHeader title="Timetable" description="Review service hours and departure times by route and day." />
 
-          <div className="rounded-xl border border-slate-200 bg-slate-100/80 px-5 py-4 text-center shadow-inner">
-            <p className="text-[2rem] font-bold leading-none text-navy">6:00 AM – 9:00 PM</p>
-            <p className="mt-2 text-base text-slate-600">Monday – Sunday</p>
-            <p className="text-sm text-slate-500">Except on holidays</p>
-          </div>
-        </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm">
+        Daily service · Weekdays &amp; weekends · Holiday operations may vary.
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">

@@ -1,210 +1,203 @@
-import { Link, useLocation } from 'react-router-dom'
-import { CheckCircle2, CircleAlert, Clock3, FileText, Hash, MapPin, Search, ShieldCheck, Ticket, BellRing, Phone } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { PageHeader } from '../../admin/components/Card.jsx'
+import {
+  BadgeCheck,
+  BusFront,
+  CheckCircle2,
+  CirclePlus,
+  Clock3,
+  ArrowDownWideNarrow,
+  Search,
+  ShieldCheck,
+  Store,
+} from 'lucide-react'
 
 const stats = [
-  { label: 'Total reports', value: '4', tone: 'default' },
-  { label: 'Passed / matched', value: '1', tone: 'green' },
-  { label: 'In depot transit', value: '1', tone: 'blue' },
-  { label: 'Pending', value: '1', tone: 'amber' },
-  { label: 'Claimed', value: '1', tone: 'gray' },
+  { label: 'Total reports', value: 4, detail: 'All logged records' },
+  { label: 'Ready for claim', value: 1, detail: 'Pass issued · Matched' },
+  { label: 'In depot transit', value: 1, detail: 'Found by bus crew' },
+  { label: 'Pending', value: 1, detail: 'Inventory loop checking' },
+  { label: 'Claimed', value: 1, detail: 'Archived releases' },
 ]
 
-const claims = [
-  { title: 'Backpack', status: 'Pending', route: 'R-01', bus: 'Bus #1234', date: 'Oct 8, 2026', badge: 'red' },
-  { title: 'Wallet & QC Resident Card', status: 'Ready for pickup', route: 'R-01', bus: 'Bus #1234', date: 'Filed Sep 30, 2026', badge: 'green' },
+const reports = [
+  {
+    id: 'QC-LR-2026-0891',
+    title: 'Wallet & QC Resident Card',
+    status: 'Ready',
+    filed: 'Sep 30, 2026',
+    description: 'Brown leather bifold wallet with stamped initials “JDC”. Confirmed contents: Quezon City Citizen Q-ID, personalized Blue Beacon Bee Card, and minor cash envelope.',
+    route: 'Route 1 (QC Hall ↔ Cubao)',
+    bus: 'Bus #1042',
+    priority: true,
+  },
+  {
+    id: 'QC-LR-2026-1008',
+    title: 'Backpack',
+    status: 'In Review',
+    filed: 'Oct 8, 2026',
+    description: 'Navy backpack reported missing after a trip on Route 1.',
+    route: 'Route 1 (QC Hall ↔ Cubao)',
+    bus: 'Bus #1234',
+    priority: false,
+  },
 ]
+
+const filters = ['All', 'Ready', 'In Review', 'Claimed']
 
 export default function LostItemReports() {
-  const { pathname } = useLocation()
-  const isFormActive = pathname === '/commuter/lost-item'
-  const isReportsActive = pathname === '/commuter/lost-item-reports'
+  const [query, setQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [newestFirst, setNewestFirst] = useState(true)
+
+  const filteredReports = useMemo(() => {
+    const search = query.trim().toLowerCase()
+
+    return reports.filter((report) => {
+      const matchesFilter = activeFilter === 'All' || report.status === activeFilter
+      const matchesSearch = !search || `${report.id} ${report.title} ${report.route} ${report.bus}`.toLowerCase().includes(search)
+      return matchesFilter && matchesSearch
+    }).sort((first, second) => {
+      const dateDifference = new Date(second.filed).getTime() - new Date(first.filed).getTime()
+      return newestFirst ? dateDifference : -dateDifference
+    })
+  }, [activeFilter, newestFirst, query])
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-        <div>
-          <h1 className="text-[clamp(2rem,2.3vw,2.8rem)] font-black uppercase tracking-tight text-navy">Lost Item</h1>
-          <p className="mt-1 text-sm text-slate-500">File automated inquiries, track real-time depot verification, and claim recovered personal items.</p>
-        </div>
-
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
-            <ShieldCheck size={16} />
+      <PageHeader
+        title="Lost Item Report"
+        description="Review report progress and manage recovered-item claims."
+        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+            <Store size={16} />
           </div>
-          <div>
-            <div className="font-bold text-slate-800">QC Central Terminal Depot</div>
-            <div className="text-xs text-slate-500">Open Now • 08:00 – 17:00 PHT</div>
+          <div className="text-sm text-slate-600">
+            <p className="font-bold text-slate-800">QC Central Terminal Depot</p>
+            <p className="text-xs text-slate-500">Open Now · 08:00 – 17:00 PHT</p>
           </div>
-        </div>
-      </div>
+        </div>}
+      />
 
-      <div className="border-b border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link to="/commuter/lost-item" className={`rounded-xl px-4 py-2 text-sm shadow-sm transition ${isFormActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
+      <nav className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm" aria-label="Lost item pages">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to="/commuter/lost-item" className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
             Report Lost Item
           </Link>
-          <Link to="/commuter/lost-item-reports" className={`rounded-xl px-4 py-2 text-sm shadow-sm transition ${isReportsActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
+          <Link to="/commuter/lost-item-reports" aria-current="page" className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm ring-2 ring-brand/20 transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
             Check My Reports / Claims
           </Link>
         </div>
-      </div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+          <ShieldCheck size={15} className="text-sky-500" />
+          Official QC Bus Commuter Protection Program
+        </div>
+      </nav>
 
-      <div className="grid gap-5 xl:grid-cols-[1.5fr_0.75fr]">
-        <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
-              <FileText size={18} />
-            </div>
-            <div>
-              <p className="text-xl font-black text-navy">Tell us about your lost item</p>
-              <p className="text-sm text-slate-500">Provide specific identifiers so fleet conductors and depot managers can locate your item faster.</p>
-            </div>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" aria-label="Lost item report summary">
+        {stats.map(({ label, value, detail }) => (
+          <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+            <p className="mt-2 text-3xl font-black text-navy">{value}</p>
+            <p className="text-xs font-medium text-slate-500">{detail}</p>
           </div>
+        ))}
+      </section>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Item Category</label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option>Transit Line / Route</option>
-              </select>
-            </div>
+      <section className="flex flex-col gap-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
+        <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <Search size={15} className="shrink-0 text-slate-500" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by Case ID, item brand, route..."
+            className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+          />
+        </label>
 
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Select Bus Route</label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option>Select Bus Route...</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="e.g., Bus #1234 or plate letters" />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Optional</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="" />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Date &amp; Travel Time Window</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" value="10/05/2026" readOnly />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Time</label>
-              <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" value="10:00 — 11:00 am" readOnly />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <input className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" placeholder="Select where you might have left it..." />
-              <MapPin size={16} className="text-slate-400" />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Comprehensive Item Description</label>
-            <textarea rows={4} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="e.g. Navy blue Herschel Settlement backpack with brown faux-leather bottom. Inside has a silver laptop sleeve, a yellow spiral notebook, and QC University ID under name 'Juan Dela Cruz'." />
-          </div>
-
-          <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Reference Photo or Proof of Ownership</label>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">Reference Photo or Proof of Ownership</div>
-          </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Contact Phone (for SMS Claim Code)</label>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-                <span className="text-sm font-semibold text-slate-700">+63</span>
-                <input className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" placeholder="" />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Transit Line / Route</label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option>Select Bus Route...</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-3">
-            <button className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">Clear Form</button>
-            <button className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm">Submit Lost Item Report</button>
-          </div>
+        <div className="flex flex-wrap gap-2" aria-label="Filter reports">
+          {filters.map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => setActiveFilter(filter)}
+              aria-pressed={activeFilter === filter}
+              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 active:translate-y-0 ${
+                activeFilter === filter
+                  ? 'bg-brand text-white shadow-sm hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md'
+                  : 'border border-slate-200 bg-slate-50 text-slate-600 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
 
-        <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-lg font-black text-navy">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                  <ShieldCheck size={16} />
-                </div>
-                Official QC Bus Commuter Protection Program
-              </div>
-            </div>
+        <button
+          type="button"
+          onClick={() => setNewestFirst((current) => !current)}
+          aria-label={`Sort by date, currently ${newestFirst ? 'newest first' : 'oldest first'}`}
+          className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 active:translate-y-0"
+        >
+          <ArrowDownWideNarrow size={14} />
+          Date: {newestFirst ? 'Newest First' : 'Oldest First'}
+        </button>
+      </section>
 
-            <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 font-bold text-navy">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white text-[10px]">R</div>
-                  <span>My Recent Inquiries</span>
+      <div className="grid items-start gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="space-y-4" aria-label="Lost item reports">
+          {filteredReports.length ? filteredReports.map((report) => (
+            <article key={report.id} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-500">
+                  {report.priority && <span className="font-bold text-slate-700">Priority Resolution</span>}
+                  <span>•</span>
+                  <span>Filed {report.filed}</span>
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Oct 2026</span>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${
+                  report.status === 'Ready' ? 'bg-green-100 text-green-700' :
+                  report.status === 'Claimed' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {report.status === 'Ready' ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
+                  {report.status === 'Ready' ? 'Ready for Pickup' : report.status}
+                </span>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-red-500 text-xs font-bold text-white">R</span>
-                    <span className="text-sm font-bold text-navy">Backpack</span>
-                  </div>
-                  <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-red-600">Pending</span>
+              <h2 className="mt-3 text-lg font-bold text-navy">{report.title}</h2>
+              <p className="mt-1 text-xs text-slate-500">Case Ref: <span className="font-semibold text-slate-700">{report.id}</span></p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{report.description}</p>
+
+              <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <span className="rounded-md bg-rose-600 px-2 py-1 text-[10px] font-black text-white">R-01</span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-700">Lost Route &amp; Unit</p>
+                  <p className="truncate text-sm text-slate-600">{report.route} · {report.bus}</p>
                 </div>
-                <div className="mt-2 text-xs text-slate-500">Bus #1234 • Oct 8, 2026</div>
-                <div className="mt-2 text-xs text-slate-500">Found by Conductor #C-109</div>
-                <button className="mt-3 text-xs font-semibold text-brand">View details</button>
+                {report.status === 'Ready' && <BadgeCheck size={17} className="ml-auto shrink-0 text-green-600" />}
               </div>
+            </article>
+          )) : (
+            <div className="rounded-[18px] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+              No lost-item reports match your search.
+            </div>
+          )}
+        </section>
+
+        <aside className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+              <CirclePlus size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-navy">Have another lost item?</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Every city bus is checked after each completed loop. File early to notify conductors immediately.</p>
             </div>
           </div>
-
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center gap-3 text-lg font-black text-navy">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand">
-                <CircleAlert size={18} />
-              </div>
-              How QC Recovery Works
-            </div>
-
-            <div className="space-y-4">
-              {[
-                'Digital intake: Your submission immediately broadcasts to terminal dispatchers and drivers on that specific line.',
-                'Depot boarding: Conductors deposit lost items at the QC City Hall Depot and log the item into the transit system.',
-                'Secure match & pickup: Upon positive match, present your QC Citizen ID or valid government ID with your digital SMS claim token.',
-              ].map((text, idx) => (
-                <div key={text} className="flex gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">{idx + 1}</div>
-                  <p className="text-sm leading-6 text-slate-600">{text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[18px] border border-slate-200 bg-brand px-4 py-3 text-white shadow-sm">
-            <div className="mb-2 flex items-center gap-2 text-base font-black">
-              <Phone size={18} />
-              Direct Transit Police &amp; Hotline
-            </div>
-            <div className="text-lg font-bold">(02) 8888-4242 loc. 8112</div>
-            <div className="mt-1 text-sm text-blue-100">QC Hotline 122</div>
-          </div>
+          <Link to="/commuter/lost-item" className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
+            <BusFront size={14} />
+            File New Lost Report
+          </Link>
         </aside>
       </div>
     </div>

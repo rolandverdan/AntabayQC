@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Bell,
@@ -9,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
+import { useToast } from '../../admin/context/ToastContext.jsx'
 
 const notificationList = [
   {
@@ -61,7 +63,41 @@ const summaryStats = [
 
 const filters = ['All', 'Unread', 'Service', 'Safety']
 
+const initialPreferences = {
+  'Service disruptions': true,
+  'Safety alerts': true,
+  'Route updates': true,
+  'Report follow-ups': false,
+}
+
 export default function Notification() {
+  const { notify } = useToast()
+  const [notifications, setNotifications] = useState(notificationList)
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [preferences, setPreferences] = useState(initialPreferences)
+  const unreadCount = notifications.filter((notification) => notification.unread).length
+  const activeAlertCount = notifications.filter((notification) => notification.tone === 'amber' || notification.category === 'Safety alert').length
+  const filteredNotifications = useMemo(() => notifications.filter((notification) => {
+    if (activeFilter === 'Unread') return notification.unread
+    if (activeFilter === 'Service') return notification.category === 'Service update' || notification.category === 'Travel update'
+    if (activeFilter === 'Safety') return notification.category === 'Safety alert'
+    return true
+  }), [activeFilter, notifications])
+
+  const markNotificationRead = (id) => {
+    setNotifications((items) => items.map((item) => (item.id === id ? { ...item, unread: false } : item)))
+  }
+
+  const markAllRead = () => {
+    if (!unreadCount) return
+    setNotifications((items) => items.map((item) => ({ ...item, unread: false })))
+    notify('All notifications marked as read.', 'success')
+  }
+
+  const togglePreference = (preference) => {
+    setPreferences((current) => ({ ...current, [preference]: !current[preference] }))
+  }
+
   return (
     <>
       <PageHeader
@@ -75,7 +111,9 @@ export default function Notification() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-                <p className="mt-2 text-3xl font-black text-navy">{value}</p>
+                <p className="mt-2 text-3xl font-black text-navy">
+                  {label === 'Unread' ? unreadCount : label === 'Active alerts' ? activeAlertCount : value}
+                </p>
               </div>
               <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
                 tone === 'blue' ? 'bg-brand/10 text-brand' :
@@ -102,25 +140,37 @@ export default function Notification() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {filters.map((filter, index) => (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap gap-2" aria-label="Filter notifications">
+              {filters.map((filter) => (
                 <button
                   key={filter}
                   type="button"
-                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                    index === 0
+                  onClick={() => setActiveFilter(filter)}
+                  aria-pressed={activeFilter === filter}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 ${
+                    activeFilter === filter
                       ? 'bg-brand text-white shadow-sm'
-                      : 'border border-slate-200 bg-slate-50 text-slate-600 hover:border-brand/30 hover:text-brand'
+                      : 'border border-slate-200 bg-slate-50 text-slate-600 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm'
                   }`}
                 >
                   {filter}
                 </button>
               ))}
+              </div>
+              <button
+                type="button"
+                onClick={markAllRead}
+                disabled={!unreadCount}
+                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-brand transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+              >
+                Mark all as read
+              </button>
             </div>
           </div>
 
           <div className="divide-y divide-slate-100">
-            {notificationList.map(({ id, category, title, detail, time, icon: Icon, tone, unread }) => (
+            {filteredNotifications.length ? filteredNotifications.map(({ id, category, title, detail, time, icon: Icon, tone, unread }) => (
               <div
                 key={id}
                 className={`flex gap-4 p-4 transition ${unread ? 'bg-slate-50/70' : 'bg-white'}`}
@@ -151,13 +201,20 @@ export default function Notification() {
                       <h3 className="text-base font-bold text-navy">{title}</h3>
                       <p className="mt-1 text-sm leading-6 text-slate-600">{detail}</p>
                     </div>
-                    <button type="button" className="mt-1 hidden rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-brand lg:inline-flex">
-                      <ChevronRight size={16} />
+                    <button
+                      type="button"
+                      onClick={() => markNotificationRead(id)}
+                      aria-label={unread ? `Mark ${title} as read` : `${title} is read`}
+                      title={unread ? 'Mark as read' : 'Read'}
+                      disabled={!unread}
+                      className="mt-1 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-default disabled:text-green-600 disabled:hover:bg-transparent"
+                    >
+                      {unread ? <ChevronRight size={16} /> : <CheckCircle2 size={16} />}
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+            )) : <p className="p-8 text-center text-sm text-slate-500">No notifications match this filter.</p>}
           </div>
         </section>
 
@@ -171,13 +228,14 @@ export default function Notification() {
             </div>
 
             <div className="space-y-3">
-              {['Service disruptions', 'Safety alerts', 'Route updates', 'Report follow-ups'].map((item, idx) => (
-                <label key={item} className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+              {Object.entries(preferences).map(([item, enabled]) => (
+                <label key={item} className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 transition-colors hover:border-brand/30 hover:bg-white">
                   <span>{item}</span>
-                  <input type="checkbox" defaultChecked={idx < 3} className="h-4 w-4 accent-brand" />
+                  <input type="checkbox" checked={enabled} onChange={() => togglePreference(item)} className="h-4 w-4 accent-brand" />
                 </label>
               ))}
             </div>
+            <p className="mt-3 text-xs text-slate-500">Preferences are saved for this page session only.</p>
           </div>
 
           <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">

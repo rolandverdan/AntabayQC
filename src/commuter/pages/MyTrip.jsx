@@ -1,13 +1,19 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  ArrowDown,
   Clock3,
   MapPin,
   Route as RouteIcon,
   ShieldCheck,
   Star,
   Ticket,
+  X,
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
+import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { useToast } from '../../admin/context/ToastContext.jsx'
 
 const upcomingTrips = [
   {
@@ -35,6 +41,40 @@ const tripHistory = [
 ]
 
 export default function MyTrip() {
+  const { routes, stopsById } = useAdminData()
+  const { notify } = useToast()
+  const [savedTrips, setSavedTrips] = useState(upcomingTrips)
+  const [showTripDetails, setShowTripDetails] = useState(false)
+  const [showAddTrip, setShowAddTrip] = useState(false)
+  const [selectedRouteId, setSelectedRouteId] = useState('')
+  const [expandedHistory, setExpandedHistory] = useState('')
+
+  const addSavedTrip = (event) => {
+    event.preventDefault()
+    const route = routes.find((item) => item.id === selectedRouteId)
+    if (!route) {
+      notify('Choose a route before saving it.', 'error')
+      return
+    }
+    if (savedTrips.some((trip) => trip.route.startsWith(`${route.id} `))) {
+      notify(`${route.id} is already in your saved trips.`, 'info')
+      return
+    }
+
+    const routeStops = route.stopIds.map((id) => stopsById[id]).filter(Boolean)
+    setSavedTrips((items) => [...items, {
+      route: `${route.id} ${route.name}`,
+      time: 'Schedule not set',
+      from: routeStops[0]?.name || 'Route origin',
+      to: routeStops[routeStops.length - 1]?.name || 'Route destination',
+      status: 'Saved route',
+      tone: 'blue',
+    }])
+    setShowAddTrip(false)
+    setSelectedRouteId('')
+    notify('Route added to saved trips for this session.', 'success')
+  }
+
   return (
     <>
       <PageHeader
@@ -55,8 +95,13 @@ export default function MyTrip() {
                   <p className="text-sm text-slate-500">Your next scheduled ride</p>
                 </div>
               </div>
-              <button type="button" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
-                View details
+              <button
+                type="button"
+                onClick={() => setShowTripDetails((current) => !current)}
+                aria-expanded={showTripDetails}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
+              >
+                {showTripDetails ? 'Hide details' : 'View details'}
               </button>
             </div>
 
@@ -83,7 +128,7 @@ export default function MyTrip() {
                 </div>
 
                 <div className="flex items-center justify-center text-slate-400">
-                  <ArrowRight size={18} />
+                  <ArrowDown size={18} />
                 </div>
 
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
@@ -101,6 +146,13 @@ export default function MyTrip() {
                 <span className="inline-flex items-center gap-2"><Clock3 size={15} /> Today · 7:40 AM</span>
                 <span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-green-700" /> Safety check passed</span>
               </div>
+              {showTripDetails && (
+                <div className="mt-3 rounded-xl border border-brand/15 bg-white p-3 text-sm text-slate-600">
+                  <p className="font-semibold text-navy">Trip details</p>
+                  <p className="mt-1">Route R-02 · Quezon City Hall to Commonwealth Avenue.</p>
+                  <p className="mt-1 text-xs text-slate-500">Schedule and bus status are sample information for this front-end demo.</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -110,23 +162,67 @@ export default function MyTrip() {
                 <h2 className="text-xl font-black text-navy">Saved trips</h2>
                 <p className="text-sm text-slate-500">Your frequent route patterns</p>
               </div>
-              <button type="button" className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white">
-                Add trip
+              <button
+                type="button"
+                onClick={() => setShowAddTrip((current) => !current)}
+                aria-expanded={showAddTrip}
+                className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+              >
+                {showAddTrip ? 'Cancel' : 'Add trip'}
               </button>
             </div>
 
+            {showAddTrip && (
+              <form onSubmit={addSavedTrip} className="mb-4 flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row">
+                <label htmlFor="saved-route" className="sr-only">Choose a route to save</label>
+                <select
+                  id="saved-route"
+                  required
+                  value={selectedRouteId}
+                  onChange={(event) => setSelectedRouteId(event.target.value)}
+                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-brand"
+                >
+                  <option value="">Select a route...</option>
+                  {routes.filter((route) => route.status === 'Active').map((route) => (
+                    <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
+                  ))}
+                </select>
+                <button type="submit" className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
+                  Save route
+                </button>
+                <button type="button" onClick={() => setShowAddTrip(false)} aria-label="Close add trip form" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                  <X size={16} />
+                </button>
+              </form>
+            )}
+
             <div className="space-y-3">
-              {upcomingTrips.map((trip) => (
-                <div key={trip.route} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              {savedTrips.map((trip) => (
+                <div key={trip.route} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-brand/25">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold text-navy">{trip.route}</p>
                       <p className="mt-1 text-xs text-slate-500">{trip.time}</p>
                     </div>
-                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
-                      trip.tone === 'green' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {trip.status}
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                        trip.tone === 'green' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {trip.status}
+                      </span>
+                      {trip.status === 'Saved route' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSavedTrips((items) => items.filter((item) => item.route !== trip.route))
+                            notify('Saved route removed for this session.', 'info')
+                          }}
+                          aria-label={`Remove ${trip.route} from saved trips`}
+                          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                        >
+                          <X size={15} />
+                        </button>
+                      )}
                     </span>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-600">
@@ -153,19 +249,31 @@ export default function MyTrip() {
 
             <div className="space-y-3">
               {tripHistory.map((trip) => (
-                <div key={`${trip.route}-${trip.date}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-navy">{trip.route}</p>
-                      <p className="mt-1 text-xs text-slate-500">{trip.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-brand">{trip.fare}</p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-600">
-                        <Star size={12} fill="currentColor" /> {trip.rating}
-                      </p>
-                    </div>
-                  </div>
+                <div key={`${trip.route}-${trip.date}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:border-brand/25">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedHistory((current) => current === trip.route ? '' : trip.route)}
+                    aria-expanded={expandedHistory === trip.route}
+                    className="w-full rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  >
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-navy">{trip.route}</span>
+                        <span className="mt-1 block text-xs text-slate-500">{trip.date}</span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="block text-sm font-bold text-brand">{trip.fare}</span>
+                        <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-600">
+                          <Star size={12} fill="currentColor" /> {trip.rating}
+                        </span>
+                      </span>
+                    </span>
+                  </button>
+                  {expandedHistory === trip.route && (
+                    <p className="mt-3 border-t border-slate-200 pt-2 text-xs leading-5 text-slate-500">
+                      Sample trip · Fare and rating are demo details. You can share feedback from the Feedback page.
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -175,18 +283,18 @@ export default function MyTrip() {
             <h3 className="mb-3 text-lg font-black text-navy">Quick actions</h3>
             <div className="space-y-3">
               {[
-                'View live tracking',
-                'Plan another route',
-                'Check timetable',
-              ].map((action) => (
-                <button
+                { action: 'View live tracking', to: '/commuter/live-tracking' },
+                { action: 'Plan another route', to: '/commuter/route-and-schedule' },
+                { action: 'Check timetable', to: '/commuter/timetable' },
+              ].map(({ action, to }) => (
+                <Link
                   key={action}
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-brand/30 hover:text-brand"
+                  to={to}
+                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                 >
                   <span>{action}</span>
                   <ArrowRight size={14} />
-                </button>
+                </Link>
               ))}
             </div>
           </div>
