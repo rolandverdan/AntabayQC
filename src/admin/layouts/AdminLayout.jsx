@@ -28,7 +28,7 @@ export default function AdminLayout() {
     setConfirmLogout(false)
     logout()
     notify('You have been logged out.', 'info')
-    navigate('/admin/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   return (
@@ -54,7 +54,7 @@ export default function AdminLayout() {
       <ConfirmDialog
         open={confirmLogout}
         title="Log out?"
-        message="You will be returned to the login page and will need to sign in again to access the admin pages."
+        message="You will be returned to the ANTABAY QC home page and will need to sign in again to access the admin pages."
         confirmLabel="Log out"
         tone="primary"
         onConfirm={doLogout}

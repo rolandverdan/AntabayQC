@@ -123,7 +123,7 @@ export default function LiveTracking() {
           </div>
 
           <div className="rounded-b-[18px] bg-white p-4">
-            <div className="relative h-[540px] overflow-hidden rounded-[14px] bg-slate-200">
+            <div className="relative h-[60dvh] min-h-[320px] md:h-[540px] overflow-hidden rounded-[14px] bg-slate-200">
               <button
                 type="button"
                 aria-label="Locate me"

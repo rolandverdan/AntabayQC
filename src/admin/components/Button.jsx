@@ -11,7 +11,7 @@ export default function Button({ variant = 'primary', size = 'md', icon: Icon, c
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${sz} ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 [@media(pointer:coarse)]:min-h-[44px] ${sz} ${VARIANTS[variant]} ${className}`}
       {...rest}
     >
       {Icon && <Icon size={size === 'sm' ? 14 : 16} />}

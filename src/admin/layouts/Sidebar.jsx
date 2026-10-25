@@ -13,6 +13,8 @@ export default function Sidebar({
   items = NAV_ITEMS,
   commuterMode = false,
   commuterMeta = 'Commuter Console',
+  roleLabel = 'Admin Console',
+  navLabel,
 }) {
   const LogoutIcon = LOGOUT_ITEM.icon
   const labelCls = `truncate whitespace-nowrap transition-opacity duration-200 ${expanded ? '' : 'lg:pointer-events-none lg:opacity-0'}`
@@ -53,7 +55,7 @@ export default function Sidebar({
           {!commuterMode && (
             <div className={`min-w-0 leading-tight ${labelCls}`}>
               <p className="truncate text-sm font-bold tracking-wide">ANTABAY QC</p>
-              <p className="truncate text-[11px] text-blue-200">Admin Console</p>
+              <p className="truncate text-[11px] text-blue-200">{roleLabel}</p>
             </div>
           )}
           <button type="button" onClick={onCloseMobile} aria-label="Close menu" className="ml-auto rounded-md p-1 hover:bg-white/10 lg:hidden">
@@ -61,7 +63,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label={commuterMode ? 'Commuter navigation' : 'Admin navigation'}>
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label={navLabel || (commuterMode ? 'Commuter navigation' : 'Admin navigation')}>
           {items.map(renderLink)}
         </nav>
 

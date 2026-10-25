@@ -52,3 +52,24 @@ body {
   100% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
 }
 .pulse-red { animation: pulse-ring 1.6s infinite; }
+
+/* ---------- Unified app additions ---------- */
+
+/* Mobile roles (Conductor / Commuter / auth pages): stop iOS zooming on focus and keep comfortable touch targets. */
+.mobile-ui { -webkit-tap-highlight-color: transparent; }
+@media (max-width: 767px) {
+  .mobile-ui input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  .mobile-ui select,
+  .mobile-ui textarea { font-size: 16px; }
+}
+
+/* Safe-area helpers for notched phones. */
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Never let the page scroll sideways on phones. */
+html, body { overflow-x: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

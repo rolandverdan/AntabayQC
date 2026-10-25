@@ -4,11 +4,13 @@ import Sidebar from '../../admin/layouts/Sidebar.jsx'
 import Header from '../../admin/layouts/Header.jsx'
 import { NAV_ITEMS } from './navItems.js'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { useCommuter } from '../context/CommuterContext.jsx'
 
 export default function CommuterLayout() {
   const { settings, buses, routes } = useAdminData()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const { leave } = useCommuter()
 
   const [collapsed, setCollapsed] = useState(true)
   const [hovered, setHovered] = useState(false)
@@ -23,7 +25,10 @@ export default function CommuterLayout() {
   const title = NAV_ITEMS.find((item) => pathname === item.to)?.label
     || NAV_ITEMS.find((item) => pathname.startsWith(item.to))?.label
     || 'Home'
-  const handleLogout = () => navigate('/', { replace: true })
+  const handleLogout = () => {
+    leave()
+    navigate('/', { replace: true })
+  }
 
   return (
     <div className="commuter-layout min-h-screen bg-[#eef3f7]" data-density={settings.density}>
