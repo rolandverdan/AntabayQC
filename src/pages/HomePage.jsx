@@ -84,10 +84,6 @@ export default function HomePage() {
             ))}
           </nav>
         </main>
-
-        <footer className="pb-5 text-center text-xs text-blue-200">
-          Frontend demo · sample data only · sign-in is simulated and not secure.
-        </footer>
       </div>
     </div>
   )
