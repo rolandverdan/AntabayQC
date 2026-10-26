@@ -43,10 +43,8 @@ export default function LiveTracking() {
         title="Live Tracking"
         description="See active buses and service updates across QC Bus routes."
         actions={<div className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:w-auto sm:min-w-72">
-          <Search size={16} aria-hidden="true" className="text-slate-500" />
-          <label htmlFor="tracking-search" className="sr-only">Search routes</label>
+          <Search size={16} className="text-slate-500" />
           <input
-            id="tracking-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search route or stop..."
@@ -54,10 +52,6 @@ export default function LiveTracking() {
           />
         </div>}
       />
-
-      <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        Demo data only. Vehicle locations, headway estimates, and route statuses shown here are not live.
-      </p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
@@ -92,8 +86,8 @@ export default function LiveTracking() {
           <p className="text-sm text-slate-500">Choose a route to view live bus movement and stop updates.</p>
         </div>
 
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter tracking by route">
-          {filteredRoutes.length ? filteredRoutes.map((route) => {
+        <div className="flex flex-wrap gap-2">
+          {filteredRoutes.map((route) => {
             const isSelected = selectedRoute === route.id
             const isAll = route.id === 'all'
 
@@ -102,8 +96,7 @@ export default function LiveTracking() {
                 key={route.id}
                 type="button"
                 onClick={() => setSelectedRoute(route.id)}
-                aria-pressed={isSelected}
-                className={`min-h-11 rounded-xl border px-3 py-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 ${
+                className={`rounded-xl border px-3 py-2.5 text-xs font-bold transition sm:py-2 ${
                   isSelected
                     ? 'border-brand bg-brand text-white shadow-sm'
                     : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-brand/40 hover:text-brand'
@@ -112,11 +105,7 @@ export default function LiveTracking() {
                 {route.label}
               </button>
             )
-          }) : (
-            <p role="status" className="w-full rounded-xl border border-dashed border-slate-300 px-4 py-5 text-center text-sm text-slate-500">
-              No routes match “{query}”. Try another search.
-            </p>
-          )}
+          })}
         </div>
       </div>
 
@@ -129,21 +118,17 @@ export default function LiveTracking() {
             </div>
 
             <div className="text-xs font-medium text-slate-500">
-              Demo view
+              Live updates <span className="font-bold text-slate-700">12:00 PM</span>
             </div>
           </div>
 
           <div className="rounded-b-[18px] bg-white p-4">
-            <div className="relative h-[60dvh] min-h-[320px] overflow-hidden rounded-[14px] bg-slate-200 md:h-[540px]">
-              <p role="status" className="absolute left-4 top-4 max-w-xs rounded-lg bg-white/90 px-3 py-2 text-sm text-slate-600 shadow-sm">
-                {activeBusCount ? 'Live bus positions are not available in this demo.' : 'No active buses are available to display right now.'}
-              </p>
+            <div className="relative h-[60dvh] min-h-[320px] md:h-[540px] overflow-hidden rounded-[14px] bg-slate-200">
               <button
                 type="button"
                 aria-label="Locate me"
-                title="Location services are not available in this demo"
-                disabled
-                className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                title="Locate me"
+                className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50"
               >
                 <LocateFixed size={20} />
               </button>

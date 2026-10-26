@@ -43,8 +43,7 @@ export default function CameraPage() {
     <div>
       <PageHeader title="Vehicle cameras" description={`${onlineCount} of ${CAMERAS.length} cameras online (simulated).`} />
       <Notice tone="blue" icon={CameraIcon}>
-        <span className="sm:hidden">Demo feeds only; no CCTV is connected.</span>
-        <span className="hidden sm:inline">This page shows placeholder feeds only. It does not use your device camera and is not connected to a real CCTV system.</span>
+        This page shows placeholder feeds only. It does not use your device camera and is not connected to a real CCTV system.
       </Notice>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_18rem]">

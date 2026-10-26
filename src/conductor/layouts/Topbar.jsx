@@ -27,7 +27,7 @@ export default function Topbar({ collapsed, onToggleCollapse, onOpenMobile, onSo
 
       <div className="min-w-0">
         <h1 className="truncate text-lg font-bold">{title}</h1>
-        <p className="hidden items-center gap-1.5 truncate text-[11px] text-cyan-100 sm:flex">
+        <p className="flex items-center gap-1.5 truncate text-[11px] text-cyan-100">
           <Bus size={12} /> {VEHICLE.plate} · {ROUTE.name}
         </p>
       </div>
@@ -38,10 +38,10 @@ export default function Topbar({ collapsed, onToggleCollapse, onOpenMobile, onSo
         <button
           type="button"
           onClick={onSos}
-          className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-2 py-2 text-sm font-bold text-white shadow-md ring-2 ring-white/80 outline-none transition hover:bg-red-700 focus-visible:ring-4 focus-visible:ring-white sm:px-4"
+          className="flex min-h-11 items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-md ring-2 ring-white/80 outline-none transition hover:bg-red-700 focus-visible:ring-4 focus-visible:ring-white sm:px-4"
         >
           <Siren size={18} />
-          <span className="hidden sm:inline">SOS</span>
+          SOS
           <span className="sr-only">emergency report</span>
         </button>
 

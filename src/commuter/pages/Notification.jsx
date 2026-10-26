@@ -55,19 +55,13 @@ const notificationList = [
   },
 ]
 
-const filters = ['All', 'Unread', 'Service', 'Safety']
-
 const summaryStats = [
   { label: 'Unread', value: '3', icon: Bell, tone: 'blue' },
   { label: 'Active alerts', value: '2', icon: AlertTriangle, tone: 'amber' },
   { label: 'Resolved', value: '6', icon: CheckCircle2, tone: 'green' },
 ]
 
-const recentActions = [
-  'Lost item report reviewed for Terminal 2.',
-  'Feedback submitted for Route 3 service quality.',
-  'Route and schedule updated after road repair notice.',
-]
+const filters = ['All', 'Unread', 'Service', 'Safety']
 
 const initialPreferences = {
   'Service disruptions': true,
@@ -108,11 +102,10 @@ export default function Notification() {
     <>
       <PageHeader
         title="Notifications"
-        description="Service updates, safety advisories, and report notifications."
-        actions={<span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">Sample data</span>}
+        description="Stay up to date with service changes, safety advisories, and updates on your reports."
       />
 
-      <div className="mb-5 hidden grid-cols-1 gap-4 md:grid md:grid-cols-3">
+      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
         {summaryStats.map(({ label, value, icon: Icon, tone }) => (
           <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
@@ -143,6 +136,7 @@ export default function Notification() {
               </div>
               <div>
                 <h2 className="text-lg font-black text-navy">Latest updates</h2>
+                <p className="text-xs text-slate-500">Pulled from QC Bus alerts and commuter activity.</p>
               </div>
             </div>
 
@@ -220,7 +214,7 @@ export default function Notification() {
                   </div>
                 </div>
               </div>
-            )) : <p role="status" className="p-8 text-center text-sm text-slate-500">No notifications match this filter.</p>}
+            )) : <p className="p-8 text-center text-sm text-slate-500">No notifications match this filter.</p>}
           </div>
         </section>
 
@@ -244,15 +238,18 @@ export default function Notification() {
             <p className="mt-3 text-xs text-slate-500">Preferences are saved for this page session only.</p>
           </div>
 
-          <div className="hidden rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm md:block">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-100 text-green-700">
                 <CheckCircle2 size={18} />
               </div>
               <h3 className="text-lg font-black text-navy">Recent actions</h3>
             </div>
+
             <ul className="space-y-3 text-sm text-slate-600">
-              {recentActions.map((action) => <li key={action} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">{action}</li>)}
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Lost item report reviewed for Terminal 2.</li>
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Feedback submitted for Route 3 service quality.</li>
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Route and schedule updated after road repair notice.</li>
             </ul>
           </div>
         </aside>

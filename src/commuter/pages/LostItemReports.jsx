@@ -89,13 +89,13 @@ export default function LostItemReports() {
             Check My Reports / Claims
           </Link>
         </div>
-        <div className="hidden items-center gap-2 text-xs font-semibold text-slate-700 md:flex">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
           <ShieldCheck size={15} className="text-sky-500" />
           Official QC Bus Commuter Protection Program
         </div>
       </nav>
 
-      <section className="hidden grid-cols-1 gap-4 sm:grid-cols-2 md:grid lg:grid-cols-3 xl:grid-cols-5" aria-label="Lost item report summary">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" aria-label="Lost item report summary">
         {stats.map(({ label, value, detail }) => (
           <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
@@ -106,11 +106,9 @@ export default function LostItemReports() {
       </section>
 
       <section className="flex flex-col gap-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
-        <label htmlFor="lost-report-search" className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+        <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
           <Search size={15} className="shrink-0 text-slate-500" />
-          <span className="sr-only">Search lost-item reports</span>
           <input
-            id="lost-report-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by Case ID, item brand, route..."

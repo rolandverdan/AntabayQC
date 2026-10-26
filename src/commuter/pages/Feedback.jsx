@@ -66,7 +66,7 @@ export default function Feedback() {
       <PageHeader
         title="Feedback"
         description="Help us improve service quality, route reliability, and your commuter experience."
-        actions={<div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 sm:flex">
+        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
               <MessageSquareText size={16} />
             </div>
@@ -91,16 +91,16 @@ export default function Feedback() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="feedback-category" className="mb-1 block text-sm font-semibold text-slate-700">Feedback category</label>
-              <select id="feedback-category" required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Feedback category</label>
+              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select feedback category...</option>
                 {categories.map((category) => <option key={category}>{category}</option>)}
               </select>
             </div>
 
             <div>
-              <label htmlFor="feedback-route" className="mb-1 block text-sm font-semibold text-slate-700">Route / line</label>
-              <select id="feedback-route" value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Route / line</label>
+              <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select Bus Route...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
                   <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
@@ -109,8 +109,8 @@ export default function Feedback() {
             </div>
 
             <div>
-              <label id="feedback-rating-label" className="mb-1 block text-sm font-semibold text-slate-700">How would you rate your trip? <span className="text-red-500">*</span></label>
-              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3" role="group" aria-labelledby="feedback-rating-label">
+              <label className="mb-1 block text-sm font-semibold text-slate-700">How would you rate your trip? <span className="text-red-500">*</span></label>
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3" role="group" aria-label="Trip rating">
                 {ratingOptions.map((value) => (
                   <button
                     key={value}
@@ -118,36 +118,36 @@ export default function Feedback() {
                     onClick={() => setForm((current) => ({ ...current, rating: value }))}
                     aria-label={`${value} out of 5 stars`}
                     aria-pressed={form.rating === value}
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-amber-400 hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-amber-400 hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                       value <= form.rating ? 'border-amber-400 text-amber-500' : 'border-slate-200 text-slate-400'
                     }`}
                   >
                     <Star size={16} fill="currentColor" />
                   </button>
                 ))}
-                <span role="status" className="text-sm font-semibold text-slate-600">{form.rating ? `${form.rating} / 5` : 'Choose a rating'}</span>
+                <span className="ml-2 text-sm font-semibold text-slate-600">{form.rating ? `${form.rating} / 5` : 'Choose a rating'}</span>
               </div>
             </div>
 
             <div>
-              <label htmlFor="feedback-details" className="mb-1 block text-sm font-semibold text-slate-700">Tell us more</label>
-              <textarea id="feedback-details" required minLength={5} rows={6} value={form.details} onChange={updateForm('details')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Share what went well, what needs improvement, and how we can make the trip better." />
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Tell us more</label>
+              <textarea required minLength={5} rows={6} value={form.details} onChange={updateForm('details')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Share what went well, what needs improvement, and how we can make the trip better." />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="feedback-bus" className="mb-1 block text-sm font-semibold text-slate-700">Bus number</label>
-                <select id="feedback-bus" value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Bus number</label>
+                <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                   <option value="">Bus unknown / not listed</option>
                   {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
                   <option value="other">Other bus...</option>
                 </select>
-                {form.busId === 'other' && <input aria-label="Other bus number" required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number" />}
+                {form.busId === 'other' && <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number" />}
               </div>
 
               <div>
-                <label htmlFor="feedback-date" className="mb-1 block text-sm font-semibold text-slate-700">Date of trip</label>
-                <input id="feedback-date" required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Date of trip</label>
+                <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
               </div>
             </div>
 
@@ -172,7 +172,7 @@ export default function Feedback() {
             </div>
 
             <div className="space-y-3">
-              {recentFeedback.length ? recentFeedback.map((item, index) => (
+              {recentFeedback.map((item, index) => (
                 <details key={`${item.title}-${index}`} className="group rounded-xl border border-slate-200 bg-slate-50 p-3 open:bg-white">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-bold text-navy marker:hidden">
                     <span>{item.title}</span>
@@ -182,15 +182,11 @@ export default function Feedback() {
                   {item.details && <p className="mt-2 text-sm leading-5 text-slate-600">{item.details}</p>}
                   {item.bus && <p className="mt-1 text-xs text-slate-500">{item.bus}</p>}
                 </details>
-              )) : (
-                <p role="status" className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
-                  No recent feedback is available yet.
-                </p>
-              )}
+              ))}
             </div>
           </div>
 
-          <div className="hidden rounded-[18px] border border-slate-200 bg-brand px-4 py-5 text-white shadow-sm md:block">
+          <div className="rounded-[18px] border border-slate-200 bg-brand px-4 py-5 text-white shadow-sm">
             <h2 className="text-lg font-black">Service response</h2>
             <p className="mt-3 text-sm leading-6 text-blue-100">
               Your feedback is reviewed by QC Bus operations and service desk teams for route planning, communication, and commuter experience improvements.
