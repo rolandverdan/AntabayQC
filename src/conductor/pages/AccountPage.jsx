@@ -51,7 +51,7 @@ export default function AccountPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Account" description="Your conductor profile." actions={<Button icon={Pencil} onClick={openEdit}>Edit profile</Button>} />
-      <Notice tone="amber" icon={Info}>All details on this page are sample data for the demo. Edits stay on this device and reset when you log out.</Notice>
+      <Notice tone="amber" icon={Info}>All details on this page are sample data. Edits stay on this device and reset when you log out.</Notice>
 
       <Card bodyClass="p-0">
         <div className="flex items-center gap-4 border-b border-slate-100 p-5">

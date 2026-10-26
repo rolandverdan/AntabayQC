@@ -48,7 +48,7 @@ export default function SosModal({ open, onClose, location }) {
     setStep('sending')
     setTimeout(() => {
       const r = {
-        id: `SOS-DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
+        id: `SOS-${Math.floor(1000 + Math.random() * 9000)}`,
         type: type.label,
         description: description.trim(),
         location,
@@ -89,7 +89,7 @@ export default function SosModal({ open, onClose, location }) {
   } else if (step === 'sending') {
     title = 'Sending report…'
   } else {
-    title = 'Report recorded (demo)'
+    title = 'Report recorded'
     footer = <Button onClick={onClose}>Done</Button>
   }
 
@@ -181,9 +181,9 @@ export default function SosModal({ open, onClose, location }) {
           <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-3 text-sm text-green-900" role="status">
             <CircleCheck size={20} className="mt-0.5 shrink-0" />
             <div>
-              <p className="font-semibold">Demo report created</p>
+              <p className="font-semibold">Report created</p>
               <p className="mt-0.5 text-xs">
-                This is a frontend demonstration. No dispatcher, emergency service, or other personnel has been contacted.
+                No dispatcher, emergency service, or other personnel has been contacted from this version.
               </p>
             </div>
           </div>

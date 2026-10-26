@@ -124,7 +124,7 @@ export default function Header({
                   <div className="absolute right-0 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
                     <div className="border-b border-slate-100 px-2 pb-2">
                       <p className="truncate font-semibold text-navy">{commuterProfile.name}</p>
-                      <p className="truncate text-xs text-slate-500">{commuterProfile.email || 'Demo commuter profile'}</p>
+                      <p className="truncate text-xs text-slate-500">{commuterProfile.email || 'Commuter profile'}</p>
                     </div>
                     <Link to="/commuter/settings" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-slate-50">
                       <UserRound size={16} /> Profile &amp; Settings

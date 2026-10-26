@@ -254,7 +254,7 @@ export default function Settings() {
               />
               <ToggleRow
                 label="Sound alerts"
-                hint="Saved in this browser; no audio is played in this demo"
+                hint="Saved in this browser; no audio is played"
                 checked={preferences.soundAlerts}
                 onChange={(value) => updatePreference('soundAlerts', value)}
               />
@@ -302,10 +302,10 @@ export default function Settings() {
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               {activeDialog === 'password'
-                ? 'Password updates are not available in this front-end demo because commuter accounts are not connected to an authentication service.'
+                ? 'Password updates are not available because commuter accounts are not connected to an authentication service.'
                 : activeDialog === 'devices'
-                  ? 'This demo does not track signed-in devices. Connect an account service to review or revoke active sessions.'
-                  : 'You can manage notification and location preferences above. Location access is not requested or collected by this demo.'}
+                  ? 'Signed-in devices are not tracked. Connect an account service to review or revoke active sessions.'
+                  : 'You can manage notification and location preferences above. Location access is not requested or collected.'}
             </p>
             <div className="mt-5 flex justify-end">
               <Button onClick={() => setActiveDialog('')}>Close</Button>

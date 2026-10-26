@@ -62,7 +62,7 @@ export default function CameraPage() {
                   <p className="text-xs text-slate-400">Placeholder · no video stream connected</p>
                 </div>
                 <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1 text-xs font-semibold">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" aria-hidden="true" /> LIVE (demo)
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" aria-hidden="true" /> LIVE
                 </span>
                 <span className="absolute right-3 top-3 rounded bg-black/60 px-2 py-1 font-mono text-xs">{cam.id}</span>
                 <span className="absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 font-mono text-xs">

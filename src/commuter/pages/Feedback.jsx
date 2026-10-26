@@ -58,7 +58,7 @@ export default function Feedback() {
     }
     setRecentFeedback((items) => [feedback, ...items])
     setForm(createInitialForm())
-    notify('Demo feedback added to Recent Feedback. It has not been sent to a service.', 'success')
+    notify('Feedback added to Recent Feedback. It has not been sent to a service.', 'success')
   }
 
   return (

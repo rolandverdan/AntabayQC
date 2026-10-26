@@ -150,7 +150,7 @@ export default function MyTrip() {
                 <div className="mt-3 rounded-xl border border-brand/15 bg-white p-3 text-sm text-slate-600">
                   <p className="font-semibold text-navy">Trip details</p>
                   <p className="mt-1">Route R-02 · Quezon City Hall to Commonwealth Avenue.</p>
-                  <p className="mt-1 text-xs text-slate-500">Schedule and bus status are sample information for this front-end demo.</p>
+                  <p className="mt-1 text-xs text-slate-500">Schedule and bus status are sample information.</p>
                 </div>
               )}
             </div>
@@ -271,7 +271,7 @@ export default function MyTrip() {
                   </button>
                   {expandedHistory === trip.route && (
                     <p className="mt-3 border-t border-slate-200 pt-2 text-xs leading-5 text-slate-500">
-                      Sample trip · Fare and rating are demo details. You can share feedback from the Feedback page.
+                      Sample trip · Fare and rating are sample details. You can share feedback from the Feedback page.
                     </p>
                   )}
                 </div>

@@ -106,7 +106,7 @@ export default function Report() {
     setForm(createInitialForm())
     setEvidence([])
     if (fileInputRef.current) fileInputRef.current.value = ''
-    notify('Demo incident report added to My Active Reports. It has not been sent to a service.', 'success')
+    notify('Incident report added to My Active Reports. It has not been sent to a service.', 'success')
   }
 
   return (
@@ -364,7 +364,7 @@ export default function Report() {
                   {selectedReport?.title === report.title && (
                     <p className="mt-2 text-xs leading-5 text-slate-600">
                       {report.details || 'No additional details available.'}
-                      {report.tone === 'amber' && <span className="mt-1 block font-semibold text-amber-700">Front-end demo only; this report is not sent to a service.</span>}
+                      {report.tone === 'amber' && <span className="mt-1 block font-semibold text-amber-700">This report is not sent to a service.</span>}
                     </p>
                   )}
                 </button>

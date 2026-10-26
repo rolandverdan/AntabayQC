@@ -16,7 +16,9 @@ export default function AuthShell({ role, heading, blurb, footer, children }) {
           <LogoTile />
           <div>
             <p className="text-lg font-bold tracking-wide">ANTABAY QC</p>
-            <p className="text-xs text-blue-200">GIS-based Bus Tracking · Quezon City</p>
+            <p className="text-xs text-blue-200">A GIS-Based Real-Time Bus Tracking,
+ETA Prediction, and Passenger Occupancy
+Monitoring System for Quezon City</p>
           </div>
         </div>
         <div className="relative z-10">

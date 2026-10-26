@@ -4,7 +4,7 @@ import { seedData } from '../../admin/data/mockData.js'
 
 const db = seedData()
 
-export const DEMO_USERNAMES = ['lourdes.garcia', 'lourdes.garcia@antabayqc.demo', 'conductor']
+export const DEMO_USERNAMES = ['lourdes.garcia', 'lourdes.garcia@antabayqc.com', 'conductor']
 export const DEMO_PASSWORD = 'Conductor123!'
 
 const account = db.accounts.find((a) => a.id === 'ACC-007')
@@ -19,7 +19,7 @@ export const initialProfile = {
   assignedVehicle: `${VEHICLE.id} · ${VEHICLE.plate}`,
   assignedRoute: `${ROUTE.id} · ${ROUTE.name}`,
   contact: account.contact,
-  email: 'lourdes.garcia@antabayqc.demo',
+  email: 'lourdes.garcia@antabayqc.com',
 }
 
 export const initialSettings = {

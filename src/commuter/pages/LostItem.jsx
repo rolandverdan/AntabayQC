@@ -50,7 +50,7 @@ export default function LostItem() {
       status: 'Pending',
       bus: 'Bus #1234',
       date: 'Oct 8, 2026',
-      details: 'Sample recent inquiry. This is demonstration data.',
+      details: 'Sample recent inquiry. This is sample data.',
     },
   ])
   const [selectedInquiry, setSelectedInquiry] = useState(null)
@@ -97,7 +97,7 @@ export default function LostItem() {
     setForm(makeInitialForm())
     setPhoto(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
-    notify(`Demo report ${caseId} added to recent inquiries. It has not been sent to a service.`, 'success')
+    notify(`Report ${caseId} added to recent inquiries. It has not been sent to a service.`, 'success')
   }
 
   return (

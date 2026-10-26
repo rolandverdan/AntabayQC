@@ -54,9 +54,9 @@ export default function ConductorLayout() {
           <div role="status" className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
             <TriangleAlert size={16} className="shrink-0" />
             <p className="min-w-0 flex-1">
-              <span className="font-semibold">Demo SOS report {sosReport.id}</span> · {sosReport.type} · Simulated, not transmitted.
+              <span className="font-semibold">SOS report {sosReport.id}</span> · {sosReport.type} · Simulated, not transmitted.
             </p>
-            <button type="button" onClick={() => setSosReport(null)} className="rounded p-1 hover:bg-amber-100" aria-label="Dismiss demo SOS banner">
+            <button type="button" onClick={() => setSosReport(null)} className="rounded p-1 hover:bg-amber-100" aria-label="Dismiss SOS banner">
               <X size={16} />
             </button>
           </div>
