@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { TriangleAlert, X } from 'lucide-react'
 import Sidebar from '../../admin/layouts/Sidebar.jsx'
+import SidebarTab from '../../admin/components/SidebarTab.jsx'
 import { NAV_ITEMS } from './navItems.js'
 import Topbar from './Topbar.jsx'
 import SosModal from '../components/SosModal.jsx'
@@ -45,11 +46,11 @@ export default function ConductorLayout() {
         onCloseMobile={() => setMobileOpen(false)}
         onLogout={() => setConfirmLogout(true)}
         items={NAV_ITEMS}
-        roleLabel="Conductor Console"
         navLabel="Conductor navigation"
       />
-      <div className={`transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
-        <Topbar collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} onOpenMobile={() => setMobileOpen(true)} onSos={() => setSosOpen(true)} onLogout={() => setConfirmLogout(true)} />
+      <SidebarTab collapsed={collapsed} expanded={expanded} onToggle={() => setCollapsed((c) => !c)} onHoverChange={setHovered} />
+      <div className={`pt-[var(--topbar-h)] transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
+        <Topbar expanded={expanded} onOpenMobile={() => setMobileOpen(true)} onSos={() => setSosOpen(true)} onLogout={() => setConfirmLogout(true)} />
         {sosReport && (
           <div role="status" className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
             <TriangleAlert size={16} className="shrink-0" />
@@ -61,7 +62,7 @@ export default function ConductorLayout() {
             </button>
           </div>
         )}
-        <main id="main" className="p-4 pb-safe md:p-6">
+        <main id="main" className="px-3 pb-4 pt-3 sm:px-4 md:px-6 md:pb-6">
           <Outlet context={sim} />
         </main>
       </div>

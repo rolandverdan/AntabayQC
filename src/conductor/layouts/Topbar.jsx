@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Siren, UserRound, Bus } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Menu, Siren, UserRound, Bus } from 'lucide-react'
+import TopBrand from '../../shared/components/TopBrand.jsx'
+import { LogoTile } from '../../shared/components/Logo.jsx'
 import { NAV_ITEMS } from './navItems.js'
 import { NOTIFICATIONS, VEHICLE, ROUTE } from '../data/mock.js'
 import { useConductor } from '../context/ConductorContext.jsx'
 
-export default function Topbar({ collapsed, onToggleCollapse, onOpenMobile, onSos, onLogout }) {
+export default function Topbar({ expanded, onOpenMobile, onSos, onLogout }) {
   const { profile, settings } = useConductor()
   const { pathname } = useLocation()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
@@ -16,16 +18,15 @@ export default function Topbar({ collapsed, onToggleCollapse, onOpenMobile, onSo
   const initials = profile.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 
   return (
-    <header className="pt-safe sticky top-0 z-20 border-b border-white/10 bg-brand text-white shadow-md">
-     <div className="flex h-16 items-center gap-3 px-4">
-      <button type="button" onClick={onOpenMobile} aria-label="Open menu" className="flex h-11 w-11 items-center justify-center rounded-md hover:bg-white/10 lg:hidden">
+    <header className="pt-safe fixed inset-x-0 top-0 z-50 h-[var(--topbar-h)] border-b border-white/10 bg-brand text-white shadow-md">
+     <div className="flex h-16 items-center pr-3 sm:pr-4">
+      <button type="button" onClick={onOpenMobile} aria-label="Open menu" className="ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-white/10 lg:hidden">
         <Menu size={20} />
       </button>
-      <button type="button" onClick={onToggleCollapse} aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} title={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} className="hidden rounded-md p-2 hover:bg-white/10 lg:block">
-        {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
-      </button>
+      <span className="ml-1 hidden min-[400px]:block lg:hidden"><LogoTile size="sm" /></span>
+      <TopBrand expanded={expanded} roleLabel="Conductor Console" />
 
-      <div className="min-w-0">
+      <div className="min-w-0 pl-3 lg:pl-6">
         <h1 className="truncate text-lg font-bold">{title}</h1>
         <p className="flex items-center gap-1.5 truncate text-[11px] text-cyan-100">
           <Bus size={12} /> {VEHICLE.plate} · {ROUTE.name}

@@ -126,7 +126,7 @@ export default function CreateAccount() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader hideTitle
         title="Driver & Conductor Accounts"
         description="Create and manage accounts for bus drivers and conductors."
         actions={<><Button icon={UserPlus} onClick={() => openCreate('Driver')}>Add Driver</Button><Button icon={UserPlus} variant="secondary" onClick={() => openCreate('Conductor')}>Add Conductor</Button></>}

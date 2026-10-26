@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Clock, Gauge, Navigation, Pause, Play, Users } from 'lucide-react'
+import { Clock, Gauge, Navigation, Users } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
-import Card, { PageHeader } from '../components/Card.jsx'
-import Button from '../components/Button.jsx'
+import Card from '../components/Card.jsx'
 import Badge from '../components/Badge.jsx'
 import MapView from '../components/MapView.jsx'
 import OccupancyBar from '../components/OccupancyBar.jsx'
 import { inputClass } from '../utils/ui.js'
 import { busMarkerStyle, computeBusLive, routeColor } from '../utils/geo.js'
 import { BUS_STATUSES } from '../data/constants.js'
-import { OCCUPANCY } from '../utils/occupancy.js'
+import { OCCUPANCY, occupancyLevel } from '../utils/occupancy.js'
 
 export default function LiveMap() {
   const { buses, routes, stops, accountsById, routesById, stopsById } = useAdminData()
@@ -17,7 +16,6 @@ export default function LiveMap() {
   const [busF, setBusF] = useState('')
   const [statusF, setStatusF] = useState('')
   const [selectedId, setSelectedId] = useState(null)
-  const [running, setRunning] = useState(true)
   const [progress, setProgress] = useState(() => Object.fromEntries(buses.map((b) => [b.id, b.progress || 0])))
 
   const dataRef = useRef({ buses, routesById, stopsById })
@@ -25,7 +23,6 @@ export default function LiveMap() {
 
   // Moves Active buses along their route lines at their set speed (time-lapsed).
   useEffect(() => {
-    if (!running) return undefined
     const t = setInterval(() => {
       const { buses: bs, routesById: rb, stopsById: sb } = dataRef.current
       setProgress((prev) => {
@@ -40,7 +37,7 @@ export default function LiveMap() {
       })
     }, 1500)
     return () => clearInterval(t)
-  }, [running])
+  }, [])
 
   const live = useMemo(
     () =>
@@ -66,15 +63,23 @@ export default function LiveMap() {
 
   const sel = live.find((x) => x.bus.id === selectedId)
 
-  return (
-    <>
-      <PageHeader
-        title="Live Bus Map"
-        description="Monitor buses, stops, and routes in Quezon City."
-        actions={<Button variant={running ? 'secondary' : 'primary'} icon={running ? Pause : Play} onClick={() => setRunning((r) => !r)}>{running ? 'Pause simulation' : 'Resume simulation'}</Button>}
-      />
+  const count = (st) => live.filter((x) => x.bus.status === st).length
+  const activeLive = live.filter((x) => x.bus.status === 'Active')
+  const avgSpeed = activeLive.length ? Math.round(activeLive.reduce((n, x) => n + (x.live.speed || 0), 0) / activeLive.length) : 0
+  const occ = { green: 0, yellow: 0, red: 0 }
+  activeLive.forEach((x) => { occ[occupancyLevel(x.bus.passengers, x.bus.capacity)] += 1 })
+  const overview = [
+    { label: 'Active', value: count('Active'), tone: 'text-green-700' },
+    { label: 'Maintenance / Inactive', value: count('Maintenance') + count('Inactive'), tone: 'text-slate-600' },
+    { label: 'Emergency', value: count('Emergency'), tone: 'text-red-700' },
+    { label: 'Avg. speed (active)', value: `${avgSpeed} km/h`, tone: 'text-navy' },
+  ]
 
-      <div className="mb-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row">
+  return (
+    <div className="flex flex-col lg:h-[calc(100dvh-5.75rem)] lg:min-h-[520px]">
+      <p className="mb-3 text-sm text-slate-500">Monitor buses, stops, and routes in Quezon City.</p>
+
+      <div className="mb-3 flex shrink-0 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row">
         <select className={inputClass(false)} value={routeF} onChange={(e) => { setRouteF(e.target.value); setBusF('') }} aria-label="Route filter">
           <option value="">Route: All active</option>
           {routes.map((r) => <option key={r.id} value={r.id}>{r.id} · {r.name}</option>)}
@@ -89,39 +94,39 @@ export default function LiveMap() {
         </select>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-3">
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-            <MapView stops={shownStops} routes={shownRoutes} buses={markers} onBusClick={setSelectedId} className="h-[480px] lg:h-[560px]" />
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[1fr_340px]">
+        <div className="flex min-w-0 flex-col gap-3 lg:min-h-0">
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:min-h-0 lg:flex-1">
+            <MapView stops={shownStops} routes={shownRoutes} buses={markers} onBusClick={setSelectedId} className="h-[420px] lg:h-full" />
           </div>
-          <Card title="QC Bus routes" bodyClass="p-4">
-            <div className="grid gap-2 sm:grid-cols-2">
+          <Card className="shrink-0" bodyClass="space-y-2.5 p-3">
+            <div className="flex flex-wrap items-center gap-1.5" title="Click a route to isolate it on the map; click again to show all.">
+              <span className="mr-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">QC Bus routes</span>
               {routes.map((r) => (
                 <button
                   key={r.id}
                   type="button"
                   onClick={() => { setRouteF(routeF === r.id ? '' : r.id); setBusF('') }}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition hover:bg-slate-50 ${routeF === r.id ? 'border-brand bg-brand/5' : 'border-slate-200'} ${r.status !== 'Active' ? 'opacity-50' : ''}`}
+                  title={r.name}
+                  className={`flex max-w-[15rem] items-center gap-1.5 rounded-full border px-2.5 py-1 text-left text-[11px] transition hover:bg-slate-50 ${routeF === r.id ? 'border-brand bg-brand/5' : 'border-slate-200'} ${r.status !== 'Active' ? 'opacity-60' : ''}`}
                 >
-                  <span className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ background: routeColor(r.id, r) }} />
-                  <span><b className="text-navy">Route {parseInt(r.id.replace(/\D/g, ''), 10)}</b> · {r.name.replace('QC Hall – ', 'QC Hall → ')}</span>
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: routeColor(r.id, r) }} />
+                  <span className="truncate"><b className="text-navy">Route {parseInt(r.id.replace(/\D/g, ''), 10)}</b> · {r.name.replace('QC Hall – ', 'QC Hall → ')}</span>
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[11px] text-slate-500">Click a route to isolate it on the map; click again to show all. Large dots mark each route&apos;s terminals.</p>
-          </Card>
-          <Card title="Legend" bodyClass="p-4">
-            <div className="grid gap-x-6 gap-y-2 text-xs text-slate-600 sm:grid-cols-2 lg:grid-cols-3">
-              {Object.values(OCCUPANCY).map((o) => <span key={o.label} className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-full" style={{ background: o.color }} />{o.label}</span>)}
-              <span className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-full bg-slate-500" />Inactive / Maintenance (stationary)</span>
-              <span className="flex items-center gap-2"><span className="pulse-red flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white">!</span>Emergency</span>
-              <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full border-2 border-navy bg-white" />Bus stop</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[11px] text-slate-600">
+              {Object.values(OCCUPANCY).map((o) => <span key={o.label} className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: o.color }} />{o.label}</span>)}
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-500" />Inactive / Maintenance</span>
+              <span className="flex items-center gap-1.5"><span className="pulse-red flex h-3 w-3 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold text-white">!</span>Emergency</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border-2 border-navy bg-white" />Bus stop</span>
             </div>
           </Card>
         </div>
 
-        <div className="space-y-4">
-          <Card title="Bus information">
+        <div className="flex min-w-0 flex-col gap-3 lg:min-h-0">
+          {/* Fixed height so the panel never jumps between "nothing selected" and "bus selected". */}
+          <Card title="Bus information" className="shrink-0" bodyClass="h-[19rem] overflow-hidden p-5">
             {sel ? (
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between"><p className="text-lg font-bold text-navy">{sel.bus.id}</p><Badge>{sel.bus.status}</Badge></div>
@@ -135,13 +140,37 @@ export default function LiveMap() {
                 <div><p className="mb-1 flex items-center gap-1 text-xs text-slate-500"><Users size={13} />Passenger occupancy</p><OccupancyBar passengers={sel.bus.passengers} capacity={sel.bus.capacity} /></div>
               </div>
             ) : (
-              <p className="text-sm text-slate-500">Select a bus marker or a bus from the list to see its details.</p>
+              <div className="space-y-3 text-sm">
+                <p className="text-slate-500">Select a bus marker or a bus from the list to see its details.</p>
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">Fleet on map ({live.length})</p>
+                  <dl className="grid grid-cols-2 gap-2">
+                    {overview.map((o) => (
+                      <div key={o.label} className="rounded-lg bg-slate-50 p-2">
+                        <dt className="truncate text-xs text-slate-500">{o.label}</dt>
+                        <dd className={`text-lg font-bold leading-tight ${o.tone}`}>{o.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">Occupancy (active buses)</p>
+                  <ul className="space-y-1">
+                    {Object.entries(OCCUPANCY).map(([k, o]) => (
+                      <li key={k} className="flex items-center justify-between rounded-lg border border-slate-100 px-2.5 py-1 text-xs">
+                        <span className="flex items-center gap-2 text-slate-700"><span className="h-2.5 w-2.5 rounded-full" style={{ background: o.color }} />{o.label}</span>
+                        <span className="font-bold text-navy">{occ[k]}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             )}
           </Card>
 
-          <Card title={`Buses on map (${live.length})`} bodyClass="p-0">
+          <Card title={`Buses on map (${live.length})`} className="flex min-h-0 flex-col lg:flex-1" bodyClass="min-h-0 p-0 lg:flex-1 lg:overflow-y-auto">
             {live.length === 0 ? <p className="p-5 text-sm text-slate-500">No buses match the filters.</p> : (
-              <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
+              <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto lg:max-h-none lg:overflow-visible">
                 {live.map(({ bus }) => (
                   <li key={bus.id}>
                     <button type="button" onClick={() => setSelectedId(bus.id)} className={`flex w-full items-center justify-between gap-2 px-5 py-2.5 text-left text-sm hover:bg-slate-50 ${bus.id === selectedId ? 'bg-brand/5' : ''}`}>
@@ -155,6 +184,6 @@ export default function LiveMap() {
           </Card>
         </div>
       </div>
-    </>
+    </div>
   )
 }
