@@ -1,21 +1,62 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, Siren, FileText } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, Siren, FileText, UserRound } from 'lucide-react'
 import { NAV_ITEMS } from './navItems.js'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 
-export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLogout }) {
+const COMMUTER_SETTINGS_KEY = 'antabayqc_commuter_settings'
+const COMMUTER_SETTINGS_EVENT = 'antabayqc:commuter-settings-updated'
+const DEFAULT_COMMUTER_PROFILE = { name: 'Commuter', email: '' }
+
+function readCommuterProfile() {
+  try {
+    const stored = localStorage.getItem(COMMUTER_SETTINGS_KEY)
+    const profile = stored ? JSON.parse(stored).profile : null
+    return { ...DEFAULT_COMMUTER_PROFILE, ...profile }
+  } catch {
+    return DEFAULT_COMMUTER_PROFILE
+  }
+}
+
+export default function Header({
+  collapsed,
+  onToggleCollapse,
+  onOpenMobile,
+  onLogout,
+  title,
+  commuterMode = false,
+  commuterMeta,
+}) {
   const { settings, emergencies, reports } = useAdminData()
   const { pathname } = useLocation()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
+  const [commuterProfile, setCommuterProfile] = useState(readCommuterProfile)
 
-  const title = NAV_ITEMS.find((n) => pathname.startsWith(n.to))?.label || 'Admin'
+  useEffect(() => {
+    const syncProfile = (event) => {
+      setCommuterProfile(event.detail?.profile || readCommuterProfile())
+    }
+    const syncStoredProfile = (event) => {
+      if (event.key === COMMUTER_SETTINGS_KEY) setCommuterProfile(readCommuterProfile())
+    }
+
+    window.addEventListener(COMMUTER_SETTINGS_EVENT, syncProfile)
+    window.addEventListener('storage', syncStoredProfile)
+    return () => {
+      window.removeEventListener(COMMUTER_SETTINGS_EVENT, syncProfile)
+      window.removeEventListener('storage', syncStoredProfile)
+    }
+  }, [])
+
+  const defaultTitle = NAV_ITEMS.find((n) => pathname.startsWith(n.to))?.label || 'Admin'
+  const headerTitle = title || defaultTitle
   const activeEmergencies = emergencies.filter((e) => e.status !== 'Resolved').length
   const pendingReports = reports.filter((r) => r.status === 'Pending').length
   const alertCount = settings.notifications.emergency || settings.notifications.reports
     ? (settings.notifications.emergency ? activeEmergencies : 0) + (settings.notifications.reports ? pendingReports : 0)
     : 0
   const initials = settings.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  const commuterInitials = commuterProfile.name.trim().split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || 'C'
   const close = () => setMenu(null)
 
   return (
@@ -26,62 +67,104 @@ export default function Header({ collapsed, onToggleCollapse, onOpenMobile, onLo
       <button type="button" onClick={onToggleCollapse} aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} title={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} className="hidden rounded-md p-2 hover:bg-white/10 lg:block">
         {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
       </button>
-      <h1 className="truncate text-lg font-bold">{title}</h1>
+      <div className="min-w-0">
+        <h1 className="truncate text-lg font-bold">{headerTitle}</h1>
+        {commuterMode && commuterMeta && <p className="truncate text-[11px] text-cyan-100">{commuterMeta}</p>}
+      </div>
 
       <div className="ml-auto flex items-center gap-2">
         {menu && <button type="button" aria-label="Close menu" className="fixed inset-0 z-10 cursor-default" onClick={close} />}
 
-        <div className="relative z-20">
-          <button type="button" onClick={() => setMenu(menu === 'bell' ? null : 'bell')} aria-label="Notifications" className="relative rounded-full p-2 hover:bg-white/10">
-            <Bell size={20} />
-            {alertCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">
-                {alertCount}
-              </span>
-            )}
-          </button>
-          {menu === 'bell' && (
-            <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
-              <p className="px-2 py-1 text-xs font-semibold uppercase text-slate-400">Notifications</p>
-              <Link to="/admin/emergency-logs" onClick={close} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
-                <Siren size={18} className="text-red-600" />
-                <span>{activeEmergencies} active emergency incident{activeEmergencies === 1 ? '' : 's'}</span>
-              </Link>
-              <Link to="/admin/report-logs" onClick={close} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
-                <FileText size={18} className="text-amber-600" />
-                <span>{pendingReports} pending report{pendingReports === 1 ? '' : 's'}</span>
-              </Link>
-              {!settings.notifications.emergency && !settings.notifications.reports && (
-                <p className="px-2 py-1 text-xs text-slate-500">Alert badges are turned off in Settings.</p>
+        {!commuterMode && (
+          <div className="relative z-20">
+            <button type="button" onClick={() => setMenu(menu === 'bell' ? null : 'bell')} aria-label="Notifications" className="relative rounded-full p-2 hover:bg-white/10">
+              <Bell size={20} />
+              {alertCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">
+                  {alertCount}
+                </span>
               )}
-            </div>
-          )}
-        </div>
-
-        <div className="relative z-20">
-          <button type="button" onClick={() => setMenu(menu === 'profile' ? null : 'profile')} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-white/10" aria-label="Profile menu">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">{initials}</span>
-            <span className="hidden text-left text-xs leading-tight sm:block">
-              <span className="block max-w-32 truncate font-semibold">{settings.name}</span>
-              <span className="block text-[10px] text-cyan-100">Administrator</span>
-            </span>
-            <ChevronDown size={14} />
-          </button>
-          {menu === 'profile' && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
-              <div className="border-b border-slate-100 px-2 pb-2">
-                <p className="truncate font-semibold text-navy">{settings.name}</p>
-                <p className="truncate text-xs text-slate-500">{settings.email}</p>
+            </button>
+            {menu === 'bell' && (
+              <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
+                <p className="px-2 py-1 text-xs font-semibold uppercase text-slate-400">Notifications</p>
+                <Link to="/admin/emergency-logs" onClick={close} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
+                  <Siren size={18} className="text-red-600" />
+                  <span>{activeEmergencies} active emergency incident{activeEmergencies === 1 ? '' : 's'}</span>
+                </Link>
+                <Link to="/admin/report-logs" onClick={close} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
+                  <FileText size={18} className="text-amber-600" />
+                  <span>{pendingReports} pending report{pendingReports === 1 ? '' : 's'}</span>
+                </Link>
+                {!settings.notifications.emergency && !settings.notifications.reports && (
+                  <p className="px-2 py-1 text-xs text-slate-500">Alert badges are turned off in Settings.</p>
+                )}
               </div>
-              <Link to="/admin/settings" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-slate-50">
-                <Settings size={16} /> Settings
-              </Link>
-              <button type="button" onClick={() => { close(); onLogout() }} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-red-600 hover:bg-red-50">
-                <LogOut size={16} /> Logout
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+
+            {commuterMode && (
+              <div className="relative z-20">
+                <button
+                  type="button"
+                  onClick={() => setMenu(menu === 'profile' ? null : 'profile')}
+                  className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  aria-label="Commuter profile menu"
+                  aria-expanded={menu === 'profile'}
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">
+                    {commuterInitials}
+                  </span>
+                  <span className="hidden max-w-36 text-left text-xs leading-tight sm:block">
+                    <span className="block truncate font-semibold">{commuterProfile.name}</span>
+                    <span className="block text-[10px] text-cyan-100">Commuter profile</span>
+                  </span>
+                  <ChevronDown size={14} />
+                </button>
+                {menu === 'profile' && (
+                  <div className="absolute right-0 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
+                    <div className="border-b border-slate-100 px-2 pb-2">
+                      <p className="truncate font-semibold text-navy">{commuterProfile.name}</p>
+                      <p className="truncate text-xs text-slate-500">{commuterProfile.email || 'Demo commuter profile'}</p>
+                    </div>
+                    <Link to="/commuter/settings" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-slate-50">
+                      <UserRound size={16} /> Profile &amp; Settings
+                    </Link>
+                    <button type="button" onClick={() => { close(); onLogout() }} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-red-600 transition hover:bg-red-50">
+                      <LogOut size={16} /> Exit commuter view
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!commuterMode && (
+          <div className="relative z-20">
+            <button type="button" onClick={() => setMenu(menu === 'profile' ? null : 'profile')} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-white/10" aria-label="Profile menu">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">{initials}</span>
+              <span className="hidden text-left text-xs leading-tight sm:block">
+                <span className="block max-w-32 truncate font-semibold">{settings.name}</span>
+                <span className="block text-[10px] text-cyan-100">Administrator</span>
+              </span>
+              <ChevronDown size={14} />
+            </button>
+            {menu === 'profile' && (
+              <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
+                <div className="border-b border-slate-100 px-2 pb-2">
+                  <p className="truncate font-semibold text-navy">{settings.name}</p>
+                  <p className="truncate text-xs text-slate-500">{settings.email}</p>
+                </div>
+                <Link to="/admin/settings" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-slate-50">
+                  <Settings size={16} /> Settings
+                </Link>
+                <button type="button" onClick={() => { close(); onLogout() }} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-red-600 hover:bg-red-50">
+                  <LogOut size={16} /> Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   )

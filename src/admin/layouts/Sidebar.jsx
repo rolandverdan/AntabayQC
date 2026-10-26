@@ -1,10 +1,21 @@
 import { NavLink } from 'react-router-dom'
-import { Bus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { NAV_ITEMS, LOGOUT_ITEM } from './navItems.js'
 
 // `expanded` is false only on desktop when the sidebar is collapsed and not hovered/focused.
 // On screens below lg the sidebar is an off-canvas drawer that always shows labels.
-export default function Sidebar({ expanded, mobileOpen, onCloseMobile, onLogout, onHoverChange }) {
+export default function Sidebar({
+  expanded,
+  mobileOpen,
+  onCloseMobile,
+  onLogout,
+  onHoverChange,
+  items = NAV_ITEMS,
+  commuterMode = false,
+  commuterMeta = 'Commuter Console',
+  roleLabel = 'Admin Console',
+  navLabel,
+}) {
   const LogoutIcon = LOGOUT_ITEM.icon
   const labelCls = `truncate whitespace-nowrap transition-opacity duration-200 ${expanded ? '' : 'lg:pointer-events-none lg:opacity-0'}`
   const itemBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150'
@@ -36,20 +47,24 @@ export default function Sidebar({ expanded, mobileOpen, onCloseMobile, onLogout,
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-[18px]">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand">
-            <Bus size={22} />
-          </div>
-          <div className={`min-w-0 leading-tight ${labelCls}`}>
-            <p className="truncate text-sm font-bold tracking-wide">ANTABAY QC</p>
-            <p className="truncate text-[11px] text-blue-200">Admin Console</p>
-          </div>
+          <img
+            src="/images/Antabay QC Logo.png"
+            alt="Antabay QC"
+            className="h-14 w-auto max-w-[44px] shrink-0 object-contain"
+          />
+          {!commuterMode && (
+            <div className={`min-w-0 leading-tight ${labelCls}`}>
+              <p className="truncate text-sm font-bold tracking-wide">ANTABAY QC</p>
+              <p className="truncate text-[11px] text-blue-200">{roleLabel}</p>
+            </div>
+          )}
           <button type="button" onClick={onCloseMobile} aria-label="Close menu" className="ml-auto rounded-md p-1 hover:bg-white/10 lg:hidden">
             <X size={18} />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label="Admin navigation">
-          {NAV_ITEMS.map(renderLink)}
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label={navLabel || (commuterMode ? 'Commuter navigation' : 'Admin navigation')}>
+          {items.map(renderLink)}
         </nav>
 
         <div className="shrink-0 space-y-1 border-t border-white/10 px-3 py-3">

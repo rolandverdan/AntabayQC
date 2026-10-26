@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-export default function Card({ title, action, children, className = '', bodyClass = 'p-5' }) {
+export function Card({ title, action, children, className = '', bodyClass = 'p-5' }) {
   return (
     <section className={`rounded-xl border border-slate-200 bg-white shadow-sm ${className}`}>
       {(title || action) && (
@@ -13,6 +13,8 @@ export default function Card({ title, action, children, className = '', bodyClas
     </section>
   )
 }
+
+export default Card
 
 const STAT_TONES = {
   blue: 'bg-brand/10 text-brand',
