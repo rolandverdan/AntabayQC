@@ -9,7 +9,7 @@ import { LogoTile } from './Logo.jsx'
  */
 export default function AuthShell({ role, heading, blurb, footer, children }) {
   return (
-    <div className="mobile-ui grid min-h-dvh lg:grid-cols-2">
+    <div className="mobile-ui grid min-h-dvh grid-cols-1 lg:grid-cols-2">
       <div className="relative hidden flex-col justify-between overflow-hidden bg-brand p-10 text-white lg:flex">
         <BrandBackdrop />
         <div className="relative z-10 flex items-center gap-3">

@@ -82,7 +82,7 @@ export default function MyTrip() {
         description="Review your upcoming commute, recent trips, and route details in one place."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-5">
           <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-3">

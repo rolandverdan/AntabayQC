@@ -28,7 +28,7 @@ export default function MapPage() {
   const stopsPassed = ROUTE_STOPS.findIndex((s) => s.id === nextStop.id)
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_20rem] xl:grid-cols-[1fr_22rem]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_20rem] xl:grid-cols-[1fr_22rem]">
       <div className="h-[50dvh] min-h-[320px] lg:h-[calc(100vh-8.5rem)]">
         <ConductorMap position={position} nextStopId={nextStop.id} prefs={settings.map} />
       </div>

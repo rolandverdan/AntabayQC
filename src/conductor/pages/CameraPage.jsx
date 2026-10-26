@@ -46,7 +46,7 @@ export default function CameraPage() {
         This page shows placeholder feeds only. It does not use your device camera and is not connected to a real CCTV system.
       </Notice>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_18rem]">
         <Card
           title={`${cam.name} · ${cam.location}`}
           action={<StatusBadge status={state.status} />}

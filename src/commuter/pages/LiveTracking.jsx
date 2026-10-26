@@ -53,7 +53,7 @@ export default function LiveTracking() {
         </div>}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
           { label: 'Active buses', value: activeBusCount, icon: BusFront, tone: 'blue' },
           { label: 'Avg headway', value: averageHeadway, icon: Clock3, tone: 'green' },
@@ -96,7 +96,7 @@ export default function LiveTracking() {
                 key={route.id}
                 type="button"
                 onClick={() => setSelectedRoute(route.id)}
-                className={`rounded-xl border px-3 py-2 text-xs font-bold transition ${
+                className={`rounded-xl border px-3 py-2.5 text-xs font-bold transition sm:py-2 ${
                   isSelected
                     ? 'border-brand bg-brand text-white shadow-sm'
                     : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-brand/40 hover:text-brand'
@@ -109,7 +109,7 @@ export default function LiveTracking() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.3fr_0.7fr]">
         <div className="rounded-[18px] border border-slate-200 bg-white p-0 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
             <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-slate-700">

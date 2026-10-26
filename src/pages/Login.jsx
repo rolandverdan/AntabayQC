@@ -93,6 +93,7 @@ export default function Login() {
       role="Sign in"
       heading="Real-Time Bus Tracking for Quezon City"
       blurb="One sign-in for administrators, conductors, and commuters. Your account decides which side opens."
+      footer="ANTABAY QC · frontend demo"
     >
       <form onSubmit={submit} noValidate>
         <h1 className="text-2xl font-bold text-navy">Login</h1>

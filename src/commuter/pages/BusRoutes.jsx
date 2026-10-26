@@ -37,7 +37,7 @@ export default function BusRoutes() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
             <div className="flex gap-2 text-sm font-bold text-slate-700">
@@ -144,7 +144,7 @@ export default function BusRoutes() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Active Buses</p>
               <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">8</p>

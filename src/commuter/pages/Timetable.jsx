@@ -143,22 +143,23 @@ export default function Timetable() {
                 key={routeId}
                 type="button"
                 onClick={() => setSelectedRouteId(routeId)}
-                className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${selectedRoute?.id === routeId ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-slate-50 text-slate-600'}`}
+                className={`rounded-md border px-3 py-2.5 text-xs font-semibold sm:py-1.5 ${selectedRoute?.id === routeId ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-slate-50 text-slate-600'}`}
               >
                 {routeId}
               </button>
             ))}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-            <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr] bg-[#1e6ea6] text-sm font-bold text-white">
+          <p className="mb-2 text-xs font-medium text-slate-500 md:hidden">Swipe sideways to see Saturday and Sunday.</p>
+          <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-slate-200 bg-slate-50">
+            <div className="grid min-w-[640px] grid-cols-[1.3fr_1fr_1fr_1fr] bg-[#1e6ea6] text-sm font-bold text-white">
               <div className="px-4 py-3">{selectedRoute?.id || 'R-01'}</div>
               <div className="px-4 py-3 text-center">Monday - Friday</div>
               <div className="px-4 py-3 text-center">Saturday</div>
               <div className="px-4 py-3 text-center">Sunday</div>
             </div>
 
-            <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr] border-t border-slate-200 text-sm">
+            <div className="grid min-w-[640px] grid-cols-[1.3fr_1fr_1fr_1fr] border-t border-slate-200 text-sm">
               <div className="border-r border-slate-200 bg-white p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <div className="font-extrabold uppercase tracking-[0.08em] text-navy">{selectedRoute?.id || 'R-01'}</div>
@@ -199,7 +200,7 @@ export default function Timetable() {
               </div>
             </div>
 
-            <div className="grid grid-cols-[1.3fr_1fr_1fr_1fr] border-t border-slate-200 text-sm">
+            <div className="grid min-w-[640px] grid-cols-[1.3fr_1fr_1fr_1fr] border-t border-slate-200 text-sm">
               <div className="border-r border-slate-200 bg-white p-4 font-black text-navy uppercase">{selectedRoute?.name || 'Route'}</div>
 
               <div className="border-r border-slate-200 bg-[#edf7ff] p-3">

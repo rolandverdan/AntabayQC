@@ -56,7 +56,7 @@ export default function ConductorMap({ position, nextStopId, prefs }) {
   }
 
   return (
-    <div className="relative h-full min-h-[360px] overflow-hidden rounded-xl border border-slate-200">
+    <div className="relative h-full min-h-[300px] overflow-hidden rounded-xl border border-slate-200">
       <MapContainer
         ref={setMap}
         center={[position.lat, position.lng]}

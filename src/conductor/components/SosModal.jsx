@@ -106,7 +106,7 @@ export default function SosModal({ open, onClose, location }) {
             <legend className="mb-2 text-sm font-semibold text-navy">
               What kind of emergency is it? <span className="text-red-500">*</span>
             </legend>
-            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-required="true">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-required="true">
               {EMERGENCY_TYPES.map((t) => {
                 const Icon = ICONS[t.icon]
                 const selected = t.id === typeId
@@ -208,7 +208,7 @@ export default function SosModal({ open, onClose, location }) {
 
 function Row({ label, value, strong = false }) {
   return (
-    <div className="grid gap-1 px-3 py-2 sm:grid-cols-[9rem_1fr] sm:gap-3">
+    <div className="grid grid-cols-1 gap-1 px-3 py-2 sm:grid-cols-[9rem_1fr] sm:gap-3">
       <dt className="text-xs font-medium text-slate-500">{label}</dt>
       <dd className={`break-words ${strong ? 'font-semibold text-navy' : 'text-slate-700'}`}>{value}</dd>
     </div>

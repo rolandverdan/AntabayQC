@@ -77,7 +77,7 @@ export default function Feedback() {
           </div>}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[1.4fr_0.6fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_0.6fr]">
         <form onSubmit={handleSubmit} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
@@ -134,7 +134,7 @@ export default function Feedback() {
               <textarea required minLength={5} rows={6} value={form.details} onChange={updateForm('details')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Share what went well, what needs improvement, and how we can make the trip better." />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">Bus number</label>
                 <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">

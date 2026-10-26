@@ -95,7 +95,7 @@ export default function LostItemReports() {
         </div>
       </nav>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" aria-label="Lost item report summary">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" aria-label="Lost item report summary">
         {stats.map(({ label, value, detail }) => (
           <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
@@ -145,7 +145,7 @@ export default function LostItemReports() {
         </button>
       </section>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-4" aria-label="Lost item reports">
           {filteredReports.length ? filteredReports.map((report) => (
             <article key={report.id} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">

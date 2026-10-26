@@ -61,7 +61,7 @@ export default function AccountPage() {
             <p className="text-sm text-slate-500">Conductor</p>
           </div>
         </div>
-        <dl className="grid divide-y divide-slate-100 px-5 sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
+        <dl className="grid grid-cols-1 divide-y divide-slate-100 px-5 sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
           <Item icon={IdCard} label="Conductor ID" value={profile.conductorId} />
           <Item icon={Bus} label="Assigned vehicle" value={profile.assignedVehicle} />
           <Item icon={RouteIcon} label="Assigned route" value={profile.assignedRoute} />

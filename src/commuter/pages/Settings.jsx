@@ -113,7 +113,7 @@ export default function Settings() {
         description="Manage your commuter profile, alerts, and travel preferences."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-5">
           <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
@@ -127,7 +127,7 @@ export default function Settings() {
             </div>
 
             <form onSubmit={saveProfile}>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-700">Full name</span>
                 <input

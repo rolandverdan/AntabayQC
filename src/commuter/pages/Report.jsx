@@ -122,7 +122,7 @@ export default function Report() {
         </div>}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[1.55fr_0.75fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.55fr_0.75fr]">
         <form onSubmit={handleSubmit} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Report Category <span className="text-red-500">*</span></label>
               <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">

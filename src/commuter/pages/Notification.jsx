@@ -105,7 +105,7 @@ export default function Notification() {
         description="Stay up to date with service changes, safety advisories, and updates on your reports."
       />
 
-      <div className="mb-5 grid gap-4 md:grid-cols-3">
+      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
         {summaryStats.map(({ label, value, icon: Icon, tone }) => (
           <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
@@ -127,7 +127,7 @@ export default function Notification() {
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <section className="rounded-[18px] border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">

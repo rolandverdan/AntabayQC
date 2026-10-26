@@ -30,7 +30,7 @@ export default function CommuterHome() {
   return (
     <>
       <PageHeader title="Home" description="Your quick access to QC Bus routes, trips, and commuter services." />
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <section className="space-y-5 lg:col-span-2">
           <div className="h-52 overflow-hidden rounded-2xl bg-[#0d54b8] p-0 shadow-sm ring-1 ring-blue-900/10">
             <img
@@ -40,7 +40,7 @@ export default function CommuterHome() {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {featureCards.map(({ title, subtitle, icon: Icon, href, tone }) => (
               <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className="flex items-center gap-4">
@@ -62,7 +62,7 @@ export default function CommuterHome() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <h3 className="mb-4 text-lg font-bold text-navy">Quick Access</h3>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {quickAccess.map(({ title, subtitle, icon: Icon, href, tone }) => (
                 <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white">
                   <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${

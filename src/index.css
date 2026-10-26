@@ -73,3 +73,13 @@ html, body { overflow-x: hidden; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Responsive safety net for the phone sides (Commuter + Conductor).
+   - grid/flex items may shrink below their content width (the classic "card wider than the screen" bug)
+   - long words and names wrap instead of widening the page */
+.commuter-layout, #main { max-width: 100%; }
+.commuter-layout main, #main { overflow-wrap: anywhere; }
+.commuter-layout main > *, #main > * { min-width: 0; max-width: 100%; }
+.commuter-layout main .grid > *, #main .grid > *,
+.commuter-layout main .flex > *, #main .flex > * { min-width: 0; }
+.commuter-layout main img, .commuter-layout main svg, #main img, #main svg { max-width: 100%; }
