@@ -1,0 +1,1 @@
+Wala dapat maliligaw, if conductor side, ditong folder lang for the ui pero but the images or other stuff can be acces in different folder.

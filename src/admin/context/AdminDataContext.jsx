@@ -3,7 +3,7 @@ import { seedData, defaultSettings } from '../data/mockData.js'
 import { nextId } from '../utils/format.js'
 
 // Browser storage only: this is NOT a database and offers no security.
-const STORAGE_KEY = 'antabayqc_admin_v3'
+const STORAGE_KEY = 'antabayqc_admin_v4'
 const Ctx = createContext(null)
 
 function load() {
