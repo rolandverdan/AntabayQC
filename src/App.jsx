@@ -44,6 +44,7 @@ import Report from './commuter/pages/Report.jsx'
 import Feedback from './commuter/pages/Feedback.jsx'
 import Notification from './commuter/pages/Notification.jsx'
 import CommuterSettings from './commuter/pages/Settings.jsx'
+import CommuterHelp from './commuter/pages/Help.jsx'
 
 export default function App() {
   return (
@@ -120,6 +121,7 @@ export default function App() {
                     <Route path="report" element={<Report />} />
                     <Route path="feedback" element={<Feedback />} />
                     <Route path="notification" element={<Notification />} />
+                    <Route path="help" element={<CommuterHelp />} />
                     <Route path="settings" element={<CommuterSettings />} />
                   </Route>
 

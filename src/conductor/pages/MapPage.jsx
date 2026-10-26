@@ -65,7 +65,7 @@ export default function MapPage() {
           </div>
         </Card>
 
-        <Card title="Location details">
+        <Card title="Location details" className="hidden lg:block">
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-3"><dt className="text-slate-500">Latitude</dt><dd className="font-mono text-navy">{position.lat.toFixed(5)}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-slate-500">Longitude</dt><dd className="font-mono text-navy">{position.lng.toFixed(5)}</dd></div>

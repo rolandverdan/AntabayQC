@@ -20,7 +20,7 @@ export default function Sidebar({
   const labelCls = `truncate whitespace-nowrap transition-opacity duration-200 ${expanded ? '' : 'lg:pointer-events-none lg:opacity-0'}`
   const itemBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150'
   const navClass = ({ isActive }) =>
-    `${itemBase} ${isActive ? 'bg-white text-navy shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'}`
+    `${itemBase} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80 ${isActive ? 'bg-white text-navy shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'}`
 
   const renderLink = ({ to, label, icon: Icon }) => (
     <NavLink key={to} to={to} title={label} className={navClass}>
@@ -72,7 +72,7 @@ export default function Sidebar({
             type="button"
             onClick={onLogout}
             title={LOGOUT_ITEM.label}
-            className={`${itemBase} w-full text-blue-100 hover:bg-red-500/90 hover:text-white`}
+            className={`${itemBase} w-full text-blue-100 hover:bg-red-500/90 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80`}
           >
             <LogoutIcon size={19} className="shrink-0" />
             <span className={labelCls}>{LOGOUT_ITEM.label}</span>

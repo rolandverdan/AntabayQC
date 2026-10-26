@@ -3,8 +3,10 @@ import {
   Bell,
   ChevronRight,
   Lock,
+  MapPinOff,
   Moon,
   Palette,
+  VolumeX,
   ShieldCheck,
   Smartphone,
   UserRound,
@@ -69,12 +71,15 @@ export default function Settings() {
   const [alerts, setAlerts] = useState(savedSettings.alerts)
   const [preferences, setPreferences] = useState(savedSettings.preferences)
   const [activeDialog, setActiveDialog] = useState('')
+  const profileHasChanges = JSON.stringify(profile) !== JSON.stringify(savedSettings.profile)
 
   const persistSettings = (nextSettings, successMessage) => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(nextSettings))
       setSavedSettings(nextSettings)
-      window.dispatchEvent(new CustomEvent(SETTINGS_UPDATED_EVENT, { detail: { profile: nextSettings.profile } }))
+      window.dispatchEvent(new CustomEvent(SETTINGS_UPDATED_EVENT, {
+        detail: { profile: nextSettings.profile, preferences: nextSettings.preferences },
+      }))
       notify(successMessage, 'success')
       return true
     } catch {
@@ -85,8 +90,9 @@ export default function Settings() {
 
   const updatePreference = (key, value) => {
     const nextSettings = { ...savedSettings, preferences: { ...preferences, [key]: value } }
-    setPreferences(nextSettings.preferences)
-    persistSettings(nextSettings, 'Preference saved in this browser.')
+    if (persistSettings(nextSettings, 'Preference saved in this browser.')) {
+      setPreferences(nextSettings.preferences)
+    }
   }
 
   const updateAlert = (key, value) => {
@@ -116,7 +122,8 @@ export default function Settings() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-5">
           <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <UserRound size={20} />
               </div>
@@ -124,6 +131,10 @@ export default function Settings() {
                 <h2 className="text-xl font-black text-navy">Profile</h2>
                 <p className="text-sm text-slate-500">Your commuter account information</p>
               </div>
+              </div>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${profileHasChanges ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-700'}`}>
+                {profileHasChanges ? 'Unsaved changes' : 'Saved'}
+              </span>
             </div>
 
             <form onSubmit={saveProfile}>
@@ -176,8 +187,8 @@ export default function Settings() {
             </div>
 
             <div className="mt-5 flex justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={cancelProfile}>Cancel</Button>
-              <Button type="submit">Save profile</Button>
+              <Button type="button" variant="secondary" onClick={cancelProfile} disabled={!profileHasChanges}>Cancel</Button>
+              <Button type="submit" disabled={!profileHasChanges}>Save profile</Button>
             </div>
             </form>
           </div>
@@ -236,30 +247,31 @@ export default function Settings() {
             <div className="space-y-3">
               <ToggleRow
                 label="Dark mode"
-                hint="Saved in this browser; visual theme switching is not implemented yet"
+                hint="Use a darker color theme throughout the commuter pages"
                 checked={preferences.darkMode}
                 onChange={(value) => updatePreference('darkMode', value)}
               />
               <ToggleRow
                 label="Compact view"
-                hint="Saved in this browser; layout density is not changed yet"
+                hint="Reduce page spacing to fit more content on screen"
                 checked={preferences.compactView}
                 onChange={(value) => updatePreference('compactView', value)}
               />
-              <ToggleRow
-                label="Use my location"
-                hint="Saved in this browser; device location is not requested"
-                checked={preferences.useLocation}
-                onChange={(value) => updatePreference('useLocation', value)}
-              />
-              <ToggleRow
-                label="Sound alerts"
-                hint="Saved in this browser; no audio is played in this demo"
-                checked={preferences.soundAlerts}
-                onChange={(value) => updatePreference('soundAlerts', value)}
-              />
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                <p className="text-sm font-semibold text-navy">Unavailable in this demo</p>
+                <div className="mt-3 space-y-3">
+                  <div className="flex items-start gap-2 text-xs text-slate-500">
+                    <MapPinOff size={16} className="mt-0.5 shrink-0" />
+                    <span><strong className="text-slate-700">Location access:</strong> Device location is not requested or collected.</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs text-slate-500">
+                    <VolumeX size={16} className="mt-0.5 shrink-0" />
+                    <span><strong className="text-slate-700">Sound alerts:</strong> This demo has no real-time alert service to play sounds for.</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="mt-3 text-xs leading-5 text-slate-500">These options are saved locally as UI preferences. Theme, layout density, location, and sound behavior need application or device-service support before they can take effect.</p>
+            <p className="mt-3 text-xs leading-5 text-slate-500">Display preferences are saved in this browser and apply across commuter pages. Location and sound controls will be available when the required device and alert services are connected.</p>
           </div>
 
           <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -296,7 +308,23 @@ export default function Settings() {
             if (event.target === event.currentTarget) setActiveDialog('')
           }}
         >
-          <section role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-dialog-title"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setActiveDialog('')
+                return
+              }
+              if (event.key !== 'Tab') return
+              const focusable = Array.from(event.currentTarget.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])'))
+              if (focusable.length !== 1) return
+              event.preventDefault()
+              focusable[0].focus()
+            }}
+            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl"
+          >
             <h2 id="settings-dialog-title" className="text-xl font-black text-navy">
               {activeDialog === 'password' ? 'Password settings' : activeDialog === 'devices' ? 'Signed-in devices' : 'Privacy controls'}
             </h2>
@@ -308,7 +336,7 @@ export default function Settings() {
                   : 'You can manage notification and location preferences above. Location access is not requested or collected by this demo.'}
             </p>
             <div className="mt-5 flex justify-end">
-              <Button onClick={() => setActiveDialog('')}>Close</Button>
+              <Button autoFocus onClick={() => setActiveDialog('')}>Close</Button>
             </div>
           </section>
         </div>

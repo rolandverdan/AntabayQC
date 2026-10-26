@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
-import { CircleAlert, FileText, MapPin, ShieldCheck, Phone, Upload, X } from 'lucide-react'
+import { CircleAlert, FileText, MapPin, ShieldCheck, Phone, CloudUpload, X } from 'lucide-react'
 
 const itemCategories = [
   'Bags & Backpacks',
@@ -43,6 +43,7 @@ export default function LostItem() {
   const fileInputRef = useRef(null)
   const [form, setForm] = useState(makeInitialForm)
   const [photo, setPhoto] = useState(null)
+  const [isPhotoDropActive, setIsPhotoDropActive] = useState(false)
   const [recentInquiries, setRecentInquiries] = useState([
     {
       id: 'QC-LR-2026-1008',
@@ -64,6 +65,20 @@ export default function LostItem() {
 
   const updateForm = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }))
+  }
+
+  const selectPhoto = (file) => {
+    if (!file) return
+    const acceptedTypes = ['image/png', 'image/jpeg', 'application/pdf']
+    if (!acceptedTypes.includes(file.type)) {
+      notify('Choose a PNG, JPG, or PDF file.', 'error')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      notify('The reference file must be 10 MB or smaller.', 'error')
+      return
+    }
+    setPhoto(file)
   }
 
   const resetForm = () => {
@@ -105,7 +120,7 @@ export default function LostItem() {
       <PageHeader
         title="Lost Item"
         description="File an inquiry, track depot verification, and claim recovered items."
-        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        actions={<div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 sm:flex">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
             <ShieldCheck size={16} />
           </div>
@@ -116,16 +131,16 @@ export default function LostItem() {
         </div>}
       />
 
-      <div className="border-b border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link to="/commuter/lost-item" className={`rounded-xl px-4 py-2 text-sm font-bold shadow-sm transition ${isFormActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
+      <nav className="border-b border-slate-200 bg-white px-4 py-3 shadow-sm" aria-label="Lost item pages">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to="/commuter/lost-item" aria-current={isFormActive ? 'page' : undefined} className={`min-h-11 rounded-xl px-4 py-2 text-sm font-bold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 ${isFormActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
             Report Lost Item
           </Link>
-          <Link to="/commuter/lost-item-reports" className={`rounded-xl px-4 py-2 text-sm shadow-sm transition ${isReportsActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
+          <Link to="/commuter/lost-item-reports" aria-current={isReportsActive ? 'page' : undefined} className={`min-h-11 rounded-xl px-4 py-2 text-sm shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 ${isReportsActive ? 'bg-brand text-white ring-2 ring-brand/20 hover:bg-brand/90' : 'border border-slate-200 bg-slate-50 font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}>
             Check My Reports / Claims
           </Link>
         </div>
-      </div>
+      </nav>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.5fr_0.75fr]">
         <form onSubmit={handleSubmit} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -141,16 +156,16 @@ export default function LostItem() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Item Category</label>
-              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label htmlFor="lost-category" className="mb-1 block text-sm font-semibold text-slate-700">Item Category</label>
+              <select id="lost-category" required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select item category...</option>
                 {itemCategories.map((category) => <option key={category}>{category}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Select Bus Route</label>
-              <select required value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label htmlFor="lost-route" className="mb-1 block text-sm font-semibold text-slate-700">Select Bus Route</label>
+              <select id="lost-route" required value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select Bus Route...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
                   <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
@@ -159,37 +174,37 @@ export default function LostItem() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
-              <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <label htmlFor="lost-bus" className="mb-1 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
+              <select id="lost-bus" value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Bus unknown / not listed</option>
                 {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
                 <option value="other">Other unit...</option>
               </select>
               {form.busId === 'other' && (
-                <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
+                <input aria-label="Other bus number or plate" required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
               )}
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Other identifying details <span className="font-normal text-slate-400">(optional)</span></label>
-              <input value={form.identifyingDetails} onChange={updateForm('identifyingDetails')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Color, brand, distinguishing marks..." />
+              <label htmlFor="lost-identifiers" className="mb-1 block text-sm font-semibold text-slate-700">Other identifying details <span className="font-normal text-slate-400">(optional)</span></label>
+              <input id="lost-identifiers" value={form.identifyingDetails} onChange={updateForm('identifyingDetails')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Color, brand, distinguishing marks..." />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Date &amp; Travel Time Window</label>
-              <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
+              <label htmlFor="lost-date" className="mb-1 block text-sm font-semibold text-slate-700">Date &amp; Travel Time Window</label>
+              <input id="lost-date" required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Time</label>
-              <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
+              <label htmlFor="lost-time" className="mb-1 block text-sm font-semibold text-slate-700">Time</label>
+              <input id="lost-time" required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
             </div>
           </div>
 
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
+            <label htmlFor="lost-location" className="mb-1 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <select required value={form.location} onChange={updateForm('location')} className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none">
+              <select id="lost-location" required value={form.location} onChange={updateForm('location')} className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none">
                 <option value="">Choose a stop or terminal...</option>
                 {availableStops.map((stop) => <option key={stop.id} value={stop.name}>{stop.name}</option>)}
                 <option value="other">Other location...</option>
@@ -197,34 +212,75 @@ export default function LostItem() {
               <MapPin size={16} className="text-slate-400" />
             </div>
             {form.location === 'other' && (
-              <input required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter location or seat position" />
+              <input aria-label="Other lost-item location" required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter location or seat position" />
             )}
           </div>
 
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Comprehensive Item Description</label>
-            <textarea required rows={4} value={form.description} onChange={updateForm('description')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Describe the item, including color, brand, marks, and contents..." />
+            <label htmlFor="lost-description" className="mb-1 block text-sm font-semibold text-slate-700">Comprehensive Item Description</label>
+            <textarea id="lost-description" required rows={4} value={form.description} onChange={updateForm('description')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Describe the item, including color, brand, marks, and contents..." />
           </div>
 
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Reference Photo or Proof of Ownership</label>
-            <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={(event) => setPhoto(event.target.files?.[0] || null)} className="sr-only" />
-            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3">
-              <button type="button" onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-                <Upload size={16} />
-                Choose a file
-              </button>
-              <span className="min-w-0 flex-1 truncate text-sm text-slate-500">{photo?.name || 'Image or PDF (optional)'}</span>
-              {photo && <button type="button" onClick={() => { setPhoto(null); fileInputRef.current.value = '' }} aria-label="Remove selected file" className="rounded-lg p-2 text-slate-500 hover:bg-slate-200"><X size={16} /></button>}
-            </div>
+            <label htmlFor="lost-photo" className="mb-1 block text-sm font-semibold text-slate-700">Reference Photo or Proof of Ownership</label>
+            <input
+              id="lost-photo"
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,application/pdf"
+              onChange={(event) => {
+                selectPhoto(event.target.files?.[0])
+                event.target.value = ''
+              }}
+              className="sr-only"
+              tabIndex={-1}
+            />
+            <button
+              type="button"
+              aria-describedby="lost-photo-help"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(event) => {
+                event.preventDefault()
+                setIsPhotoDropActive(true)
+              }}
+              onDragLeave={() => setIsPhotoDropActive(false)}
+              onDrop={(event) => {
+                event.preventDefault()
+                setIsPhotoDropActive(false)
+                selectPhoto(event.dataTransfer.files?.[0])
+              }}
+              className={`flex min-h-[88px] w-full flex-col items-center justify-center rounded-lg border bg-white px-4 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 ${
+                isPhotoDropActive ? 'border-brand bg-brand/5' : 'border-slate-300 hover:border-brand/50 hover:bg-slate-50'
+              }`}
+            >
+              <CloudUpload size={19} aria-hidden="true" className="mb-1 text-brand" />
+              <span className="text-xs font-semibold text-slate-700">Reference Photo or Proof of Ownership</span>
+              <span id="lost-photo-help" className="mt-1 text-xs text-slate-500">
+                PNG, JPG or PDF up to 10 MB. Speeds up instant verification at the central depot.
+              </span>
+            </button>
+            {photo && (
+              <div className="mt-2 flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700">{photo.name}</span>
+                <span className="shrink-0 text-xs text-slate-500">{(photo.size / (1024 * 1024)).toFixed(1)} MB</span>
+                <button
+                  type="button"
+                  onClick={() => setPhoto(null)}
+                  aria-label={`Remove ${photo.name}`}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Contact Phone (for SMS Claim Code)</label>
+              <label htmlFor="lost-phone" className="mb-1 block text-sm font-semibold text-slate-700">Contact Phone (for SMS Claim Code)</label>
               <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
                 <span className="text-sm font-semibold text-slate-700">+63</span>
-                <input required type="tel" inputMode="numeric" pattern="[0-9 +()-]{7,16}" value={form.phone} onChange={updateForm('phone')} className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" placeholder="9171234567" />
+                <input id="lost-phone" required type="tel" inputMode="numeric" pattern="[0-9 +()-]{7,16}" value={form.phone} onChange={updateForm('phone')} className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" placeholder="9171234567" />
               </div>
             </div>
 
@@ -262,7 +318,7 @@ export default function LostItem() {
             </div>
 
             <div className="space-y-3">
-              {recentInquiries.map((inquiry) => (
+              {recentInquiries.length ? recentInquiries.map((inquiry) => (
               <div key={inquiry.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -273,16 +329,20 @@ export default function LostItem() {
                 </div>
                 <div className="mt-2 text-xs text-slate-500">{inquiry.bus} · {inquiry.date}</div>
                 <div className="mt-1 text-xs text-slate-500">Case Ref: {inquiry.id}</div>
-                <button type="button" onClick={() => setSelectedInquiry(selectedInquiry?.id === inquiry.id ? null : inquiry)} className="mt-3 text-xs font-semibold text-brand hover:underline">
+                <button type="button" onClick={() => setSelectedInquiry(selectedInquiry?.id === inquiry.id ? null : inquiry)} aria-expanded={selectedInquiry?.id === inquiry.id} className="mt-3 min-h-11 rounded-md text-xs font-semibold text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
                   {selectedInquiry?.id === inquiry.id ? 'Hide details' : 'View details'}
                 </button>
                 {selectedInquiry?.id === inquiry.id && <p className="mt-2 rounded-lg bg-white p-2 text-xs leading-5 text-slate-600">{inquiry.details}</p>}
               </div>
-              ))}
+              )) : (
+                <p role="status" className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+                  No lost-item inquiries are available yet.
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="hidden rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm md:block">
             <div className="mb-4 flex items-center gap-3 text-lg font-black text-navy">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand">
                 <CircleAlert size={18} />

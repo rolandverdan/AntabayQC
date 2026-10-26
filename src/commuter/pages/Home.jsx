@@ -9,7 +9,6 @@ import {
   UserRound,
   PackageSearch,
   PhoneCall,
-  Check,
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
 
@@ -42,7 +41,7 @@ export default function CommuterHome() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {featureCards.map(({ title, subtitle, icon: Icon, href, tone }) => (
-              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
                 <div className="flex items-center gap-4">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
                     tone === 'amber' ? 'bg-yellow-100 text-yellow-700' :
@@ -60,11 +59,11 @@ export default function CommuterHome() {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:block">
             <h3 className="mb-4 text-lg font-bold text-navy">Quick Access</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {quickAccess.map(({ title, subtitle, icon: Icon, href, tone }) => (
-                <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white">
+                <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
                   <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${
                     tone === 'red' ? 'bg-red-500 text-white' :
                     tone === 'blue' ? 'bg-blue-600 text-white' :
@@ -81,7 +80,7 @@ export default function CommuterHome() {
         </section>
 
         <aside className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:block">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-slate-700">
                 <Bell size={16} className="text-slate-600" />
@@ -89,22 +88,21 @@ export default function CommuterHome() {
               </div>
               <Link to="/commuter/notification" className="text-xs font-semibold text-brand hover:underline">view all</Link>
             </div>
+            <p className="mb-3 text-xs text-slate-500">Sample advisories for preview only — not current service alerts.</p>
 
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
                   <span className="text-lg text-blue-500">⛅</span>
-                  Weather Advisory
+                  Sample weather advisory
                 </div>
-                <p className="text-xs text-slate-500">Today, Oct 09, 2026</p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
                   <span className="text-lg text-red-500">⚠</span>
-                  Traffic Advisory
+                  Sample traffic advisory
                 </div>
-                <p className="text-xs text-slate-500">Today, Oct 09, 2026</p>
               </div>
             </div>
           </div>
@@ -116,10 +114,7 @@ export default function CommuterHome() {
               </div>
               <div>
                 <h3 className="text-lg font-bold">QC LGU Hotline</h3>
-                <p className="mt-1 flex items-center gap-1.5 text-sm text-blue-100">
-                  <Check size={14} className="text-green-300" />
-                  Police Dispatch Active
-                </p>
+                <p className="mt-1 text-sm text-blue-100">For emergency assistance</p>
               </div>
             </div>
             <a

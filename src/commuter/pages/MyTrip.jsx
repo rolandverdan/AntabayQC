@@ -99,7 +99,7 @@ export default function MyTrip() {
                 type="button"
                 onClick={() => setShowTripDetails((current) => !current)}
                 aria-expanded={showTripDetails}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
+                className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
               >
                 {showTripDetails ? 'Hide details' : 'View details'}
               </button>
@@ -166,7 +166,7 @@ export default function MyTrip() {
                 type="button"
                 onClick={() => setShowAddTrip((current) => !current)}
                 aria-expanded={showAddTrip}
-                className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="min-h-11 rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
               >
                 {showAddTrip ? 'Cancel' : 'Add trip'}
               </button>
@@ -187,17 +187,17 @@ export default function MyTrip() {
                     <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
                   ))}
                 </select>
-                <button type="submit" className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
+                <button type="submit" className="min-h-11 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
                   Save route
                 </button>
-                <button type="button" onClick={() => setShowAddTrip(false)} aria-label="Close add trip form" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                <button type="button" onClick={() => setShowAddTrip(false)} aria-label="Close add trip form" className="min-h-11 min-w-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
                   <X size={16} />
                 </button>
               </form>
             )}
 
-            <div className="space-y-3">
-              {savedTrips.map((trip) => (
+            <div className="space-y-3" aria-live="polite">
+              {savedTrips.length ? savedTrips.map((trip) => (
                 <div key={trip.route} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-brand/25">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -225,13 +225,18 @@ export default function MyTrip() {
                       )}
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-600">
-                    <span>{trip.from}</span>
-                    <ArrowRight size={14} className="text-slate-400" />
-                    <span>{trip.to}</span>
+                  <div className="mt-3 flex flex-col items-start gap-2 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <span className="break-words">{trip.from}</span>
+                    <ArrowRight size={14} aria-hidden="true" className="hidden shrink-0 text-slate-400 sm:block" />
+                    <ArrowDown size={14} aria-hidden="true" className="sm:hidden" />
+                    <span className="break-words">{trip.to}</span>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <p role="status" className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+                  You haven’t saved any routes yet. Choose <strong>Add trip</strong> to save one for this session.
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -248,7 +253,7 @@ export default function MyTrip() {
             </div>
 
             <div className="space-y-3">
-              {tripHistory.map((trip) => (
+              {tripHistory.length ? tripHistory.map((trip) => (
                 <div key={`${trip.route}-${trip.date}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:border-brand/25">
                   <button
                     type="button"
@@ -275,11 +280,15 @@ export default function MyTrip() {
                     </p>
                   )}
                 </div>
-              ))}
+              )) : (
+                <p role="status" className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+                  Your recent trip history will appear here when it’s available.
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="hidden rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm md:block">
             <h3 className="mb-3 text-lg font-black text-navy">Quick actions</h3>
             <div className="space-y-3">
               {[
