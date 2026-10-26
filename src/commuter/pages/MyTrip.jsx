@@ -111,7 +111,7 @@ export default function MyTrip() {
                   <RouteIcon size={16} className="text-brand" />
                   R-02 QC Hall ↔ Commonwealth
                 </div>
-                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700">
+                <span className="commuter-status-tag rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700">
                   On time
                 </span>
               </div>
@@ -205,7 +205,7 @@ export default function MyTrip() {
                       <p className="mt-1 text-xs text-slate-500">{trip.time}</p>
                     </div>
                     <span className="flex shrink-0 items-center gap-2">
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                      <span className={`commuter-status-tag rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
                         trip.tone === 'green' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                       }`}>
                         {trip.status}

@@ -7,7 +7,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   Upload,
-  Clock3,
   Phone,
   X,
 } from 'lucide-react'
@@ -16,15 +15,26 @@ import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
 
 const categoryGuide = [
-  { label: 'Driver', desc: 'Driver conduct, route issues, speeding, unsafe driving.' },
-  { label: 'Conductor', desc: 'Conductor conduct, staff behavior, route support issues.' },
-  { label: 'Passenger', desc: 'Passenger conduct, disputes, safety or misconduct.' },
-  { label: 'Bus Condition', desc: 'Air conditioning, ventilation, maintenance, cleanliness.' },
-  { label: 'Delay / Schedule', desc: 'Trip delays, missed stops, schedule disruption.' },
-  { label: 'Overcrowding', desc: 'Overloaded trips, queue issues, unsafe standing space.' },
-  { label: 'Lost Item', desc: 'Item left behind, missing belongings, recovery status.' },
-  { label: 'General Concern', desc: 'General complaints, service quality, observations.' },
+  { label: 'Driver', desc: 'Driver conduct, route issues, speeding, unsafe driving.', tone: 'red' },
+  { label: 'Conductor', desc: 'Conductor conduct, staff behavior, route support issues.', tone: 'violet' },
+  { label: 'Passenger', desc: 'Passenger conduct, disputes, safety or misconduct.', tone: 'amber' },
+  { label: 'Bus Condition', desc: 'Air conditioning, ventilation, maintenance, cleanliness.', tone: 'orange' },
+  { label: 'Delay / Schedule', desc: 'Trip delays, missed stops, schedule disruption.', tone: 'blue' },
+  { label: 'Overcrowding', desc: 'Overloaded trips, queue issues, unsafe standing space.', tone: 'purple' },
+  { label: 'Lost Item', desc: 'Item left behind, missing belongings, recovery status.', tone: 'teal' },
+  { label: 'General Concern', desc: 'General complaints, service quality, observations.', tone: 'slate' },
 ]
+
+const categoryToneClasses = {
+  red: 'bg-red-100 text-red-700',
+  violet: 'bg-violet-100 text-violet-700',
+  amber: 'bg-amber-100 text-amber-700',
+  orange: 'bg-orange-100 text-orange-700',
+  blue: 'bg-blue-100 text-blue-700',
+  purple: 'bg-purple-100 text-purple-700',
+  teal: 'bg-teal-100 text-teal-700',
+  slate: 'bg-slate-200 text-slate-700',
+}
 
 const demoReports = [
   { title: 'AC Malfunction on Route 2 (Bus #5678)', status: 'Under Inspection', tone: 'blue' },
@@ -122,9 +132,9 @@ export default function Report() {
         </div>}
       />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.55fr_0.75fr]">
-        <form onSubmit={handleSubmit} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(340px,0.9fr)]">
+        <form onSubmit={handleSubmit} className="min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="mb-6 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <FileText size={18} />
@@ -136,7 +146,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Report Category <span className="text-red-500">*</span></label>
               <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
@@ -159,18 +169,12 @@ export default function Report() {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Operational Date</label>
-              <div className="relative">
-                <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
-                <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
+              <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Time</label>
-              <div className="relative">
-                <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
-                <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
+              <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
             </div>
 
             <div className="md:col-span-2">
@@ -306,8 +310,8 @@ export default function Report() {
           </div>
         </form>
 
-        <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="min-w-0 space-y-5">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3 text-base font-black text-navy">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <FileText size={16} />
@@ -315,8 +319,8 @@ export default function Report() {
               Report Categories Guide
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {categoryGuide.map(({ label, desc }) => (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {categoryGuide.map(({ label, desc, tone }) => (
                 <button
                   key={label}
                   type="button"
@@ -324,18 +328,20 @@ export default function Report() {
                   aria-pressed={form.category === label}
                   className={`rounded-xl border p-2.5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                     form.category === label
-                      ? 'border-brand bg-brand/5 shadow-sm'
-                      : 'border-slate-200 bg-slate-50 hover:border-brand/30 hover:bg-white hover:shadow-sm'
+                      ? 'border-brand bg-brand/5 shadow-sm ring-1 ring-brand/20'
+                      : 'border-slate-200 bg-white hover:border-brand/30 hover:bg-slate-50 hover:shadow-sm'
                   }`}
                 >
-                  <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">{label}</div>
-                  <div className="text-[11px] leading-4 text-slate-600">{desc}</div>
+                  <span className={`mb-1.5 inline-flex rounded-md px-2 py-0.5 !text-xs font-bold uppercase tracking-[0.06em] ${categoryToneClasses[tone]}`}>
+                    {label}
+                  </span>
+                  <div className="!text-sm leading-5 text-slate-600">{desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2 text-base font-black text-navy">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <ShieldCheck size={16} />
@@ -354,7 +360,7 @@ export default function Report() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="text-sm font-bold text-slate-800">{report.title}</div>
-                    <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${
+                    <span className={`commuter-status-tag shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${
                       report.tone === 'blue' ? 'bg-blue-100 text-blue-700' :
                       report.tone === 'amber' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                     }`}>
@@ -372,7 +378,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-brand/20 bg-brand p-4 text-white shadow-sm">
+          <div className="rounded-[18px] border border-brand/20 bg-brand p-5 text-white shadow-sm">
             <div className="mb-3 flex items-center gap-3 text-lg font-black">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
                 <ShieldAlert size={18} />

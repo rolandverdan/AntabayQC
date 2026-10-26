@@ -26,13 +26,23 @@ const quickAccess = [
   { title: 'Settings', subtitle: 'Manage your account and preferences.', icon: Settings, tone: 'dark', href: '/commuter/settings' },
 ]
 
+const mobileShortcuts = [
+  { title: 'Routes & Schedules', icon: RouteIcon, href: '/commuter/route-and-schedule', tone: 'amber' },
+  { title: 'Live Tracking', icon: MapPinned, href: '/commuter/live-tracking', tone: 'green' },
+  { title: 'Lost Items', icon: PackageSearch, href: '/commuter/lost-item', tone: 'yellow' },
+  { title: 'My Trips', icon: UserRound, href: '/commuter/my-trip', tone: 'blue' },
+  { title: 'Report Incidents', icon: AlertTriangle, href: '/commuter/report', tone: 'red' },
+  { title: 'Send Feedback', icon: MessageSquareText, href: '/commuter/feedback', tone: 'blue' },
+  { title: 'Settings', icon: Settings, href: '/commuter/settings', tone: 'dark' },
+]
+
 export default function CommuterHome() {
   return (
     <>
       <PageHeader title="Home" description="Your quick access to QC Bus routes, trips, and commuter services." />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <section className="space-y-5 lg:col-span-2">
-          <div className="h-52 overflow-hidden rounded-2xl bg-[#0d54b8] p-0 shadow-sm ring-1 ring-blue-900/10">
+          <div className="hidden h-52 overflow-hidden rounded-2xl bg-[#0d54b8] p-0 shadow-sm ring-1 ring-blue-900/10 md:block">
             <img
               src="/images/bus1.jpeg"
               alt="QC Bus"
@@ -40,7 +50,28 @@ export default function CommuterHome() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3 md:hidden">
+            {mobileShortcuts.map(({ title, icon: Icon, href, tone }) => (
+              <Link
+                key={title}
+                to={href}
+                className="flex min-h-28 flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm transition hover:border-brand/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+              >
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                  tone === 'amber' ? 'bg-yellow-100 text-yellow-700' :
+                  tone === 'green' ? 'bg-green-100 text-green-700' :
+                  tone === 'blue' ? 'bg-blue-100 text-blue-700' :
+                  tone === 'red' ? 'bg-red-100 text-red-700' :
+                  tone === 'dark' ? 'bg-brand/10 text-brand' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  <Icon size={22} />
+                </span>
+                <span className="!text-sm font-bold leading-5 text-navy">{title}</span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden grid-cols-1 gap-4 sm:grid-cols-2 md:grid">
             {featureCards.map(({ title, subtitle, icon: Icon, href, tone }) => (
               <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className="flex items-center gap-4">
@@ -60,7 +91,7 @@ export default function CommuterHome() {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:block">
             <h3 className="mb-4 text-lg font-bold text-navy">Quick Access</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {quickAccess.map(({ title, subtitle, icon: Icon, href, tone }) => (
@@ -81,7 +112,7 @@ export default function CommuterHome() {
         </section>
 
         <aside className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:block">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-slate-700">
                 <Bell size={16} className="text-slate-600" />

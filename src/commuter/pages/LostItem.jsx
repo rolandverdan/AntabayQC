@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
-import { CircleAlert, FileText, MapPin, ShieldCheck, Phone, Upload, X } from 'lucide-react'
+import { FileText, MapPin, Upload, X } from 'lucide-react'
 
 const itemCategories = [
   'Bags & Backpacks',
@@ -105,15 +105,6 @@ export default function LostItem() {
       <PageHeader
         title="Lost Item"
         description="File an inquiry, track depot verification, and claim recovered items."
-        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
-            <ShieldCheck size={16} />
-          </div>
-          <div>
-            <div className="font-bold text-slate-800">QC Central Terminal Depot</div>
-            <div className="text-xs text-slate-500">Open Now • 08:00 – 17:00 PHT</div>
-          </div>
-        </div>}
       />
 
       <div className="border-b border-slate-200 bg-white px-4 py-3 shadow-sm">
@@ -135,7 +126,6 @@ export default function LostItem() {
             </div>
             <div>
               <p className="text-xl font-black text-navy">Tell us about your lost item</p>
-              <p className="text-sm text-slate-500">Provide specific identifiers so fleet conductors and depot managers can locate your item faster.</p>
             </div>
           </div>
 
@@ -242,15 +232,6 @@ export default function LostItem() {
 
         <aside className="space-y-5">
           <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-lg font-black text-navy">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                  <ShieldCheck size={16} />
-                </div>
-                Official QC Bus Commuter Protection Program
-              </div>
-            </div>
-
             <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 font-bold text-navy">
@@ -269,7 +250,7 @@ export default function LostItem() {
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-brand text-xs font-bold text-white">R</span>
                     <span className="text-sm font-bold text-navy">{inquiry.title}</span>
                   </div>
-                  <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">{inquiry.status}</span>
+                  <span className="commuter-status-tag rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">{inquiry.status}</span>
                 </div>
                 <div className="mt-2 text-xs text-slate-500">{inquiry.bus} · {inquiry.date}</div>
                 <div className="mt-1 text-xs text-slate-500">Case Ref: {inquiry.id}</div>
@@ -282,36 +263,6 @@ export default function LostItem() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center gap-3 text-lg font-black text-navy">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand">
-                <CircleAlert size={18} />
-              </div>
-              How QC Recovery Works
-            </div>
-
-            <div className="space-y-4">
-              {[
-                'Digital intake: Your submission immediately broadcasts to terminal dispatchers and drivers on that specific line.',
-                'Depot boarding: Conductors deposit lost items at the QC City Hall Depot and log the item into the transit system.',
-                'Secure match & pickup: Upon positive match, present your QC Citizen ID or valid government ID with your digital SMS claim token.',
-              ].map((text, idx) => (
-                <div key={text} className="flex gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">{idx + 1}</div>
-                  <p className="text-sm leading-6 text-slate-600">{text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[18px] border border-slate-200 bg-brand px-4 py-3 text-white shadow-sm">
-            <div className="mb-2 flex items-center gap-2 text-base font-black">
-              <Phone size={18} />
-              Direct Transit Police &amp; Hotline
-            </div>
-            <div className="text-lg font-bold">(02) 8888-4242 loc. 8112</div>
-            <div className="mt-1 text-sm text-blue-100">QC Hotline 122</div>
-          </div>
         </aside>
       </div>
     </div>

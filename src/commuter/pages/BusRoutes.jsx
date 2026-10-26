@@ -26,16 +26,7 @@ export default function BusRoutes() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Bus Routes" description="Explore QC Bus routes, stops, and daily service hours." />
-
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-slate-500">Daily service · Weekdays &amp; weekends · Holiday operations may vary.</p>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center sm:min-w-[250px]">
-          <p className="text-xl font-bold leading-tight text-navy sm:text-2xl">6:00 AM – 9:00 PM</p>
-          <p className="mt-1.5 text-sm font-medium text-slate-600">Monday – Sunday</p>
-          <p className="text-xs text-slate-500">Except on holidays</p>
-        </div>
-      </div>
+      <PageHeader title="Bus Routes" description="Explore QC Bus routes and stops." />
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -144,22 +135,23 @@ export default function BusRoutes() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Active Buses</p>
-              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">8</p>
+          <div className="grid grid-cols-3 gap-2 md:gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-2 text-center shadow-sm sm:p-4">
+              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs">Active Buses</p>
+              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">8</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Frequency</p>
-              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">15–20</p>
-              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-2 text-center shadow-sm sm:p-4">
+              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs">Frequency</p>
+              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">15–20</p>
+              <p className="!text-xs text-slate-500">minutes</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Trip Duration</p>
-              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">30–45</p>
-              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-2 text-center shadow-sm sm:p-4">
+              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs">Trip Duration</p>
+              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">30–45</p>
+              <p className="!text-xs text-slate-500">minutes</p>
             </div>
           </div>
+          <p className="mt-2 text-center !text-xs text-slate-500">Official City Bus Routes • Quezon City Government (QC Bus System)</p>
         </div>
       </div>
     </div>

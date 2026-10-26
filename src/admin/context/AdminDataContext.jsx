@@ -101,20 +101,21 @@ export function AdminDataProvider({ children }) {
     saveBus: (bus) =>
       setDb((p) => {
         const exists = p.buses.some((b) => b.id === bus.id)
-        let buses = exists
-          ? p.buses.map((b) => (b.id === bus.id ? { ...b, ...bus } : b))
-          : [...p.buses, { passengers: 0, speed: bus.status === 'Active' ? 20 : 0, progress: 0, ...bus }]
-        // a driver / conductor can only be assigned to one bus
-        buses = buses.map((b) =>
-          b.id === bus.id
-            ? b
-            : {
-                ...b,
-                driverId: bus.driverId && b.driverId === bus.driverId ? '' : b.driverId,
-                conductorId: bus.conductorId && b.conductorId === bus.conductorId ? '' : b.conductorId,
-              },
-        )
-        return withLog({ ...p, buses }, {
+        const nextBus = { passengers: 0, speed: bus.status === 'Active' ? 20 : 0, progress: 0, ...bus }
+        const buses = exists
+          ? p.buses.map((b) => (b.id === bus.id ? nextBus : b))
+          : [...p.buses, nextBus]
+
+        // a driver / conductor can only be assigned to one bus at a time
+        const nextBuses = buses.map((b) => {
+          if (b.id === bus.id) return b
+          const next = { ...b }
+          if (bus.driverId && b.driverId === bus.driverId) next.driverId = ''
+          if (bus.conductorId && b.conductorId === bus.conductorId) next.conductorId = ''
+          return next
+        })
+
+        return withLog({ ...p, buses: nextBuses }, {
           action: exists ? 'Bus information updated' : 'Bus added',
           module: 'Buses',
           severity: exists ? 'Info' : 'Success',
