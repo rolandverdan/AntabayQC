@@ -23,11 +23,11 @@ export default function CommuterLayout() {
   const activeRoutes = routes.filter((r) => r.status === 'Active').length
 
   const title = NAV_ITEMS.find((item) => pathname === item.to)?.label
-    || NAV_ITEMS.find((item) => pathname.startsWith(item.to))?.label
     || ({
       '/commuter/terms-and-conditions': 'Terms & Conditions',
-      '/commuter/privacy-policy': 'Privacy Policy',
+      '/commuter/settings/privacy-policy': 'Privacy Policy',
     }[pathname])
+    || NAV_ITEMS.find((item) => pathname.startsWith(item.to))?.label
     || 'Home'
   const footerPageName = {
     '/commuter/home': 'Home',
@@ -41,6 +41,7 @@ export default function CommuterLayout() {
     '/commuter/feedback': 'Feedback',
     '/commuter/notification': 'Notifications',
     '/commuter/settings': 'Settings',
+    '/commuter/settings/privacy-policy': 'Privacy Policy',
     '/commuter/help-support': 'Help & Support',
   }[pathname] || title
   const handleLogout = () => {
@@ -70,6 +71,8 @@ export default function CommuterLayout() {
           commuterMode
           commuterMeta={`${activeBuses} buses · ${activeRoutes} routes`}
         />
+
+        <div aria-hidden="true" className="h-16 md:hidden" />
 
         <main className="flex min-h-[calc(100vh-4rem)] flex-col p-4 md:min-h-0 md:p-6">
           <div className="flex-1">

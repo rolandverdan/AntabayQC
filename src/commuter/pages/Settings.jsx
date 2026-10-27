@@ -307,7 +307,7 @@ export default function Settings() {
                   <span className="inline-flex items-center gap-2"><FileText size={16} /> Terms &amp; Conditions</span>
                   <ChevronRight size={16} className="text-slate-500" />
                 </Link>
-                <Link to="/commuter/privacy-policy" className="flex min-h-11 items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-medium text-slate-700 transition hover:border-brand/30 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                <Link to="/commuter/settings/privacy-policy" className="flex min-h-11 items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-medium text-slate-700 transition hover:border-brand/30 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
                   <span className="inline-flex items-center gap-2"><ShieldCheck size={16} /> Privacy Policy</span>
                   <ChevronRight size={16} className="text-slate-500" />
                 </Link>
@@ -335,7 +335,7 @@ export default function Settings() {
                   : 'You can manage notification and location preferences above. Location access is not requested or collected by this demo.'}
             </p>
             {activeDialog === 'privacy' && (
-              <Link to="/commuter/privacy-policy" onClick={() => setActiveDialog('')} className="mt-3 inline-flex min-h-10 items-center text-sm font-bold text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+              <Link to="/commuter/settings/privacy-policy" onClick={() => setActiveDialog('')} className="mt-3 inline-flex min-h-10 items-center text-sm font-bold text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
                 Read the draft Privacy Policy
               </Link>
             )}

@@ -39,6 +39,25 @@ body {
   line-height: 1.35;
 }
 
+/* Match the commuter phone text sizing without changing the desktop layout. */
+@media (max-width: 767px) {
+  .commuter-layout > div > header {
+    position: fixed;
+    inset: 0 0 auto;
+  }
+
+  .commuter-layout,
+  .commuter-layout :where(*) {
+    font-size: 1rem;
+  }
+
+  .commuter-layout .commuter-status-tag {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+}
+
 /* Keep Leaflet panes below modals / dropdowns */
 .leaflet-container { z-index: 0; font-family: var(--font-sans); border-radius: 0.75rem; }
 
