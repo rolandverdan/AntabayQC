@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Bell,
+  CircleHelp,
   ChevronRight,
+  FileText,
   Lock,
   Moon,
   Palette,
@@ -45,7 +48,7 @@ function readSettings() {
 
 function ToggleRow({ label, hint, checked, onChange }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+    <label className="flex min-h-16 cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-300 bg-white px-3 py-3 shadow-sm md:min-h-0 md:border-slate-200 md:bg-slate-50 md:shadow-none">
       <div>
         <p className="text-sm font-semibold text-navy">{label}</p>
         {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
@@ -55,7 +58,7 @@ function ToggleRow({ label, hint, checked, onChange }) {
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         aria-label={label}
-        className="h-4 w-4 accent-brand"
+        className="h-5 w-5 shrink-0 accent-brand"
       />
     </label>
   )
@@ -223,6 +226,20 @@ export default function Settings() {
         </section>
 
         <aside className="space-y-5">
+          <Link
+            to="/commuter/help-support"
+            className="flex items-center gap-3 rounded-[18px] border border-slate-300 bg-white p-4 shadow-sm transition hover:border-brand/40 md:border-slate-200"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+              <CircleHelp size={20} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-navy">Help &amp; Support</span>
+              <span className="mt-0.5 block text-xs text-slate-600">FAQs and useful commuter links</span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-slate-500" />
+          </Link>
+
           <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
@@ -254,7 +271,7 @@ export default function Settings() {
               />
               <ToggleRow
                 label="Sound alerts"
-                hint="Saved in this browser; no audio is played"
+                hint="Saved in this browser; no audio is played in this demo"
                 checked={preferences.soundAlerts}
                 onChange={(value) => updatePreference('soundAlerts', value)}
               />
@@ -285,6 +302,16 @@ export default function Settings() {
                 <span className="inline-flex items-center gap-2"><Moon size={16} /> Privacy controls</span>
                 <ChevronRight size={16} className="text-slate-400" />
               </button>
+              <div className="mt-2 space-y-2 border-t border-slate-200 pt-3 md:hidden">
+                <Link to="/commuter/terms-and-conditions" className="flex min-h-11 items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-medium text-slate-700 transition hover:border-brand/30 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                  <span className="inline-flex items-center gap-2"><FileText size={16} /> Terms &amp; Conditions</span>
+                  <ChevronRight size={16} className="text-slate-500" />
+                </Link>
+                <Link to="/commuter/privacy-policy" className="flex min-h-11 items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-medium text-slate-700 transition hover:border-brand/30 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                  <span className="inline-flex items-center gap-2"><ShieldCheck size={16} /> Privacy Policy</span>
+                  <ChevronRight size={16} className="text-slate-500" />
+                </Link>
+              </div>
             </div>
           </div>
         </aside>
@@ -302,11 +329,16 @@ export default function Settings() {
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               {activeDialog === 'password'
-                ? 'Password updates are not available because commuter accounts are not connected to an authentication service.'
+                ? 'Password updates are not available in this front-end demo because commuter accounts are not connected to an authentication service.'
                 : activeDialog === 'devices'
-                  ? 'Signed-in devices are not tracked. Connect an account service to review or revoke active sessions.'
-                  : 'You can manage notification and location preferences above. Location access is not requested or collected.'}
+                  ? 'This demo does not track signed-in devices. Connect an account service to review or revoke active sessions.'
+                  : 'You can manage notification and location preferences above. Location access is not requested or collected by this demo.'}
             </p>
+            {activeDialog === 'privacy' && (
+              <Link to="/commuter/privacy-policy" onClick={() => setActiveDialog('')} className="mt-3 inline-flex min-h-10 items-center text-sm font-bold text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                Read the draft Privacy Policy
+              </Link>
+            )}
             <div className="mt-5 flex justify-end">
               <Button onClick={() => setActiveDialog('')}>Close</Button>
             </div>

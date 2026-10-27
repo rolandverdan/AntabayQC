@@ -44,6 +44,9 @@ import Report from './commuter/pages/Report.jsx'
 import Feedback from './commuter/pages/Feedback.jsx'
 import Notification from './commuter/pages/Notification.jsx'
 import CommuterSettings from './commuter/pages/Settings.jsx'
+import HelpSupport from './commuter/pages/HelpSupport.jsx'
+import TermsConditions from './commuter/pages/TermsConditions.jsx'
+import PrivacyPolicy from './commuter/pages/PrivacyPolicy.jsx'
 
 export default function App() {
   return (
@@ -121,6 +124,9 @@ export default function App() {
                     <Route path="feedback" element={<Feedback />} />
                     <Route path="notification" element={<Notification />} />
                     <Route path="settings" element={<CommuterSettings />} />
+                    <Route path="help-support" element={<HelpSupport />} />
+                    <Route path="terms-and-conditions" element={<TermsConditions />} />
+                    <Route path="privacy-policy" element={<PrivacyPolicy />} />
                   </Route>
 
                   <Route path="*" element={<Navigate to="/" replace />} />
