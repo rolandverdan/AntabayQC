@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar.jsx'
 import Header from './Header.jsx'
-import SidebarTab from '../components/SidebarTab.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -16,7 +15,7 @@ export default function AdminLayout() {
   const { pathname } = useLocation()
 
   // `collapsed` = icon-only by default; hovering (or focusing) the sidebar expands it temporarily.
-  const [collapsed, setCollapsed] = useState(true)
+  const [collapsed, setCollapsed] = useState(settings.sidebarCollapsed)
   const [hovered, setHovered] = useState(false)
   const expanded = !collapsed || hovered
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -41,14 +40,14 @@ export default function AdminLayout() {
         onCloseMobile={() => setMobileOpen(false)}
         onLogout={() => setConfirmLogout(true)}
       />
-      <SidebarTab collapsed={collapsed} expanded={expanded} onToggle={() => setCollapsed((c) => !c)} onHoverChange={setHovered} />
-      <div className={`pt-[var(--topbar-h)] transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
+      <div className={`transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
         <Header
-          expanded={expanded}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
           onOpenMobile={() => setMobileOpen(true)}
           onLogout={() => setConfirmLogout(true)}
         />
-        <main className="px-4 pb-4 pt-3 md:px-6 md:pb-6">
+        <main className="p-4 md:p-6">
           <Outlet />
         </main>
       </div>

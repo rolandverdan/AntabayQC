@@ -5,7 +5,6 @@ import Header from '../../admin/layouts/Header.jsx'
 import { NAV_ITEMS } from './navItems.js'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useCommuter } from '../context/CommuterContext.jsx'
-import SidebarTab from '../../admin/components/SidebarTab.jsx'
 
 export default function CommuterLayout() {
   const { settings, buses, routes } = useAdminData()
@@ -32,7 +31,7 @@ export default function CommuterLayout() {
   }
 
   return (
-    <div className="commuter-layout mobile-ui min-h-screen bg-[#eef3f7]" data-density={settings.density}>
+    <div className="commuter-layout min-h-screen bg-[#eef3f7]" data-density={settings.density}>
       <Sidebar
         expanded={expanded}
         onHoverChange={setHovered}
@@ -43,12 +42,10 @@ export default function CommuterLayout() {
         items={NAV_ITEMS}
       />
 
-      <SidebarTab collapsed={collapsed} expanded={expanded} onToggle={() => setCollapsed((c) => !c)} onHoverChange={setHovered} />
-
-      <div className={`pt-[var(--topbar-h)] transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
+      <div className={`transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
         <Header
-          expanded={expanded}
-          roleLabel="Commuter Console"
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
           onOpenMobile={() => setMobileOpen(true)}
           onLogout={handleLogout}
           title={title}
@@ -56,7 +53,7 @@ export default function CommuterLayout() {
           commuterMeta={`${activeBuses} buses · ${activeRoutes} routes`}
         />
 
-        <main className="px-4 pb-4 pt-3 md:px-6 md:pb-6">
+        <main className="p-4 md:p-6">
           <Outlet />
         </main>
       </div>

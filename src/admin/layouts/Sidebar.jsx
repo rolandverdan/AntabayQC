@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { X } from 'lucide-react'
 import { NAV_ITEMS, LOGOUT_ITEM } from './navItems.js'
 
 // `expanded` is false only on desktop when the sidebar is collapsed and not hovered/focused.
@@ -11,6 +12,8 @@ export default function Sidebar({
   onHoverChange,
   items = NAV_ITEMS,
   commuterMode = false,
+  commuterMeta = 'Commuter Console',
+  roleLabel = 'Admin Console',
   navLabel,
 }) {
   const LogoutIcon = LOGOUT_ITEM.icon
@@ -34,15 +37,32 @@ export default function Sidebar({
     <>
       {mobileOpen && <div className="fixed inset-0 z-30 bg-slate-900/50 lg:hidden" onClick={onCloseMobile} />}
       <aside
-        // Hover only reacts to a real mouse; touch devices use the menu button in the header.
+        // Hover only reacts to a real mouse; touch devices use the menu / pin buttons in the header.
         onPointerEnter={(e) => e.pointerType === 'mouse' && onHoverChange(true)}
         onPointerLeave={(e) => e.pointerType === 'mouse' && onHoverChange(false)}
         onFocus={() => onHoverChange(true)}
         onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) onHoverChange(false) }}
-        className={`fixed left-0 top-[var(--topbar-h)] z-40 flex h-[calc(100dvh-var(--topbar-h))] w-64 flex-col overflow-hidden bg-brand text-white shadow-xl transition-[width,transform] duration-200 ease-out lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-40 flex h-full w-64 flex-col overflow-hidden bg-brand text-white shadow-xl transition-[width,transform] duration-200 ease-out lg:translate-x-0 ${
           expanded ? 'lg:w-64' : 'lg:w-[76px]'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-[18px]">
+          <img
+            src="/images/Antabay QC Logo.png"
+            alt="Antabay QC"
+            className="h-14 w-auto max-w-[44px] shrink-0 object-contain"
+          />
+          {!commuterMode && (
+            <div className={`min-w-0 leading-tight ${labelCls}`}>
+              <p className="truncate text-sm font-bold tracking-wide">ANTABAY QC</p>
+              <p className="truncate text-[11px] text-blue-200">{roleLabel}</p>
+            </div>
+          )}
+          <button type="button" onClick={onCloseMobile} aria-label="Close menu" className="ml-auto rounded-md p-1 hover:bg-white/10 lg:hidden">
+            <X size={18} />
+          </button>
+        </div>
+
         <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label={navLabel || (commuterMode ? 'Commuter navigation' : 'Admin navigation')}>
           {items.map(renderLink)}
         </nav>

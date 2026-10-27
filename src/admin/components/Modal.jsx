@@ -21,9 +21,9 @@ export default function Modal({ open, onClose, title, children, footer, size = '
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
       <div role="dialog" aria-modal="true" aria-label={title} className={`relative flex max-h-[92dvh] w-full flex-col rounded-xl bg-white shadow-2xl ${WIDTHS[size]}`}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200 py-1 pl-5 pr-4 sm:py-2">
           <h2 className="text-base font-bold text-navy">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={onClose} aria-label="Close" className="-mr-2 flex h-11 w-11 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>

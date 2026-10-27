@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Download, Eye, FileText, Clock, CircleCheck, TriangleAlert } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -6,7 +6,6 @@ import { StatCard, PageHeader } from '../components/Card.jsx'
 import Button, { IconButton } from '../components/Button.jsx'
 import Badge from '../components/Badge.jsx'
 import DataTable from '../components/DataTable.jsx'
-import useHighlight from '../hooks/useHighlight.js'
 import SearchFilterBar, { DateRange } from '../components/SearchFilterBar.jsx'
 import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
@@ -31,11 +30,6 @@ export default function ReportLogs() {
   const [viewId, setViewId] = useState(null)
   const [newStatus, setNewStatus] = useState('')
   const [confirm, setConfirm] = useState(null)
-  const highlight = useHighlight()
-  // Arriving from a notification: clear filters so the picked reports are definitely visible.
-  useEffect(() => {
-    if (highlight.size) { setQ(''); setType(''); setStatus(''); setRouteF(''); setFrom(''); setTo('') }
-  }, [highlight])
 
   const rows = useMemo(
     () => reports
@@ -76,7 +70,7 @@ export default function ReportLogs() {
 
   return (
     <>
-      <PageHeader hideTitle
+      <PageHeader
         title="Report Logs"
         description="Operational reports submitted about buses and routes (separate from system logs)."
         actions={<Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button>}
@@ -98,7 +92,7 @@ export default function ReportLogs() {
       >
         <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </SearchFilterBar>
-      <DataTable columns={columns} rows={rows} highlightKeys={highlight} emptyTitle="No reports match" />
+      <DataTable columns={columns} rows={rows} emptyTitle="No reports match" />
 
       <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Report ${view.id}` : ''} footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (

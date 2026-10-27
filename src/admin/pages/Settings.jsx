@@ -56,7 +56,7 @@ export default function Settings() {
 
   return (
     <>
-      <PageHeader hideTitle title="Settings" description="Administrator profile and preferences." />
+      <PageHeader title="Settings" description="Administrator profile and preferences." />
       <Notice tone="blue">Settings are saved in this browser&apos;s local storage only. There is no server-side storage, and this is not secure storage.</Notice>
 
       <div className="grid gap-5 xl:grid-cols-3">
@@ -79,6 +79,18 @@ export default function Settings() {
             </div>
           </Card>
 
+          <Card title="Dashboard & display">
+            <div className="divide-y divide-slate-100">
+              <Toggle label="Show map preview on dashboard" checked={draft.showMapPreview} onChange={(v) => setDraft((d) => ({ ...d, showMapPreview: v }))} />
+              <Toggle label="Show recent activity cards" hint="Recent system, report, and emergency logs." checked={draft.showRecentActivity} onChange={(v) => setDraft((d) => ({ ...d, showRecentActivity: v }))} />
+              <Toggle label="Collapse sidebar by default" hint="Icons only; expands when you hover over it. Turn off to keep it open. Applies on next sign in or reload." checked={draft.sidebarCollapsed} onChange={(v) => setDraft((d) => ({ ...d, sidebarCollapsed: v }))} />
+            </div>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              <Field label="Table density"><select className={inputClass(false)} value={draft.density} onChange={upd('density')}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></Field>
+              <Field label="Rows per table page"><select className={inputClass(false)} value={draft.pageSize} onChange={upd('pageSize')}>{[5, 8, 10, 15, 20].map((n) => <option key={n} value={n}>{n}</option>)}</select></Field>
+            </div>
+          </Card>
+
           <div className="flex flex-wrap justify-end gap-2">
             <Button variant="secondary" icon={RotateCcw} onClick={() => { setDraft(settings); setErrors({}) }} disabled={!dirty}>Reset / Cancel</Button>
             <Button type="submit" icon={Save} disabled={!dirty}>Save Changes</Button>
@@ -88,9 +100,9 @@ export default function Settings() {
         <div className="space-y-5">
           <Card title="Change password">
             <form onSubmit={changePassword} noValidate className="space-y-3">
-              <Field label="Current password" required error={pwErrors.current}><input type="password" autoComplete="current-password" className={inputClass(pwErrors.current)} value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></Field>
-              <Field label="New password" required error={pwErrors.next}><input type="password" autoComplete="new-password" className={inputClass(pwErrors.next)} value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} /></Field>
-              <Field label="Confirm new password" required error={pwErrors.confirm}><input type="password" autoComplete="new-password" className={inputClass(pwErrors.confirm)} value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} /></Field>
+              <Field label="Current password" error={pwErrors.current}><input type="password" autoComplete="current-password" className={inputClass(pwErrors.current)} value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></Field>
+              <Field label="New password" error={pwErrors.next}><input type="password" autoComplete="new-password" className={inputClass(pwErrors.next)} value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} /></Field>
+              <Field label="Confirm new password" error={pwErrors.confirm}><input type="password" autoComplete="new-password" className={inputClass(pwErrors.confirm)} value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} /></Field>
               <Button type="submit" variant="secondary" icon={Lock} className="w-full">Update password</Button>
             </form>
           </Card>

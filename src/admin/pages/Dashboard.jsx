@@ -53,22 +53,27 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader hideTitle description="Overview of the ANTABAY QC system." />
+      <PageHeader
+        title="Dashboard"
+        description="Overview of the ANTABAY QC system."
+        actions={
+          <>
+            <Button icon={Plus} onClick={() => navigate('/admin/buses?new=1')}>Create Bus</Button>
+            <Button icon={Route} variant="secondary" onClick={() => navigate('/admin/routes?new=1')}>Add Route</Button>
+            <Button icon={UserPlus} variant="secondary" onClick={() => navigate('/admin/accounts?new=driver')}>Register Driver</Button>
+            <Button icon={Siren} variant="danger" onClick={() => navigate('/admin/emergency-logs')}>View Emergencies</Button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard reserveSub icon={Bus} label="Total buses" value={buses.length} to="/admin/buses" />
-        <StatCard reserveSub icon={CircleCheck} label="Active buses" value={activeBuses} tone="green" sub={`${buses.length - activeBuses} not in service`} to="/admin/buses" />
-        <StatCard reserveSub icon={Users} label="Drivers & conductors" value={accounts.length} tone="teal" sub={`${drivers} drivers · ${conductors} conductors`} to="/admin/accounts" />
-        <StatCard reserveSub icon={MapPin} label="Total bus stops" value={stops.length} tone="teal" to="/admin/bus-stops" />
-        <StatCard reserveSub icon={Route} label="Total routes" value={routes.length} to="/admin/routes" sub={`${routes.filter((r) => r.status === 'Active').length} active`} />
-        <StatCard reserveSub icon={Siren} label="Active emergencies" value={activeEmergencies} tone="red" to="/admin/emergency-logs" />
-        <StatCard reserveSub icon={FileText} label="Pending reports" value={pendingReports} tone="amber" to="/admin/report-logs" />
-        <div className="order-first grid min-h-[6.25rem] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm sm:order-none" role="group" aria-label="Quick actions">
-          <Button size="sm" icon={Plus} onClick={() => navigate('/admin/buses?new=1')}>Create Bus</Button>
-          <Button size="sm" icon={Route} variant="secondary" onClick={() => navigate('/admin/routes?new=1')}>Add Route</Button>
-          <Button size="sm" icon={UserPlus} variant="secondary" onClick={() => navigate('/admin/accounts?new=driver')}>Register Driver</Button>
-          <Button size="sm" icon={Siren} variant="danger" onClick={() => navigate('/admin/emergency-logs')}>View Emergencies</Button>
-        </div>
+        <StatCard icon={Bus} label="Total buses" value={buses.length} to="/admin/buses" />
+        <StatCard icon={CircleCheck} label="Active buses" value={activeBuses} tone="green" sub={`${buses.length - activeBuses} not in service`} to="/admin/buses" />
+        <StatCard icon={Users} label="Drivers & conductors" value={accounts.length} tone="teal" sub={`${drivers} drivers · ${conductors} conductors`} to="/admin/accounts" />
+        <StatCard icon={MapPin} label="Total bus stops" value={stops.length} tone="teal" to="/admin/bus-stops" />
+        <StatCard icon={Route} label="Total routes" value={routes.length} to="/admin/routes" sub={`${routes.filter((r) => r.status === 'Active').length} active`} />
+        <StatCard icon={Siren} label="Active emergencies" value={activeEmergencies} tone="red" to="/admin/emergency-logs" />
+        <StatCard icon={FileText} label="Pending reports" value={pendingReports} tone="amber" to="/admin/report-logs" />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">

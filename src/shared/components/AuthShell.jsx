@@ -16,7 +16,9 @@ export default function AuthShell({ role, heading, blurb, footer, children }) {
           <LogoTile />
           <div>
             <p className="text-lg font-bold tracking-wide">ANTABAY QC</p>
-            <p className="text-xs text-blue-200">GIS-based Bus Tracking · Quezon City</p>
+            <p className="text-xs text-blue-200">A GIS-Based Real-Time Bus Tracking,
+ETA Prediction, and Passenger Occupancy
+Monitoring System for Quezon City</p>
           </div>
         </div>
         <div className="relative z-10">
@@ -39,7 +41,7 @@ export default function AuthShell({ role, heading, blurb, footer, children }) {
         <div className="relative z-10 w-full max-w-md">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-8 lg:shadow-sm">
             <div className="mb-5 flex items-center gap-3 lg:hidden">
-              <LogoTile size="sm" />
+              <LogoTile size="sm" className="shadow-none ring-1 ring-slate-200" />
               <div className="leading-tight">
                 <p className="font-bold text-navy">ANTABAY QC</p>
                 <p className="text-[11px] text-slate-500">{role}</p>

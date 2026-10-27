@@ -12,8 +12,6 @@ export const LOG_COLUMNS = [
   { header: 'Description', value: (l) => l.description },
 ]
 
-export const exportCategory = (key) => EXPORT_CATEGORIES.find((c) => c.key === key)
-
 const nameOf = (accountsById, id) => accountsById[id]?.fullName || ''
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Ban, CircleCheck, Download, Eye, Pencil, Plus, Route as RouteIcon, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Ban, CircleCheck, Eye, Pencil, Plus, Route as RouteIcon, X } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -15,8 +15,6 @@ import DetailGrid from '../components/DetailGrid.jsx'
 import MapView from '../components/MapView.jsx'
 import { inputClass } from '../utils/ui.js'
 import { includesText, nextId } from '../utils/format.js'
-import { downloadCsv, todayStamp } from '../utils/csv.js'
-import { exportCategory } from '../utils/exportConfig.js'
 import { routeColor } from '../utils/geo.js'
 import { ACCOUNT_STATUSES } from '../data/constants.js'
 
@@ -79,17 +77,6 @@ export default function CreateRoutes() {
   const view = routes.find((r) => r.id === viewId)
   const availableStops = form ? stops.filter((s) => s.status === 'Active' && !form.stopIds.includes(s.id)) : []
 
-  // Exports exactly what the table shows: same search and filters.
-  const exportCsv = () => {
-    if (!rows.length) {
-      notify('No routes match the current search and filters, so nothing was exported.', 'error')
-      return
-    }
-    const cat = exportCategory('routes')
-    downloadCsv(`antabay-${cat.file}-${todayStamp()}.csv`, rows, cat.columns({ stopsById }))
-    notify(`Exported ${rows.length} record(s) to CSV.`, 'info')
-  }
-
   const columns = [
     { key: 'id', header: 'Route ID', render: (r) => <span className="flex items-center gap-2 font-semibold text-navy"><span className="h-3 w-3 rounded-full" style={{ background: routeColor(r.id, r) }} />{r.id}</span> },
     { key: 'name', header: 'Route name' },
@@ -112,7 +99,7 @@ export default function CreateRoutes() {
 
   return (
     <>
-      <PageHeader hideTitle title="Routes" description="Define routes by selecting existing bus stops and arranging them in order." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={RouteIcon} onClick={openCreate}>Add Route</Button></>} />
+      <PageHeader title="Routes" description="Define routes by selecting existing bus stops and arranging them in order." actions={<Button icon={RouteIcon} onClick={openCreate}>Add Route</Button>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search route ID, name, origin, destination…"
         filters={[{ label: 'Status', value: status, onChange: setStatus, options: ACCOUNT_STATUSES.map((s) => ({ value: s, label: s })) }]}

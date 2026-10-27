@@ -29,7 +29,7 @@ export default function ExportData() {
 
   return (
     <>
-      <PageHeader hideTitle title="Export Data" description="Download records currently stored in this admin console as a CSV file." />
+      <PageHeader title="Export Data" description="Download records currently stored in this admin console as a CSV file." />
       <div className="grid gap-5 lg:grid-cols-3">
         <Card title="Export settings" className="lg:col-span-1" bodyClass="space-y-4 p-4">
           <Field label="Data category">

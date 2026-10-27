@@ -10,8 +10,8 @@ const selectCls = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm
 
 function Row({ title, description, htmlFor, children }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="min-w-0">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+      <div className="min-w-0 flex-1 basis-40">
         <label htmlFor={htmlFor} className="block text-sm font-semibold text-navy">{title}</label>
         {description && <p className="text-xs text-slate-500">{description}</p>}
       </div>
@@ -60,7 +60,7 @@ export default function SettingsPage() {
             </select>
           </Row>
           <Row title={`Volume: ${sound.volume}%`} htmlFor="s-vol">
-            <input id="s-vol" type="range" min="0" max="100" step="5" value={sound.volume} disabled={!sound.enabled} onChange={(e) => updateSetting('sound', 'volume', Number(e.target.value))} className="w-36 accent-brand disabled:opacity-50" />
+            <input id="s-vol" type="range" min="0" max="100" step="5" value={sound.volume} disabled={!sound.enabled} onChange={(e) => updateSetting('sound', 'volume', Number(e.target.value))} className="h-6 w-40 max-w-full accent-brand disabled:opacity-50" />
           </Row>
           <div className="py-3">
             <Button variant="secondary" size="sm" icon={Play} disabled={!sound.enabled} onClick={() => playTone(sound.tone, sound.volume)}>Play test sound</Button>

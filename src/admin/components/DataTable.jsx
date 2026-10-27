@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 
 /** columns: [{ key, header, render?: (row) => node, className? }] */
-export default function DataTable({ columns, rows, rowKey = 'id', pageSize, emptyTitle = 'No records found', emptyHint = 'Try changing your search or filters.', rowClassName, highlightKeys }) {
+export default function DataTable({ columns, rows, rowKey = 'id', pageSize, emptyTitle = 'No records found', emptyHint = 'Try changing your search or filters.', rowClassName }) {
   const { settings } = useAdminData()
   const size = pageSize || settings.pageSize || 8
   const [page, setPage] = useState(1)
@@ -11,19 +11,6 @@ export default function DataTable({ columns, rows, rowKey = 'id', pageSize, empt
   const current = Math.min(page, pages)
 
   useEffect(() => setPage(1), [rows.length])
-
-  // Rows named in `highlightKeys` pulse. Jump to the page that holds the first one and scroll it into view.
-  const bodyRef = useRef(null)
-  const hasHighlight = !!highlightKeys && highlightKeys.size > 0
-  useEffect(() => {
-    if (!hasHighlight) return undefined
-    const idx = rows.findIndex((r) => highlightKeys.has(r[rowKey]))
-    if (idx < 0) return undefined
-    setPage(Math.floor(idx / size) + 1)
-    const t = setTimeout(() => bodyRef.current?.querySelector('[data-highlighted="true"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightKeys, rows])
 
   const start = (current - 1) * size
   const slice = rows.slice(start, start + size)
@@ -41,13 +28,9 @@ export default function DataTable({ columns, rows, rowKey = 'id', pageSize, empt
               ))}
             </tr>
           </thead>
-          <tbody ref={bodyRef} className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100">
             {slice.map((row) => (
-              <tr
-                key={row[rowKey]}
-                data-highlighted={hasHighlight && highlightKeys.has(row[rowKey]) ? 'true' : undefined}
-                className={`hover:bg-slate-50/70 ${rowClassName ? rowClassName(row) : ''} ${hasHighlight && highlightKeys.has(row[rowKey]) ? 'row-pulse' : ''}`}
-              >
+              <tr key={row[rowKey]} className={`hover:bg-slate-50/70 ${rowClassName ? rowClassName(row) : ''}`}>
                 {columns.map((c) => (
                   <td key={c.key} className={`align-middle text-slate-700 ${c.className || ''}`}>
                     {c.render ? c.render(row) : row[c.key]}

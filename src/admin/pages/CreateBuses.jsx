@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Ban, Bus, CircleCheck, Download, Eye, Pencil } from 'lucide-react'
+import { Ban, Bus, CircleCheck, Eye, Pencil } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -15,8 +15,6 @@ import DetailGrid from '../components/DetailGrid.jsx'
 import OccupancyBar from '../components/OccupancyBar.jsx'
 import { inputClass } from '../utils/ui.js'
 import { includesText, nextId } from '../utils/format.js'
-import { downloadCsv, todayStamp } from '../utils/csv.js'
-import { exportCategory } from '../utils/exportConfig.js'
 import { BUS_STATUSES } from '../data/constants.js'
 
 export default function CreateBuses() {
@@ -80,17 +78,6 @@ export default function CreateBuses() {
 
   const view = buses.find((b) => b.id === viewId)
 
-  // Exports exactly what the table shows: same search and filters.
-  const exportCsv = () => {
-    if (!rows.length) {
-      notify('No buses match the current search and filters, so nothing was exported.', 'error')
-      return
-    }
-    const cat = exportCategory('buses')
-    downloadCsv(`antabay-${cat.file}-${todayStamp()}.csv`, rows, cat.columns({ accountsById }))
-    notify(`Exported ${rows.length} record(s) to CSV.`, 'info')
-  }
-
   const columns = [
     { key: 'id', header: 'Bus', render: (b) => (<div><p className="font-semibold text-navy">{b.id}</p><p className="max-w-48 truncate text-xs text-slate-500">{b.model}</p></div>) },
     { key: 'plate', header: 'Plate' },
@@ -114,7 +101,7 @@ export default function CreateBuses() {
 
   return (
     <>
-      <PageHeader hideTitle title="Buses" description="Add, edit, and manage the bus fleet." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Bus} onClick={openCreate}>Add Bus</Button></>} />
+      <PageHeader title="Buses" description="Add, edit, and manage the bus fleet." actions={<Button icon={Bus} onClick={openCreate}>Add Bus</Button>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search bus ID, plate, model, driver…"
         filters={[
