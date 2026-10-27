@@ -76,3 +76,26 @@ html, body { overflow-x: hidden; }
 .commuter-layout main .grid > *, #main .grid > *,
 .commuter-layout main .flex > *, #main .flex > * { min-width: 0; }
 .commuter-layout main img, .commuter-layout main svg, #main img, #main svg { max-width: 100%; }
+
+/* Sharpen the card and control outlines across commuter desktop pages. */
+@media (min-width: 768px) {
+  .commuter-layout main :is(
+    [class~="border-slate-200"],
+    [class~="md:border-slate-200"],
+    [class~="lg:border-slate-200"],
+    [class~="xl:border-slate-200"],
+    [class~="2xl:border-slate-200"]
+  ) {
+    border-color: #cbd5e1;
+  }
+
+  .commuter-layout main :is(
+    [class~="border-slate-100"],
+    [class~="md:border-slate-100"],
+    [class~="lg:border-slate-100"],
+    [class~="xl:border-slate-100"],
+    [class~="2xl:border-slate-100"]
+  ) {
+    border-color: #dbe3ed;
+  }
+}

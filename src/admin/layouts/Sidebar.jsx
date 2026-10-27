@@ -22,8 +22,8 @@ export default function Sidebar({
   const navClass = ({ isActive }) =>
     `${itemBase} ${isActive ? 'bg-white text-navy shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'}`
 
-  const renderLink = ({ to, label, icon: Icon }) => (
-    <NavLink key={to} to={to} title={label} className={navClass}>
+  const renderLink = ({ to, label, icon: Icon, mobileOnly }) => (
+    <NavLink key={to} to={to} title={label} className={(state) => `${navClass(state)} ${mobileOnly ? 'lg:hidden' : ''}`}>
       {({ isActive }) => (
         <>
           <Icon size={19} className={`shrink-0 ${isActive ? 'text-brand' : ''}`} />

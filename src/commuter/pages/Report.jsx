@@ -7,6 +7,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Upload,
+  Clock3,
   Phone,
   X,
 } from 'lucide-react'
@@ -26,14 +27,14 @@ const categoryGuide = [
 ]
 
 const categoryToneClasses = {
-  red: 'bg-red-100 text-red-700',
-  violet: 'bg-violet-100 text-violet-700',
-  amber: 'bg-amber-100 text-amber-700',
-  orange: 'bg-orange-100 text-orange-700',
-  blue: 'bg-blue-100 text-blue-700',
-  purple: 'bg-purple-100 text-purple-700',
-  teal: 'bg-teal-100 text-teal-700',
-  slate: 'bg-slate-200 text-slate-700',
+  red: 'bg-red-100 text-red-800 md:text-red-700',
+  violet: 'bg-violet-100 text-violet-800 md:text-violet-700',
+  amber: 'bg-amber-100 text-amber-800 md:text-amber-700',
+  orange: 'bg-orange-100 text-orange-800 md:text-orange-700',
+  blue: 'bg-blue-100 text-blue-800 md:text-blue-700',
+  purple: 'bg-purple-100 text-purple-800 md:text-purple-700',
+  teal: 'bg-teal-100 text-teal-800 md:text-teal-700',
+  slate: 'bg-slate-200 text-slate-800 md:text-slate-700',
 }
 
 const demoReports = [
@@ -120,11 +121,11 @@ export default function Report() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 md:space-y-5">
       <PageHeader
         title="Incident Report"
         description="Report a service incident, safety concern, or operational delay to the QC Commuter Protection & Safety Office."
-        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+        actions={<div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 md:flex">
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[9px] text-white">
             <Check size={10} />
           </span>
@@ -132,9 +133,9 @@ export default function Report() {
         </div>}
       />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(340px,0.9fr)]">
-        <form onSubmit={handleSubmit} className="min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-          <div className="mb-6 flex items-center justify-between gap-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.55fr_0.75fr]">
+        <form onSubmit={handleSubmit} className="min-w-0 rounded-[18px] border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-5">
+          <div className="mb-6 flex items-center justify-between gap-3 md:mb-5">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <FileText size={18} />
@@ -146,10 +147,10 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2 md:gap-4">
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Report Category <span className="text-red-500">*</span></label>
-              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select concern category...</option>
                 {categoryGuide.map(({ label }) => <option key={label}>{label}</option>)}
               </select>
@@ -157,29 +158,35 @@ export default function Report() {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
-              <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Bus unknown / not listed</option>
                 {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
                 <option value="other">Other unit...</option>
               </select>
               {form.busId === 'other' && (
-                <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
+                <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
               )}
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Operational Date</label>
-              <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
+              <div className="relative">
+                <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 md:pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
+                <Clock3 className="pointer-events-none absolute right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-400 md:block" />
+              </div>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Time</label>
-              <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
+              <div className="relative">
+                <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 md:pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
+                <Clock3 className="pointer-events-none absolute right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-400 md:block" />
+              </div>
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Route</label>
-              <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                 <option value="">Select route if known...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
                   <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
@@ -190,7 +197,7 @@ export default function Report() {
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
               <div className="relative">
-                <select value={form.location} onChange={updateForm('location')} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand">
+                <select value={form.location} onChange={updateForm('location')} className="w-full appearance-none rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand">
                   <option value="">Select stop or location if known...</option>
                   {availableStops.map((stop) => <option key={stop.id} value={stop.name}>{stop.name}</option>)}
                   <option value="other">Other location...</option>
@@ -198,13 +205,13 @@ export default function Report() {
                 <MapPin className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
               {form.location === 'other' && (
-                <input required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter terminal, stop, or landmark" />
+                <input required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter terminal, stop, or landmark" />
               )}
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Incident Severity / Urgency <span className="text-red-500">*</span></label>
-              <div className="grid grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <div className="grid grid-cols-3 rounded-xl border border-slate-300 bg-white p-1 shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none">
                 {['Low', 'Mid', 'High'].map((level) => (
                   <button
                     key={level}
@@ -213,8 +220,8 @@ export default function Report() {
                     aria-pressed={form.severity === level}
                     className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                       form.severity === level
-                        ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200'
-                        : 'text-slate-600 hover:bg-white/70'
+                      ? 'bg-brand text-white shadow-sm ring-1 ring-brand/20'
+                        : 'text-slate-700 hover:bg-slate-50 md:text-slate-600 md:hover:bg-white/70'
                     }`}
                   >
                     {level}
@@ -230,7 +237,7 @@ export default function Report() {
                 required
                 value={form.details}
                 onChange={updateForm('details')}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand"
+                className="w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand"
                 placeholder="Provide as much detail as possible including what occurred, your description, exact stop or landmark, and circumstances..."
               />
             </div>
@@ -241,7 +248,7 @@ export default function Report() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex min-h-[110px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-sm text-slate-500 transition-all duration-150 hover:border-brand/50 hover:bg-brand/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
+                className="flex min-h-[110px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-400 bg-white p-4 text-center text-sm text-slate-700 shadow-sm transition-all duration-150 hover:border-brand/50 hover:bg-brand/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 md:border-slate-300 md:bg-slate-50 md:text-slate-500 md:shadow-none"
               >
                 <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200">
                   <Upload size={18} />
@@ -252,7 +259,7 @@ export default function Report() {
               {evidence.length > 0 && (
                 <ul className="mt-2 space-y-2">
                   {evidence.map((file, index) => (
-                    <li key={`${file.name}-${file.lastModified}`} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+                    <li key={`${file.name}-${file.lastModified}`} className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm md:border-slate-200 md:text-slate-600 md:shadow-none">
                       <span className="min-w-0 flex-1 truncate">{file.name}</span>
                       <span className="shrink-0 text-xs text-slate-400">{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
                       <button
@@ -270,7 +277,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+          <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-brand/20 bg-brand/5 px-3 py-3 md:mt-5 md:border-slate-200 md:bg-slate-50">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-brand">
                 <Bell size={18} />
@@ -294,14 +301,14 @@ export default function Report() {
           </div>
 
           {!form.anonymous && (
-            <div className="mt-4">
+            <div className="mt-6 md:mt-4">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Contact Phone <span className="text-slate-400">(optional)</span></label>
-              <input type="tel" inputMode="tel" value={form.phone} onChange={updateForm('phone')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="For follow-up about this report" />
+              <input type="tel" inputMode="tel" value={form.phone} onChange={updateForm('phone')} className="w-full rounded-xl border border-slate-300 bg-white shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="For follow-up about this report" />
             </div>
           )}
 
-          <div className="mt-5 flex items-center justify-end gap-3">
-            <button type="button" onClick={resetForm} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-100 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-2 md:mt-5 md:gap-3">
+            <button type="button" onClick={resetForm} className="rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 md:border-slate-200 md:text-slate-700 md:shadow-none md:hover:border-slate-300">
               Clear Form
             </button>
             <button type="submit" className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
@@ -310,8 +317,8 @@ export default function Report() {
           </div>
         </form>
 
-        <aside className="min-w-0 space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+        <aside className="min-w-0 space-y-6 md:space-y-5">
+          <div className="rounded-[18px] border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-4">
             <div className="mb-4 flex items-center gap-3 text-base font-black text-navy">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <FileText size={16} />
@@ -319,29 +326,29 @@ export default function Report() {
               Report Categories Guide
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-3">
               {categoryGuide.map(({ label, desc, tone }) => (
                 <button
                   key={label}
                   type="button"
                   onClick={() => setForm((current) => ({ ...current, category: label }))}
                   aria-pressed={form.category === label}
-                  className={`rounded-xl border p-2.5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                  className={`rounded-xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 md:p-2.5 ${
                     form.category === label
-                      ? 'border-brand bg-brand/5 shadow-sm ring-1 ring-brand/20'
-                      : 'border-slate-200 bg-white hover:border-brand/30 hover:bg-slate-50 hover:shadow-sm'
+                      ? 'border-brand bg-brand/5 shadow-sm ring-1 ring-brand/20 md:ring-0'
+                      : 'border-slate-300 bg-white hover:border-brand/50 hover:bg-slate-50 hover:shadow-sm md:border-slate-200 md:bg-slate-50 md:hover:border-brand/30 md:hover:bg-white'
                   }`}
                 >
-                  <span className={`mb-1.5 inline-flex rounded-md px-2 py-0.5 !text-xs font-bold uppercase tracking-[0.06em] ${categoryToneClasses[tone]}`}>
+                  <span className={`mb-1.5 inline-flex rounded-md px-2 py-0.5 !text-xs font-bold uppercase tracking-[0.06em] md:mb-1 md:inline md:rounded-none md:bg-transparent md:px-0 md:py-0 md:!text-[11px] md:tracking-[0.08em] md:text-slate-500 ${categoryToneClasses[tone]}`}>
                     {label}
                   </span>
-                  <div className="!text-sm leading-5 text-slate-600">{desc}</div>
+                  <div className="!text-sm leading-5 text-slate-600 md:!text-[11px] md:leading-4">{desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-[18px] border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-4">
             <div className="mb-4 flex items-center gap-2 text-base font-black text-navy">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <ShieldCheck size={16} />
@@ -349,20 +356,20 @@ export default function Report() {
               My Active Reports
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4 md:space-y-3">
               {activeReports.map((report) => (
                 <button
                   key={report.title}
                   type="button"
                   onClick={() => setSelectedReport(selectedReport?.title === report.title ? null : report)}
                   aria-expanded={selectedReport?.title === report.title}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-left transition-all duration-150 hover:border-brand/30 hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-left shadow-sm transition-all duration-150 hover:border-brand/50 hover:bg-slate-50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 md:border-slate-200 md:bg-slate-50 md:shadow-none md:hover:border-brand/30 md:hover:bg-white"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="text-sm font-bold text-slate-800">{report.title}</div>
                     <span className={`commuter-status-tag shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${
-                      report.tone === 'blue' ? 'bg-blue-100 text-blue-700' :
-                      report.tone === 'amber' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                      report.tone === 'blue' ? 'bg-blue-100 text-blue-800 md:text-blue-700' :
+                      report.tone === 'amber' ? 'bg-amber-100 text-amber-800 md:text-amber-700' : 'bg-green-100 text-green-800 md:text-green-700'
                     }`}>
                       {report.status}
                     </span>
@@ -378,7 +385,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-brand/20 bg-brand p-5 text-white shadow-sm">
+          <div className="rounded-[18px] border border-brand/20 bg-brand p-4 text-white shadow-sm md:p-4">
             <div className="mb-3 flex items-center gap-3 text-lg font-black">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
                 <ShieldAlert size={18} />
@@ -413,6 +420,8 @@ export default function Report() {
           </div>
         </aside>
       </div>
+
+      <p className="mt-2 text-center text-xs text-slate-500 md:hidden">Incident reports submitted here are sample data and are not sent to a service.</p>
     </div>
   )
 }

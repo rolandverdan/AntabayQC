@@ -232,7 +232,7 @@ export default function Timetable() {
             </div>
           </div>
 
-          <div className="mt-4 text-center text-xs text-slate-500">Official City Bus Timetable • Quezon City Government (QC Bus System)</div>
+          <div className="mt-4 hidden text-center text-xs text-slate-500 md:block">Official City Bus Timetable • Quezon City Government (QC Bus System)</div>
         </div>
       </div>
     </div>

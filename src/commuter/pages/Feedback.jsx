@@ -66,7 +66,7 @@ export default function Feedback() {
       <PageHeader
         title="Feedback"
         description="Help us improve service quality, route reliability, and your commuter experience."
-        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        actions={<div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 md:flex">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
               <MessageSquareText size={16} />
             </div>
@@ -119,7 +119,9 @@ export default function Feedback() {
                     aria-label={`${value} out of 5 stars`}
                     aria-pressed={form.rating === value}
                     className={`flex h-10 w-10 items-center justify-center rounded-full border bg-white transition-all duration-150 hover:-translate-y-0.5 hover:border-amber-400 hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
-                      value <= form.rating ? 'border-amber-400 text-amber-500' : 'border-slate-200 text-slate-400'
+                      value <= form.rating
+                        ? 'border-amber-600 bg-amber-100 text-amber-700 shadow-sm md:border-amber-400 md:bg-white md:text-amber-500 md:shadow-none'
+                        : 'border-slate-300 text-slate-500 md:border-slate-200 md:text-slate-400'
                     }`}
                   >
                     <Star size={16} fill="currentColor" />

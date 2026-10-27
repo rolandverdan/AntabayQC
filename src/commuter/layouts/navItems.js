@@ -6,6 +6,7 @@ import {
   CircleAlert,
   MessageSquareText,
   Bell,
+  CircleHelp,
   Settings,
   UserRound,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ export const NAV_ITEMS = [
   { to: '/commuter/feedback', label: 'Feedback', icon: MessageSquareText },
   { to: '/commuter/notification', label: 'Notification', icon: Bell },
   { to: '/commuter/my-trip', label: 'My Trip', icon: UserRound },
+  { to: '/commuter/help-support', label: 'Help & Support', icon: CircleHelp, mobileOnly: true },
   { to: '/commuter/settings', label: 'Settings', icon: Settings },
 ]
 

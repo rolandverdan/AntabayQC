@@ -73,7 +73,7 @@ export default function CommuterHome() {
 
           <div className="hidden grid-cols-1 gap-4 sm:grid-cols-2 md:grid">
             {featureCards.map(({ title, subtitle, icon: Icon, href, tone }) => (
-              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:focus-visible:outline-none md:focus-visible:ring-2 md:focus-visible:ring-brand/50 md:focus-visible:ring-offset-2">
                 <div className="flex items-center gap-4">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
                     tone === 'amber' ? 'bg-yellow-100 text-yellow-700' :
@@ -95,7 +95,7 @@ export default function CommuterHome() {
             <h3 className="mb-4 text-lg font-bold text-navy">Quick Access</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {quickAccess.map(({ title, subtitle, icon: Icon, href, tone }) => (
-                <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white">
+                <Link key={title} to={href} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center transition hover:border-brand/30 hover:bg-white md:focus-visible:outline-none md:focus-visible:ring-2 md:focus-visible:ring-brand/50 md:focus-visible:ring-offset-2">
                   <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${
                     tone === 'red' ? 'bg-red-500 text-white' :
                     tone === 'blue' ? 'bg-blue-600 text-white' :
@@ -121,26 +121,32 @@ export default function CommuterHome() {
               <Link to="/commuter/notification" className="text-xs font-semibold text-brand hover:underline">view all</Link>
             </div>
 
+            <p className="mb-3 hidden text-xs text-slate-500 md:block">Sample advisories for preview only &mdash; not current service alerts.</p>
+
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                  <span className="text-lg text-blue-500">⛅</span>
-                  Weather Advisory
+                  <span className="text-lg text-blue-500 md:hidden">⛅</span>
+                  <span className="hidden text-lg text-blue-500 md:inline">&#x26c5;&#xfe0f;</span>
+                  <span className="md:hidden">Weather Advisory</span>
+                  <span className="hidden md:inline">Sample weather advisory</span>
                 </div>
-                <p className="text-xs text-slate-500">Today, Oct 09, 2026</p>
+                <p className="text-xs text-slate-500 md:hidden">Today, Oct 09, 2026</p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                  <span className="text-lg text-red-500">⚠</span>
-                  Traffic Advisory
+                  <span className="text-lg text-red-500 md:hidden">⚠</span>
+                  <span className="hidden text-lg text-red-500 md:inline">&#x26a0;&#xfe0f;</span>
+                  <span className="md:hidden">Traffic Advisory</span>
+                  <span className="hidden md:inline">Sample traffic advisory</span>
                 </div>
-                <p className="text-xs text-slate-500">Today, Oct 09, 2026</p>
+                <p className="text-xs text-slate-500 md:hidden">Today, Oct 09, 2026</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-brand p-5 text-white shadow-sm">
+          <div className="hidden rounded-2xl bg-brand p-5 text-white shadow-sm md:block">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
                 <PhoneCall size={22} />
