@@ -14,10 +14,8 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  // `collapsed` = icon-only by default; hovering (or focusing) the sidebar expands it temporarily.
-  const [collapsed, setCollapsed] = useState(settings.sidebarCollapsed)
   const [hovered, setHovered] = useState(false)
-  const expanded = !collapsed || hovered
+  const expanded = hovered // pure hover: icons only, opens while the pointer / keyboard focus is on the sidebar
   const [mobileOpen, setMobileOpen] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
 
@@ -40,14 +38,13 @@ export default function AdminLayout() {
         onCloseMobile={() => setMobileOpen(false)}
         onLogout={() => setConfirmLogout(true)}
       />
-      <div className={`transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
+      <div className={`pt-[var(--topbar-h)] transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
         <Header
-          collapsed={collapsed}
-          onToggleCollapse={() => setCollapsed((c) => !c)}
+          expanded={expanded}
           onOpenMobile={() => setMobileOpen(true)}
           onLogout={() => setConfirmLogout(true)}
         />
-        <main className="p-4 md:p-6">
+        <main className="px-4 pb-4 pt-3 md:px-6 md:pb-6">
           <Outlet />
         </main>
       </div>

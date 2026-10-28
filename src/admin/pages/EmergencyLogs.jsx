@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react'
-import { Eye, Siren, TriangleAlert, CircleCheck, Activity } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, Download, Eye, Siren, TriangleAlert, CircleCheck, Activity } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { StatCard, PageHeader } from '../components/Card.jsx'
 import Button, { IconButton } from '../components/Button.jsx'
 import Badge from '../components/Badge.jsx'
 import DataTable from '../components/DataTable.jsx'
+import useHighlight from '../hooks/useHighlight.js'
 import SearchFilterBar, { DateRange } from '../components/SearchFilterBar.jsx'
 import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
@@ -14,6 +16,8 @@ import DetailGrid from '../components/DetailGrid.jsx'
 import { inputClass } from '../utils/ui.js'
 import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
 import { EMERGENCY_SEVERITIES, EMERGENCY_STATUSES, INCIDENT_TYPES } from '../data/constants.js'
+import { downloadCsv, todayStamp } from '../utils/csv.js'
+import { exportCategory } from '../utils/exportConfig.js'
 
 const SEV_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 }
 const unresolved = (e) => e.status !== 'Resolved'
@@ -30,6 +34,12 @@ export default function EmergencyLogs() {
   const [viewId, setViewId] = useState(null)
   const [newStatus, setNewStatus] = useState('')
   const [confirm, setConfirm] = useState(null)
+  const navigate = useNavigate()
+  const highlight = useHighlight()
+  // Arriving from a notification: clear filters so the picked incidents are definitely visible.
+  useEffect(() => {
+    if (highlight.size) { setQ(''); setSev(''); setStatus(''); setType(''); setFrom(''); setTo('') }
+  }, [highlight])
 
   const rows = useMemo(
     () => emergencies
@@ -42,9 +52,20 @@ export default function EmergencyLogs() {
 
   const rowClass = (e) => {
     if (!unresolved(e)) return ''
-    if (e.severity === 'Critical') return 'bg-red-50/70 border-l-4 border-l-red-500'
-    if (e.severity === 'High') return 'bg-amber-50/70 border-l-4 border-l-amber-500'
+    if (e.severity === 'Critical') return 'bg-red-50/70 border-l-4 border-l-red-500 row-alert'
+    if (e.severity === 'High') return 'bg-amber-50/70 border-l-4 border-l-amber-500 row-alert-soft'
     return ''
+  }
+
+  // Exports exactly what the table shows: same search and filters.
+  const exportCsv = () => {
+    if (!rows.length) {
+      notify('No emergency records match the current search and filters, so nothing was exported.', 'error')
+      return
+    }
+    const cat = exportCategory('emergencies')
+    downloadCsv(`antabay-${cat.file}-${todayStamp()}.csv`, rows, cat.columns())
+    notify(`Exported ${rows.length} record(s) to CSV.`, 'info')
   }
 
   const columns = [
@@ -64,7 +85,7 @@ export default function EmergencyLogs() {
 
   return (
     <>
-      <PageHeader title="Emergency Logs" description="Incident monitoring. Critical and High unresolved incidents are highlighted and listed first." />
+      <PageHeader hideTitle title="Emergency Logs" description="Incident monitoring. Critical and High unresolved incidents are highlighted and listed first." actions={<><Button icon={ArrowLeft} variant="secondary" onClick={() => navigate('/admin/dashboard')}>Back to Dashboard</Button><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button></>} />
       <div className="mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard icon={Siren} label="Total emergencies" value={emergencies.length} />
         <StatCard icon={Activity} label="Active incidents" value={emergencies.filter(unresolved).length} tone="amber" sub="Not yet resolved" />
@@ -82,7 +103,7 @@ export default function EmergencyLogs() {
       >
         <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </SearchFilterBar>
-      <DataTable columns={columns} rows={rows} rowClassName={rowClass} emptyTitle="No incidents match" />
+      <DataTable columns={columns} rows={rows} rowClassName={rowClass} highlightKeys={highlight} emptyTitle="No incidents match" />
 
       <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Incident ${view.id}` : ''} footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (

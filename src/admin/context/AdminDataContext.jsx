@@ -103,7 +103,7 @@ export function AdminDataProvider({ children }) {
         const exists = p.buses.some((b) => b.id === bus.id)
         let buses = exists
           ? p.buses.map((b) => (b.id === bus.id ? { ...b, ...bus } : b))
-          : [...p.buses, { passengers: 0, speed: bus.status === 'Active' ? 20 : 0, progress: 0, ...bus }]
+          : [...p.buses, { passengers: 0, speed: bus.status === 'Active' ? 20 : 0, progress: 0, createdAt: new Date().toISOString(), ...bus }]
         // a driver / conductor can only be assigned to one bus
         buses = buses.map((b) =>
           b.id === bus.id

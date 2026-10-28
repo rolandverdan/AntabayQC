@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Ban, Bus, CircleCheck, Eye, Pencil } from 'lucide-react'
+import { Ban, Bus, CircleCheck, Download, Eye, Pencil } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -15,6 +15,8 @@ import DetailGrid from '../components/DetailGrid.jsx'
 import OccupancyBar from '../components/OccupancyBar.jsx'
 import { inputClass } from '../utils/ui.js'
 import { includesText, nextId } from '../utils/format.js'
+import { downloadCsv, todayStamp } from '../utils/csv.js'
+import { exportCategory } from '../utils/exportConfig.js'
 import { BUS_STATUSES } from '../data/constants.js'
 
 export default function CreateBuses() {
@@ -44,7 +46,9 @@ export default function CreateBuses() {
   const rows = useMemo(
     () => buses.filter((b) =>
       (!status || b.status === status) && (!routeF || b.routeId === routeF) &&
-      (!q || includesText([b.id, b.plate, b.model, name(b.driverId), name(b.conductorId)], q))),
+      (!q || includesText([b.id, b.plate, b.model, name(b.driverId), name(b.conductorId)], q)))
+      // Newest first, so a bus that was just added is on page 1. Seed buses (no createdAt) fall back to bus number.
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '') || (parseInt(b.id.replace(/\D/g, ''), 10) || 0) - (parseInt(a.id.replace(/\D/g, ''), 10) || 0)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [buses, accountsById, q, status, routeF],
   )
@@ -78,6 +82,17 @@ export default function CreateBuses() {
 
   const view = buses.find((b) => b.id === viewId)
 
+  // Exports exactly what the table shows: same search and filters.
+  const exportCsv = () => {
+    if (!rows.length) {
+      notify('No buses match the current search and filters, so nothing was exported.', 'error')
+      return
+    }
+    const cat = exportCategory('buses')
+    downloadCsv(`antabay-${cat.file}-${todayStamp()}.csv`, rows, cat.columns({ accountsById }))
+    notify(`Exported ${rows.length} record(s) to CSV.`, 'info')
+  }
+
   const columns = [
     { key: 'id', header: 'Bus', render: (b) => (<div><p className="font-semibold text-navy">{b.id}</p><p className="max-w-48 truncate text-xs text-slate-500">{b.model}</p></div>) },
     { key: 'plate', header: 'Plate' },
@@ -101,7 +116,7 @@ export default function CreateBuses() {
 
   return (
     <>
-      <PageHeader title="Buses" description="Add, edit, and manage the bus fleet." actions={<Button icon={Bus} onClick={openCreate}>Add Bus</Button>} />
+      <PageHeader hideTitle title="Buses" description="Add, edit, and manage the bus fleet." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Bus} onClick={openCreate}>Add Bus</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search bus ID, plate, model, driver…"
         filters={[
@@ -135,7 +150,7 @@ export default function CreateBuses() {
         {view && (
           <div className="space-y-5">
             <DetailGrid items={[
-              ['Bus ID', view.id], ['Plate number', view.plate], ['Model', view.model, true], ['Capacity', `${view.capacity} passengers`], ['Status', view.status],
+              ['Plate number', <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-navy ring-1 ring-inset ring-slate-300">{view.plate}</span>], ['Status', <Badge>{view.status}</Badge>], ['Model', view.model, true], ['Capacity', `${view.capacity} passengers`],
               ['Route', view.routeId ? `${view.routeId} · ${routesById[view.routeId]?.name}` : ''], ['Driver', name(view.driverId)], ['Conductor', name(view.conductorId)],
             ]} />
             <div>

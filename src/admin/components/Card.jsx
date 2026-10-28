@@ -24,28 +24,30 @@ const STAT_TONES = {
   teal: 'bg-deep/10 text-deep',
 }
 
-export function StatCard({ icon: Icon, label, value, sub, tone = 'blue', to }) {
+export function StatCard({ icon: Icon, label, value, sub, tone = 'blue', to, reserveSub = false }) {
   const body = (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+    <div className={`flex h-full items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md ${reserveSub ? 'min-h-[6.25rem]' : ''}`}>
       <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${STAT_TONES[tone]}`}>
         <Icon size={22} />
       </div>
       <div className="min-w-0">
-        <p className="truncate text-xs font-medium text-slate-500">{label}</p>
-        <p className="text-2xl font-bold leading-tight text-navy">{value}</p>
-        {sub && <p className="truncate text-xs text-slate-500">{sub}</p>}
+        <p className="truncate text-xs font-medium leading-4 text-slate-500">{label}</p>
+        <p className="text-2xl font-bold leading-8 text-navy">{value}</p>
+        {(sub || reserveSub) && <p className="min-h-4 truncate text-xs leading-4 text-slate-500">{sub || '\u00a0'}</p>}
       </div>
     </div>
   )
-  return to ? <Link to={to} className="block">{body}</Link> : body
+  return to ? <Link to={to} className="block h-full">{body}</Link> : body
 }
 
-export function PageHeader({ title, description, actions }) {
+export function PageHeader({ title, description, actions, hideTitle = false }) {
+  // hideTitle: the top header bar already shows the page name, so only the description and actions are rendered.
+  if (hideTitle && !description && !actions) return null
   return (
-    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className={`${hideTitle ? 'mb-3 sm:items-center' : 'mb-5 sm:items-end'} flex flex-col gap-3 sm:flex-row sm:justify-between`}>
       <div>
-        <h1 className="text-xl font-bold text-navy md:text-2xl">{title}</h1>
-        {description && <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p>}
+        {!hideTitle && <h1 className="text-xl font-bold text-navy md:text-2xl">{title}</h1>}
+        {description && <p className={`max-w-2xl text-sm text-slate-500 ${hideTitle ? '' : 'mt-1'}`}>{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

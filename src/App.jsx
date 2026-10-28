@@ -1,5 +1,4 @@
-import { Component, lazy, Suspense } from 'react'
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastProvider } from './admin/context/ToastContext.jsx'
 import { AdminDataProvider } from './admin/context/AdminDataContext.jsx'
 import { AuthProvider } from './admin/context/AuthContext.jsx'
@@ -45,34 +44,6 @@ import Report from './commuter/pages/Report.jsx'
 import Feedback from './commuter/pages/Feedback.jsx'
 import Notification from './commuter/pages/Notification.jsx'
 import CommuterSettings from './commuter/pages/Settings.jsx'
-import HelpSupport from './commuter/pages/HelpSupport.jsx'
-import TermsConditions from './commuter/pages/TermsConditions.jsx'
-
-const PrivacyPolicy = lazy(() => import('./commuter/pages/CommuterLegalInfo.jsx'))
-
-class PrivacyPolicyLoadBoundary extends Component {
-  state = { hasError: false }
-
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <p className="font-semibold">Privacy Policy could not be loaded.</p>
-          <p className="mt-1">Check whether your browser is blocking this page, then try again.</p>
-          <Link to="/commuter/settings" className="mt-3 inline-flex min-h-10 items-center font-semibold underline">
-            Return to Settings
-          </Link>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
 
 export default function App() {
   return (
@@ -150,18 +121,6 @@ export default function App() {
                     <Route path="feedback" element={<Feedback />} />
                     <Route path="notification" element={<Notification />} />
                     <Route path="settings" element={<CommuterSettings />} />
-                    <Route path="help-support" element={<HelpSupport />} />
-                    <Route path="terms-and-conditions" element={<TermsConditions />} />
-                    <Route
-                      path="settings/privacy-policy"
-                      element={(
-                        <PrivacyPolicyLoadBoundary>
-                          <Suspense fallback={<p role="status" className="text-sm text-slate-500">Loading Privacy Policy…</p>}>
-                            <PrivacyPolicy />
-                          </Suspense>
-                        </PrivacyPolicyLoadBoundary>
-                      )}
-                    />
                   </Route>
 
                   <Route path="*" element={<Navigate to="/" replace />} />

@@ -35,7 +35,6 @@ export default function CameraPage() {
     clearTimeout(timers.current[c.id])
     set(c.id, { status: 'Offline', error: '' })
   }
-  const canFullscreen = typeof document !== 'undefined' && !!document.fullscreenEnabled
   const fullscreen = () => frame.current?.requestFullscreen?.()
 
   const onlineCount = Object.values(states).filter((s) => s.status === 'Online').length
@@ -94,9 +93,7 @@ export default function CameraPage() {
                 {state.error ? 'Try again' : 'Start feed'}
               </Button>
             )}
-            {canFullscreen && (
-              <Button variant="secondary" icon={Maximize2} onClick={fullscreen} disabled={state.status !== 'Online'}>Full screen</Button>
-            )}
+            <Button variant="secondary" icon={Maximize2} onClick={fullscreen} disabled={state.status !== 'Online'}>Full screen</Button>
           </div>
         </Card>
 
