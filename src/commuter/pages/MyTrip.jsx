@@ -84,64 +84,40 @@ export default function MyTrip() {
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                   <Ticket size={18} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-navy md:text-xl">Upcoming trip</h2>
-                  <p className="text-xs text-slate-500 md:text-sm">Your next scheduled ride</p>
+                  <h2 className="text-xl font-black text-navy">Upcoming trip</h2>
+                  <p className="text-sm text-slate-500">Your next scheduled ride</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowTripDetails((current) => !current)}
                 aria-expanded={showTripDetails}
-                className="min-h-10 shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 md:border-slate-200 md:bg-slate-50 md:text-slate-600"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
               >
                 {showTripDetails ? 'Hide details' : 'View details'}
               </button>
             </div>
 
-            <div className="rounded-2xl border border-slate-300 bg-slate-50 p-3 md:border-slate-200 md:p-4">
-              <div className="mb-4 flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
-                <div className="flex min-w-0 items-center gap-2 text-sm font-bold leading-5 text-navy">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-bold text-navy">
                   <RouteIcon size={16} className="text-brand" />
                   R-02 QC Hall ↔ Commonwealth
                 </div>
-                <span className="commuter-status-tag rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700">
+                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700">
                   On time
                 </span>
               </div>
 
-              <div className="md:hidden">
-                <div className="flex items-start gap-3">
-                  <div className="flex shrink-0 flex-col items-center pt-1">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-700">
-                      <MapPin size={13} />
-                    </span>
-                    <span className="h-7 border-l-2 border-dashed border-slate-300" />
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10 text-brand">
-                      <MapPin size={13} />
-                    </span>
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-5">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">From</p>
-                      <p className="break-words text-sm font-semibold leading-5 text-navy">Quezon Memorial Circle</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">To</p>
-                      <p className="break-words text-sm font-semibold leading-5 text-navy">Commonwealth Avenue</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="hidden space-y-3 md:block">
-                <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
                     <MapPin size={16} />
                   </div>
@@ -155,7 +131,7 @@ export default function MyTrip() {
                   <ArrowDown size={18} />
                 </div>
 
-                <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand">
                     <MapPin size={16} />
                   </div>
@@ -166,35 +142,31 @@ export default function MyTrip() {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col items-start gap-2 rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-700 md:flex-row md:flex-wrap md:items-center md:gap-3 md:border-slate-200 md:text-slate-600">
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
                 <span className="inline-flex items-center gap-2"><Clock3 size={15} /> Today · 7:40 AM</span>
                 <span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-green-700" /> Safety check passed</span>
               </div>
-              <Link to="/commuter/live-tracking" className="mt-3 flex min-h-11 items-center justify-between rounded-xl bg-brand px-4 text-sm font-bold text-white shadow-sm transition hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 md:hidden">
-                <span>View route tracking</span>
-                <ArrowRight size={16} />
-              </Link>
               {showTripDetails && (
                 <div className="mt-3 rounded-xl border border-brand/15 bg-white p-3 text-sm text-slate-600">
                   <p className="font-semibold text-navy">Trip details</p>
                   <p className="mt-1">Route R-02 · Quezon City Hall to Commonwealth Avenue.</p>
-                  <p className="mt-1 text-xs text-slate-500">Schedule and bus status are sample information for this front-end demo.</p>
+                  <p className="mt-1 text-xs text-slate-500">Schedule and bus status are sample information.</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-black text-navy md:text-xl">Saved trips</h2>
-                <p className="text-xs text-slate-500 md:text-sm">Your frequent route patterns</p>
+                <h2 className="text-xl font-black text-navy">Saved trips</h2>
+                <p className="text-sm text-slate-500">Your frequent route patterns</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddTrip((current) => !current)}
                 aria-expanded={showAddTrip}
-                className="min-h-10 shrink-0 rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
               >
                 {showAddTrip ? 'Cancel' : 'Add trip'}
               </button>
@@ -226,14 +198,14 @@ export default function MyTrip() {
 
             <div className="space-y-3">
               {savedTrips.map((trip) => (
-                <div key={trip.route} className="rounded-2xl border border-slate-300 bg-white p-3 transition-colors hover:border-brand/25 md:border-slate-200 md:bg-slate-50 md:p-4">
-                  <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
-                    <div className="min-w-0">
+                <div key={trip.route} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-brand/25">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
                       <p className="text-sm font-bold text-navy">{trip.route}</p>
                       <p className="mt-1 text-xs text-slate-500">{trip.time}</p>
                     </div>
                     <span className="flex shrink-0 items-center gap-2">
-                      <span className={`commuter-status-tag rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
                         trip.tone === 'green' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                       }`}>
                         {trip.status}
@@ -253,10 +225,10 @@ export default function MyTrip() {
                       )}
                     </span>
                   </div>
-                  <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-xs leading-4 text-slate-700 md:flex md:justify-between md:gap-3 md:text-sm md:text-slate-600">
-                    <span className="break-words">{trip.from}</span>
+                  <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-600">
+                    <span>{trip.from}</span>
                     <ArrowRight size={14} className="text-slate-400" />
-                    <span className="break-words text-right md:text-left">{trip.to}</span>
+                    <span>{trip.to}</span>
                   </div>
                 </div>
               ))}
@@ -265,7 +237,7 @@ export default function MyTrip() {
         </section>
 
         <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
                 <Star size={18} />
@@ -299,7 +271,7 @@ export default function MyTrip() {
                   </button>
                   {expandedHistory === trip.route && (
                     <p className="mt-3 border-t border-slate-200 pt-2 text-xs leading-5 text-slate-500">
-                      Sample trip · Fare and rating are demo details. You can share feedback from the Feedback page.
+                      Sample trip · Fare and rating are sample details. You can share feedback from the Feedback page.
                     </p>
                   )}
                 </div>
@@ -307,7 +279,7 @@ export default function MyTrip() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="mb-3 text-lg font-black text-navy">Quick actions</h3>
             <div className="space-y-3">
               {[

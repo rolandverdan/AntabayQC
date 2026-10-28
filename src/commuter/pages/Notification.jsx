@@ -105,23 +105,22 @@ export default function Notification() {
         description="Stay up to date with service changes, safety advisories, and updates on your reports."
       />
 
-      <div className="mb-5 grid grid-cols-3 gap-2 md:gap-4">
+      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
         {summaryStats.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-2 shadow-sm sm:p-4">
-            <div className="flex items-center justify-between gap-1 sm:gap-3">
-              <div className="min-w-0">
-                <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs sm:tracking-[0.12em]">{label}</p>
-                <p className="mt-1 !text-lg font-black leading-tight text-navy sm:mt-2 sm:!text-3xl">
+          <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+                <p className="mt-2 text-3xl font-black text-navy">
                   {label === 'Unread' ? unreadCount : label === 'Active alerts' ? activeAlertCount : value}
                 </p>
               </div>
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11 sm:rounded-xl ${
+              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
                 tone === 'blue' ? 'bg-brand/10 text-brand' :
                 tone === 'amber' ? 'bg-amber-100 text-amber-700' :
                 'bg-green-100 text-green-700'
               }`}>
-                <Icon size={18} className="sm:hidden" />
-                <Icon size={20} className="hidden sm:block" />
+                <Icon size={20} />
               </div>
             </div>
           </div>
@@ -151,8 +150,8 @@ export default function Notification() {
                   aria-pressed={activeFilter === filter}
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 ${
                     activeFilter === filter
-                      ? 'bg-brand text-white shadow-sm ring-2 ring-brand/20 md:ring-0'
-                      : 'border border-slate-300 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-brand/50 hover:bg-slate-50 hover:text-brand hover:shadow-sm md:border-slate-200 md:bg-slate-50 md:text-slate-600 md:hover:border-brand/30 md:hover:bg-white'
+                      ? 'bg-brand text-white shadow-sm'
+                      : 'border border-slate-200 bg-slate-50 text-slate-600 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm'
                   }`}
                 >
                   {filter}
@@ -170,15 +169,11 @@ export default function Notification() {
             </div>
           </div>
 
-          <div className="space-y-3 p-4">
+          <div className="divide-y divide-slate-100">
             {filteredNotifications.length ? filteredNotifications.map(({ id, category, title, detail, time, icon: Icon, tone, unread }) => (
               <div
                 key={id}
-                className={`flex gap-3 rounded-xl border p-3 transition sm:gap-4 sm:p-4 ${
-                  unread
-                    ? 'border-brand/25 bg-brand/5'
-                    : 'border-slate-200 bg-white'
-                }`}
+                className={`flex gap-4 p-4 transition ${unread ? 'bg-slate-50/70' : 'bg-white'}`}
               >
                 <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
                   tone === 'amber' ? 'bg-amber-100 text-amber-700' :
@@ -193,7 +188,7 @@ export default function Notification() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{category}</span>
                     {unread && (
-                      <span className="commuter-status-tag inline-flex items-center rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white md:bg-brand/10 md:text-brand">
+                      <span className="inline-flex items-center rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-brand">
                         New
                       </span>
                     )}

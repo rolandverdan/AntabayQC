@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen, Siren, UserRound, Bus } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Menu, Siren, UserRound, Bus } from 'lucide-react'
+import TopBrand from '../../shared/components/TopBrand.jsx'
 import { LogoTile } from '../../shared/components/Logo.jsx'
 import { NAV_ITEMS } from './navItems.js'
 import { NOTIFICATIONS, VEHICLE, ROUTE } from '../data/mock.js'
 import { useConductor } from '../context/ConductorContext.jsx'
 
-export default function Topbar({ collapsed, onToggleCollapse, onSos, onLogout }) {
+export default function Topbar({ expanded, onOpenMobile, onSos, onLogout }) {
   const { profile, settings } = useConductor()
   const { pathname } = useLocation()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
@@ -17,35 +18,35 @@ export default function Topbar({ collapsed, onToggleCollapse, onSos, onLogout })
   const initials = profile.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 
   return (
-    <header className="pt-safe sticky top-0 z-20 border-b border-white/10 bg-brand text-white shadow-md">
-     <div className="flex h-16 items-center gap-2 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:gap-3 sm:pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1rem,env(safe-area-inset-right))]">
-      {/* Below lg there is no sidebar, so the logo lives here. Desktop shows it in the sidebar. */}
-      <LogoTile size="sm" className="lg:hidden" />
-      <button type="button" onClick={onToggleCollapse} aria-label={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} title={collapsed ? 'Pin sidebar open' : 'Collapse sidebar (expand on hover)'} className="hidden rounded-md p-2 hover:bg-white/10 lg:block">
-        {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+    <header className="pt-safe fixed inset-x-0 top-0 z-50 h-[var(--topbar-h)] border-b border-white/10 bg-brand text-white shadow-md">
+     <div className="flex h-16 items-center pr-3 sm:pr-4">
+      <button type="button" onClick={onOpenMobile} aria-label="Open menu" className="ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-white/10 lg:hidden">
+        <Menu size={20} />
       </button>
+      <span className="ml-1 hidden min-[400px]:block lg:hidden"><LogoTile size="sm" /></span>
+      <TopBrand expanded={expanded} roleLabel="Conductor Console" />
 
-      <div className="min-w-0">
-        <h1 className="truncate text-base font-bold sm:text-lg">{title}</h1>
+      <div className="min-w-0 pl-3 lg:pl-6">
+        <h1 className="truncate text-lg font-bold">{title}</h1>
         <p className="flex items-center gap-1.5 truncate text-[11px] text-cyan-100">
           <Bus size={12} /> {VEHICLE.plate} · {ROUTE.name}
         </p>
       </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+      <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
         {menu && <button type="button" aria-label="Close menu" tabIndex={-1} className="fixed inset-0 z-10 cursor-default" onClick={close} />}
 
         <button
           type="button"
           onClick={onSos}
-          className="order-2 flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold sm:order-1 sm:gap-2 text-white shadow-md ring-2 ring-white/80 outline-none transition hover:bg-red-700 focus-visible:ring-4 focus-visible:ring-white sm:px-4"
+          className="flex min-h-11 items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-md ring-2 ring-white/80 outline-none transition hover:bg-red-700 focus-visible:ring-4 focus-visible:ring-white sm:px-4"
         >
           <Siren size={18} />
           SOS
           <span className="sr-only">emergency report</span>
         </button>
 
-        <div className="relative z-20 order-1 sm:order-2">
+        <div className="relative z-20">
           <button type="button" onClick={() => setMenu(menu === 'bell' ? null : 'bell')} aria-label="Notifications" aria-expanded={menu === 'bell'} className="relative flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10">
             <Bell size={20} />
             {alerts.length > 0 && (
@@ -71,8 +72,7 @@ export default function Topbar({ collapsed, onToggleCollapse, onSos, onLogout })
           )}
         </div>
 
-        {/* Phones: the Account tab + the Logout button on that page replace this menu. */}
-        <div className="relative z-20 order-3 hidden sm:block">
+        <div className="relative z-20">
           <button type="button" onClick={() => setMenu(menu === 'profile' ? null : 'profile')} aria-label="Account menu" aria-expanded={menu === 'profile'} className="flex min-h-11 items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-white/10">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">{initials}</span>
             <span className="hidden text-left text-xs leading-tight md:block">

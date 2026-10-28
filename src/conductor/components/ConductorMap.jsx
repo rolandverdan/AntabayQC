@@ -29,7 +29,7 @@ function CtrlBtn({ label, onClick, active = false, children }) {
       aria-label={label}
       aria-pressed={active || undefined}
       title={label}
-      className={`flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-brand/40 ${
+      className={`flex h-10 w-10 items-center justify-center rounded-lg border shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-brand/40 ${
         active ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-navy hover:bg-slate-50'
       }`}
     >
@@ -103,7 +103,7 @@ export default function ConductorMap({ position, nextStopId, prefs }) {
         </Marker>
       </MapContainer>
 
-      <div className="absolute right-3 top-3 z-[500] grid grid-cols-1 gap-2 [@media(max-height:480px)]:grid-cols-2">
+      <div className="absolute right-3 top-3 z-[500] flex flex-col gap-2">
         <CtrlBtn label="Zoom in" onClick={() => map?.zoomIn()}><Plus size={18} /></CtrlBtn>
         <CtrlBtn label="Zoom out" onClick={() => map?.zoomOut()}><Minus size={18} /></CtrlBtn>
         <CtrlBtn label="Center on my vehicle" onClick={recenter}><LocateFixed size={18} /></CtrlBtn>
@@ -113,7 +113,7 @@ export default function ConductorMap({ position, nextStopId, prefs }) {
         </CtrlBtn>
       </div>
 
-      <div className="absolute left-3 top-3 z-[500] max-w-[calc(100%-5rem)] rounded-md bg-white/95 px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm">
+      <div className="absolute bottom-3 left-3 z-[500] rounded-md bg-white/95 px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm">
         Simulated position · not live GPS
       </div>
     </div>

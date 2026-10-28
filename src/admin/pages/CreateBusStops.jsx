@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, MapPin, Pencil, Trash2 } from 'lucide-react'
+import { Download, Eye, MapPin, Pencil, Trash2 } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -16,6 +16,8 @@ import MapPicker from '../components/MapPicker.jsx'
 import MapView from '../components/MapView.jsx'
 import { inputClass } from '../utils/ui.js'
 import { includesText, nextId } from '../utils/format.js'
+import { downloadCsv, todayStamp } from '../utils/csv.js'
+import { exportCategory } from '../utils/exportConfig.js'
 import { ACCOUNT_STATUSES } from '../data/constants.js'
 
 export default function CreateBusStops() {
@@ -83,6 +85,17 @@ export default function CreateBusStops() {
 
   const view = stops.find((s) => s.id === viewId)
 
+  // Exports exactly what the table shows: same search and filters.
+  const exportCsv = () => {
+    if (!rows.length) {
+      notify('No bus stops match the current search and filters, so nothing was exported.', 'error')
+      return
+    }
+    const cat = exportCategory('stops')
+    downloadCsv(`antabay-${cat.file}-${todayStamp()}.csv`, rows, cat.columns())
+    notify(`Exported ${rows.length} record(s) to CSV.`, 'info')
+  }
+
   const columns = [
     { key: 'id', header: 'Stop ID', render: (s) => <span className="font-semibold text-navy">{s.id}</span> },
     { key: 'name', header: 'Name', render: (s) => (<div><p className="font-semibold text-navy">{s.name}</p><p className="max-w-56 truncate text-xs text-slate-500">{s.address}</p></div>) },
@@ -102,7 +115,7 @@ export default function CreateBusStops() {
 
   return (
     <>
-      <PageHeader title="Bus Stops" description="Create and manage bus stops. Click the map in the form to set coordinates." actions={<Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button>} />
+      <PageHeader hideTitle title="Bus Stops" description="Create and manage bus stops. Click the map in the form to set coordinates." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search stop ID, name, address…"
         filters={[

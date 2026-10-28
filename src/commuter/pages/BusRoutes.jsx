@@ -26,15 +26,9 @@ export default function BusRoutes() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Bus Routes"
-        description={<>
-          <span className="md:hidden">Explore QC Bus routes and stops.</span>
-          <span className="hidden md:inline">Explore QC Bus routes, stops, and daily service hours.</span>
-        </>}
-      />
+      <PageHeader title="Bus Routes" description="Explore QC Bus routes, stops, and daily service hours." />
 
-      <div className="hidden flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-slate-500">Daily service · Weekdays &amp; weekends · Holiday operations may vary.</p>
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center sm:min-w-[250px]">
           <p className="text-xl font-bold leading-tight text-navy sm:text-2xl">6:00 AM – 9:00 PM</p>
@@ -44,20 +38,20 @@ export default function BusRoutes() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-2xl border border-slate-300 bg-white shadow-sm md:border-slate-200">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
             <div className="flex gap-2 text-sm font-bold text-slate-700">
-              <NavLink to="/commuter/route-and-schedule" className={({ isActive }) => `${buttonBase} border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${isActive ? 'border-brand bg-brand text-white shadow-sm ring-2 ring-brand/20 md:border-0 md:ring-0' : 'border-slate-300 bg-white text-slate-700 hover:border-brand/40 hover:bg-slate-50 md:border-transparent md:bg-transparent md:text-slate-500 md:hover:border-transparent md:hover:bg-slate-100'}`}>
+              <NavLink to="/commuter/route-and-schedule" className={({ isActive }) => `${buttonBase} ${isActive ? 'bg-brand text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}>
                 Bus Routes
               </NavLink>
-              <NavLink to="/commuter/timetable" className={({ isActive }) => `${buttonBase} border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${isActive ? 'border-brand bg-brand text-white shadow-sm ring-2 ring-brand/20 md:border-0 md:ring-0' : 'border-slate-300 bg-white text-slate-700 hover:border-brand/40 hover:bg-slate-50 md:border-transparent md:bg-transparent md:text-slate-500 md:hover:border-transparent md:hover:bg-slate-100'}`}>
+              <NavLink to="/commuter/timetable" className={({ isActive }) => `${buttonBase} ${isActive ? 'bg-brand text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}>
                 Timetable
               </NavLink>
             </div>
           </div>
 
           <div className="p-4">
-            <div className="mb-4 flex items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm md:border-slate-200 md:bg-slate-50 md:shadow-none">
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
               <Search size={16} className="text-slate-400" />
               <input
                 value={query}
@@ -79,9 +73,7 @@ export default function BusRoutes() {
                     type="button"
                     onClick={() => setSelectedRouteId(route.id)}
                     className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
-                      isSelected
-                        ? 'border-brand bg-brand/5 shadow-sm ring-2 ring-brand/15 md:ring-0'
-                        : 'border-slate-300 bg-white hover:border-brand/40 hover:bg-slate-50 md:border-slate-200 md:bg-slate-50 md:hover:border-brand/30 md:hover:bg-white'
+                      isSelected ? 'border-brand bg-brand/5 shadow-sm' : 'border-slate-200 bg-slate-50 hover:border-brand/30 hover:bg-white'
                     }`}
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ background: route.color }}>
@@ -100,7 +92,7 @@ export default function BusRoutes() {
         </div>
 
         <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-brand">
@@ -139,7 +131,7 @@ export default function BusRoutes() {
               </div>
 
               {selectedStops.slice(0, 6).map((stop, index) => (
-                <div key={stop.id} className="flex items-start gap-3 rounded-xl border border-slate-300 bg-white p-3 md:border-slate-200 md:bg-slate-50">
+                <div key={stop.id} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
                     {index + 1}
                   </span>
@@ -152,23 +144,22 @@ export default function BusRoutes() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 md:gap-4">
-            <div className="rounded-2xl border border-slate-300 bg-white p-2 text-center shadow-sm sm:p-4 md:border-slate-200">
-              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs md:tracking-[0.12em]">Active Buses</p>
-              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">8</p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Active Buses</p>
+              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">8</p>
             </div>
-            <div className="rounded-2xl border border-slate-300 bg-white p-2 text-center shadow-sm sm:p-4 md:border-slate-200">
-              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs md:tracking-[0.12em]">Frequency</p>
-              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">15–20</p>
-              <p className="!text-xs text-slate-500 sm:!text-sm">minutes</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Frequency</p>
+              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">15–20</p>
+              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
             </div>
-            <div className="rounded-2xl border border-slate-300 bg-white p-2 text-center shadow-sm sm:p-4 md:border-slate-200">
-              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs md:tracking-[0.12em]">Trip Duration</p>
-              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">30–45</p>
-              <p className="!text-xs text-slate-500 sm:!text-sm">minutes</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Trip Duration</p>
+              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">30–45</p>
+              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
             </div>
           </div>
-          <p className="mt-2 hidden text-center !text-xs text-slate-500 md:block">Official City Bus Routes • Quezon City Government (QC Bus System)</p>
         </div>
       </div>
     </div>

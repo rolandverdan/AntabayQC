@@ -32,25 +32,6 @@ body {
   line-height: 1rem;
 }
 
-/* Match the commuter phone text sizing without changing the desktop layout. */
-@media (max-width: 767px) {
-  .commuter-layout > div > header {
-    position: fixed;
-    inset: 0 0 auto;
-  }
-
-  .commuter-layout,
-  .commuter-layout :where(*) {
-    font-size: 1rem;
-  }
-
-  .commuter-layout .commuter-status-tag {
-    padding: 0.125rem 0.5rem;
-    font-size: 0.75rem;
-    line-height: 1rem;
-  }
-}
-
 /* Keep Leaflet panes below modals / dropdowns */
 .leaflet-container { z-index: 0; font-family: var(--font-sans); border-radius: 0.75rem; }
 
@@ -75,16 +56,6 @@ body {
   .mobile-ui textarea { font-size: 16px; }
 }
 
-/* Conductor bottom navigation: one source of truth so the nav and the page padding always agree.
-   Short (landscape phone) viewports use a slimmer bar. */
-:root {
-  --bottom-nav-item-h: 3.75rem;
-  --bottom-nav-h: calc(var(--bottom-nav-item-h) + env(safe-area-inset-bottom, 0px));
-}
-@media (max-height: 480px) {
-  :root { --bottom-nav-item-h: 3rem; }
-}
-
 /* Safe-area helpers for notched phones. */
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -105,3 +76,34 @@ html, body { overflow-x: hidden; }
 .commuter-layout main .grid > *, #main .grid > *,
 .commuter-layout main .flex > *, #main .flex > * { min-width: 0; }
 .commuter-layout main img, .commuter-layout main svg, #main img, #main svg { max-width: 100%; }
+
+/* ---------- Row pulses (Admin tables) ---------- */
+/* Strong pulse: rows picked from the header notifications. */
+@keyframes row-pulse-kf {
+  0%, 100% { background-color: rgba(250, 204, 21, 0.10); box-shadow: inset 0 0 0 0 rgba(36, 74, 155, 0); }
+  50% { background-color: rgba(250, 204, 21, 0.55); box-shadow: inset 0 0 0 2px rgba(36, 74, 155, 0.55); }
+}
+.admin-table tr.row-pulse { animation: row-pulse-kf 1.1s ease-in-out infinite; }
+/* Gentle pulse: unresolved Critical / High incidents always draw the eye a little. */
+@keyframes row-alert-kf { 0%, 100% { background-color: rgba(254, 226, 226, 0.45); } 50% { background-color: rgba(252, 165, 165, 0.55); } }
+@keyframes row-alert-soft-kf { 0%, 100% { background-color: rgba(254, 243, 199, 0.45); } 50% { background-color: rgba(252, 211, 77, 0.40); } }
+.admin-table tr.row-alert { animation: row-alert-kf 2.2s ease-in-out infinite; }
+.admin-table tr.row-alert-soft { animation: row-alert-soft-kf 2.6s ease-in-out infinite; }
+.admin-table tr.row-pulse.row-alert, .admin-table tr.row-pulse.row-alert-soft { animation: row-pulse-kf 1.1s ease-in-out infinite; }
+/* Reduced motion: no flashing, just a steady highlight. */
+@media (prefers-reduced-motion: reduce) {
+  .admin-table tr.row-pulse { animation: none !important; background-color: rgba(250, 204, 21, 0.5) !important; box-shadow: inset 0 0 0 2px rgba(36, 74, 155, 0.55); }
+  .admin-table tr.row-alert, .admin-table tr.row-alert-soft { animation: none !important; }
+  *, *::before, *::after { animation-iteration-count: 1 !important; }
+}
+
+/* Height of the full-width top header (plus the phone notch). Sidebars and page content start below it. */
+:root { --topbar-h: calc(4rem + env(safe-area-inset-top, 0px)); }
+
+/* Admin tables: breathing room at the left edge of the first column and right edge of the last one. */
+.admin-table th:first-child, .admin-table td:first-child { padding-left: 1.25rem; }
+.admin-table th:last-child, .admin-table td:last-child { padding-right: 1.25rem; }
+@media (min-width: 768px) {
+  .admin-table th:first-child, .admin-table td:first-child { padding-left: 1.5rem; }
+  .admin-table th:last-child, .admin-table td:last-child { padding-right: 1.5rem; }
+}

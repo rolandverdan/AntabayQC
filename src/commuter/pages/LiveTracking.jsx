@@ -24,9 +24,13 @@ export default function LiveTracking() {
 
   const filteredRoutes = useMemo(() => {
     const needle = query.trim().toLowerCase()
+
     if (!needle) return routeOptions
 
-    return routeOptions.filter((route) => `${route.label} ${route.name || ''}`.toLowerCase().includes(needle))
+    return routeOptions.filter((route) => {
+      const haystack = `${route.label} ${route.name || ''}`.toLowerCase()
+      return haystack.includes(needle)
+    })
   }, [query, routeOptions])
 
   const activeBusCount = buses.filter((bus) => bus.status === 'Active').length
@@ -38,7 +42,7 @@ export default function LiveTracking() {
       <PageHeader
         title="Live Tracking"
         description="See active buses and service updates across QC Bus routes."
-        actions={<div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm md:flex md:min-w-72">
+        actions={<div className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:w-auto sm:min-w-72">
           <Search size={16} className="text-slate-500" />
           <input
             value={query}
@@ -49,7 +53,7 @@ export default function LiveTracking() {
         </div>}
       />
 
-      <div className="hidden grid-cols-1 gap-4 md:grid md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
           { label: 'Active buses', value: activeBusCount, icon: BusFront, tone: 'blue' },
           { label: 'Avg headway', value: averageHeadway, icon: Clock3, tone: 'green' },
@@ -74,13 +78,14 @@ export default function LiveTracking() {
       </div>
 
       <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-4 hidden md:block">
+        <div className="mb-4">
           <div className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
             <MapPinned size={12} />
             Select Bus Routes
           </div>
           <p className="text-sm text-slate-500">Choose a route to view live bus movement and stop updates.</p>
         </div>
+
         <div className="flex flex-wrap gap-2">
           {filteredRoutes.map((route) => {
             const isSelected = selectedRoute === route.id
@@ -142,7 +147,7 @@ export default function LiveTracking() {
               <div key={route} className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 last:mb-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-navy">{route}</span>
-                  <span className={`commuter-status-tag rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
                     tone === 'green' ? 'bg-green-100 text-green-700' :
                     tone === 'amber' ? 'bg-amber-100 text-amber-700' :
                     'bg-red-100 text-red-700'

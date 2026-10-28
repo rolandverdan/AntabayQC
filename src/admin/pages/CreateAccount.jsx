@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
+import { Eye, KeyRound, Lock, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -12,11 +12,30 @@ import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import Field from '../components/FormField.jsx'
 import DetailGrid from '../components/DetailGrid.jsx'
+import PasswordInput from '../components/PasswordInput.jsx'
+import Avatar from '../components/Avatar.jsx'
+import AvatarPicker from '../components/AvatarPicker.jsx'
 import { inputClass } from '../utils/ui.js'
 import { fmtDate, includesText } from '../utils/format.js'
 import { ACCOUNT_STATUSES, ROLES } from '../data/constants.js'
 
-const EMPTY = { id: '', type: 'Driver', fullName: '', employeeId: '', username: '', contact: '', busId: '', status: 'Active', password: '', confirm: '' }
+// Surname particles that belong with the last name when an existing full name is split.
+const PARTICLES = new Set(['de', 'del', 'dela', 'delos', 'la', 'san', 'santa', 'van', 'von'])
+function splitName(full = '') {
+  const w = full.trim().split(/\s+/).filter(Boolean)
+  if (w.length < 2) return { firstName: w[0] || '', lastName: '' }
+  let i = w.length - 1
+  while (i > 1 && PARTICLES.has(w[i - 1].toLowerCase())) i -= 1
+  return { firstName: w.slice(0, i).join(' '), lastName: w.slice(i).join(' ') }
+}
+// EMP-D-001 style IDs, numbered per role. Always generated, never typed.
+function nextEmployeeId(accounts, type) {
+  const prefix = type === 'Driver' ? 'EMP-D-' : 'EMP-C-'
+  const max = accounts.reduce((m, a) => (a.employeeId?.startsWith(prefix) ? Math.max(m, parseInt(a.employeeId.slice(prefix.length), 10) || 0) : m), 0)
+  return `${prefix}${String(max + 1).padStart(3, '0')}`
+}
+
+const EMPTY = { id: '', type: 'Driver', firstName: '', lastName: '', avatar: '', employeeId: '', username: '', contact: '', busId: '', status: 'Active', password: '', confirm: '' }
 
 export default function CreateAccount() {
   const { accounts, buses, saveAccount, setAccountStatus } = useAdminData()
@@ -32,7 +51,7 @@ export default function CreateAccount() {
   const [confirm, setConfirm] = useState(null)
 
   const busOf = (id) => buses.find((b) => b.driverId === id || b.conductorId === id)
-  const openCreate = (type) => { setErrors({}); setForm({ ...EMPTY, type }) }
+  const openCreate = (type) => { setErrors({}); setForm({ ...EMPTY, type, employeeId: nextEmployeeId(accounts, type) }) }
 
   useEffect(() => {
     const n = params.get('new')
@@ -60,9 +79,8 @@ export default function CreateAccount() {
 
   const validate = () => {
     const e = {}
-    if (!form.fullName.trim()) e.fullName = 'Full name is required.'
-    if (!form.employeeId.trim()) e.employeeId = 'Employee ID is required.'
-    else if (accounts.some((a) => a.id !== form.id && a.employeeId.toLowerCase() === form.employeeId.trim().toLowerCase())) e.employeeId = 'Employee ID already exists.'
+    if (!form.firstName.trim()) e.firstName = 'First name is required.'
+    if (!form.lastName.trim()) e.lastName = 'Last name is required.'
     if (!form.username.trim()) e.username = 'Email or username is required.'
     else if (form.username.trim().length < 4) e.username = 'Must be at least 4 characters.'
     else if (accounts.some((a) => a.id !== form.id && a.username.toLowerCase() === form.username.trim().toLowerCase())) e.username = 'Already in use.'
@@ -85,8 +103,11 @@ export default function CreateAccount() {
       {
         id: form.id,
         type: form.type,
-        fullName: form.fullName.trim(),
-        employeeId: form.employeeId.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        fullName: `${form.firstName.trim()} ${form.lastName.trim()}`,
+        avatar: form.avatar || '',
+        employeeId: form.employeeId,
         username: form.username.trim(),
         contact: form.contact.replace(/[\s-]/g, ''),
         status: form.status,
@@ -98,14 +119,17 @@ export default function CreateAccount() {
     setForm(null)
   }
 
-  const openEdit = (a) => { setErrors({}); setForm({ ...EMPTY, ...a, busId: busOf(a.id)?.id || '', password: '', confirm: '' }) }
+  const openEdit = (a, focusPw = false) => {
+    setErrors({})
+    setForm({ ...EMPTY, ...splitName(a.fullName), ...a, busId: busOf(a.id)?.id || '', password: '', confirm: '', focusPw })
+  }
   const view = accounts.find((a) => a.id === viewId)
 
   const staffField = form?.type === 'Driver' ? 'driverId' : 'conductorId'
   const nameOf = (id) => accounts.find((a) => a.id === id)?.fullName
 
   const columns = [
-    { key: 'fullName', header: 'Name', render: (a) => (<div><p className="font-semibold text-navy">{a.fullName}</p><p className="text-xs text-slate-500">{a.employeeId}</p></div>) },
+    { key: 'fullName', header: 'Name', render: (a) => (<div className="flex items-center gap-3"><Avatar src={a.avatar} size="sm" /><div><p className="font-semibold text-navy">{a.fullName}</p><p className="text-xs text-slate-500">{a.employeeId}</p></div></div>) },
     { key: 'type', header: 'Role', render: (a) => <Badge>{a.type}</Badge> },
     { key: 'username', header: 'Email / username' },
     { key: 'contact', header: 'Contact' },
@@ -126,7 +150,7 @@ export default function CreateAccount() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader hideTitle
         title="Driver & Conductor Accounts"
         description="Create and manage accounts for bus drivers and conductors."
         actions={<><Button icon={UserPlus} onClick={() => openCreate('Driver')}>Add Driver</Button><Button icon={UserPlus} variant="secondary" onClick={() => openCreate('Conductor')}>Add Conductor</Button></>}
@@ -147,8 +171,15 @@ export default function CreateAccount() {
       >
         {form && (
           <form id="account-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name" required error={errors.fullName}><input className={inputClass(errors.fullName)} value={form.fullName} onChange={set('fullName')} /></Field>
-            <Field label="Employee ID" required error={errors.employeeId}><input className={inputClass(errors.employeeId)} value={form.employeeId} onChange={set('employeeId')} placeholder={form.type === 'Driver' ? 'EMP-D-007' : 'EMP-C-006'} /></Field>
+            <div className="sm:col-span-2"><AvatarPicker value={form.avatar} onChange={(avatar) => setForm((f) => ({ ...f, avatar }))} /></div>
+            <Field label="First name" required error={errors.firstName}><input className={inputClass(errors.firstName)} value={form.firstName} onChange={set('firstName')} autoComplete="given-name" /></Field>
+            <Field label="Last name" required error={errors.lastName}><input className={inputClass(errors.lastName)} value={form.lastName} onChange={set('lastName')} autoComplete="family-name" /></Field>
+            <Field label="Employee ID" hint="Generated automatically so IDs never repeat.">
+              <div className="relative">
+                <input className={`${inputClass(false)} cursor-not-allowed bg-slate-100! pr-9 font-mono text-slate-600`} value={form.employeeId} readOnly aria-readonly="true" tabIndex={-1} />
+                <Lock size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+              </div>
+            </Field>
             <Field label="Email or username" required error={errors.username}><input className={inputClass(errors.username)} value={form.username} onChange={set('username')} /></Field>
             <Field label="Contact number" required error={errors.contact}><input className={inputClass(errors.contact)} value={form.contact} onChange={set('contact')} placeholder="09171234567" inputMode="tel" /></Field>
             <Field label="Assigned bus" hint="Assigning replaces the bus's current driver/conductor.">
@@ -161,18 +192,37 @@ export default function CreateAccount() {
               </select>
             </Field>
             <Field label="Account status"><select className={inputClass(false)} value={form.status} onChange={set('status')}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</select></Field>
-            <Field label={isEdit ? 'New password (optional)' : 'Password'} required={!isEdit} error={errors.password}><input type="password" autoComplete="new-password" className={inputClass(errors.password)} value={form.password} onChange={set('password')} /></Field>
-            <Field label="Confirm password" required={!isEdit} error={errors.confirm}><input type="password" autoComplete="new-password" className={inputClass(errors.confirm)} value={form.confirm} onChange={set('confirm')} /></Field>
+            <Field label={isEdit ? 'New password (optional)' : 'Password'} required={!isEdit} error={errors.password}><PasswordInput autoComplete="new-password" autoFocus={!!form.focusPw} className={inputClass(errors.password)} value={form.password} onChange={set('password')} /></Field>
+            <Field label="Confirm password" required={!isEdit} error={errors.confirm}><PasswordInput autoComplete="new-password" className={inputClass(errors.confirm)} value={form.confirm} onChange={set('confirm')} /></Field>
           </form>
         )}
       </Modal>
 
-      <Modal open={!!view} onClose={() => setViewId(null)} title="Account details" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
+      <Modal
+        open={!!view} onClose={() => setViewId(null)} title="Account details"
+        footer={view && (
+          <>
+            <Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>
+            <Button variant="secondary" icon={KeyRound} onClick={() => { const a = view; setViewId(null); openEdit(a, true) }}>Reset password</Button>
+            <Button icon={Pencil} onClick={() => { const a = view; setViewId(null); openEdit(a) }}>Edit</Button>
+          </>
+        )}
+      >
         {view && (
-          <DetailGrid items={[
-            ['Account ID', view.id], ['Role', view.type], ['Full name', view.fullName], ['Employee ID', view.employeeId],
-            ['Email / username', view.username], ['Contact', view.contact], ['Assigned bus', busOf(view.id)?.id || 'Unassigned'], ['Status', view.status], ['Created', fmtDate(view.createdAt)],
-          ]} />
+          <div className="space-y-5">
+            <div className="flex items-center gap-4 rounded-xl bg-slate-50 p-4">
+              <Avatar src={view.avatar} size="lg" />
+              <div className="min-w-0">
+                <p className="truncate text-lg font-bold text-navy">{view.fullName}</p>
+                <p className="font-mono text-xs text-slate-500">{view.employeeId}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5"><Badge>{view.type}</Badge><Badge>{view.status}</Badge></div>
+              </div>
+            </div>
+            <DetailGrid items={[
+              ['Account ID', view.id], ['Email / username', view.username], ['Contact', view.contact],
+              ['Assigned bus', busOf(view.id)?.id || 'Unassigned'], ['Created', fmtDate(view.createdAt)],
+            ]} />
+          </div>
         )}
       </Modal>
 

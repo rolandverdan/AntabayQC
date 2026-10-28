@@ -1,27 +1,16 @@
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bus, CircleCheck, Users, MapPin, Route, Siren, FileText, Plus, UserPlus, ArrowRight } from 'lucide-react'
+import { Bus, CircleCheck, Users, MapPin, Route, Siren, FileText, Plus, UserPlus } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import Card, { StatCard, PageHeader } from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import Badge from '../components/Badge.jsx'
 import MapView from '../components/MapView.jsx'
-import { fmtDateTime } from '../utils/format.js'
+import RecentActivity from '../components/RecentActivity.jsx'
+import PassengerTrend from '../components/PassengerTrend.jsx'
 import { OCCUPANCY, occupancyLevel } from '../utils/occupancy.js'
 import { BUS_STATUSES } from '../data/constants.js'
 import { busMarkerStyle, computeBusLive, routeColor } from '../utils/geo.js'
-
-function RecentList({ title, to, items, render }) {
-  return (
-    <Card title={title} action={<Link to={to} className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline">View all <ArrowRight size={13} /></Link>} bodyClass="p-0">
-      {items.length === 0 ? (
-        <p className="p-5 text-sm text-slate-500">Nothing to show yet.</p>
-      ) : (
-        <ul className="divide-y divide-slate-100">{items.map((it) => <li key={it.id} className="px-5 py-3">{render(it)}</li>)}</ul>
-      )}
-    </Card>
-  )
-}
 
 export default function Dashboard() {
   const { buses, accounts, stops, routes, logs, reports, emergencies, settings, stopsById, routesById } = useAdminData()
@@ -53,27 +42,22 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Overview of the ANTABAY QC system."
-        actions={
-          <>
-            <Button icon={Plus} onClick={() => navigate('/admin/buses?new=1')}>Create Bus</Button>
-            <Button icon={Route} variant="secondary" onClick={() => navigate('/admin/routes?new=1')}>Add Route</Button>
-            <Button icon={UserPlus} variant="secondary" onClick={() => navigate('/admin/accounts?new=driver')}>Register Driver</Button>
-            <Button icon={Siren} variant="danger" onClick={() => navigate('/admin/emergency-logs')}>View Emergencies</Button>
-          </>
-        }
-      />
+      <PageHeader hideTitle description="Overview of the ANTABAY QC system." />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Bus} label="Total buses" value={buses.length} to="/admin/buses" />
-        <StatCard icon={CircleCheck} label="Active buses" value={activeBuses} tone="green" sub={`${buses.length - activeBuses} not in service`} to="/admin/buses" />
-        <StatCard icon={Users} label="Drivers & conductors" value={accounts.length} tone="teal" sub={`${drivers} drivers · ${conductors} conductors`} to="/admin/accounts" />
-        <StatCard icon={MapPin} label="Total bus stops" value={stops.length} tone="teal" to="/admin/bus-stops" />
-        <StatCard icon={Route} label="Total routes" value={routes.length} to="/admin/routes" sub={`${routes.filter((r) => r.status === 'Active').length} active`} />
-        <StatCard icon={Siren} label="Active emergencies" value={activeEmergencies} tone="red" to="/admin/emergency-logs" />
-        <StatCard icon={FileText} label="Pending reports" value={pendingReports} tone="amber" to="/admin/report-logs" />
+        <StatCard reserveSub icon={Bus} label="Total buses" value={buses.length} to="/admin/buses" />
+        <StatCard reserveSub icon={CircleCheck} label="Active buses" value={activeBuses} tone="green" sub={`${buses.length - activeBuses} not in service`} to="/admin/buses" />
+        <StatCard reserveSub icon={Users} label="Drivers & conductors" value={accounts.length} tone="teal" sub={`${drivers} drivers · ${conductors} conductors`} to="/admin/accounts" />
+        <StatCard reserveSub icon={MapPin} label="Total bus stops" value={stops.length} tone="teal" to="/admin/bus-stops" />
+        <StatCard reserveSub icon={Route} label="Total routes" value={routes.length} to="/admin/routes" sub={`${routes.filter((r) => r.status === 'Active').length} active`} />
+        <StatCard reserveSub icon={Siren} label="Active emergencies" value={activeEmergencies} tone="red" to="/admin/emergency-logs" />
+        <StatCard reserveSub icon={FileText} label="Pending reports" value={pendingReports} tone="amber" to="/admin/report-logs" />
+        <div className="order-first grid min-h-[6.25rem] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm sm:order-none" role="group" aria-label="Quick actions">
+          <Button size="sm" icon={Plus} onClick={() => navigate('/admin/buses?new=1')}>Create Bus</Button>
+          <Button size="sm" icon={Route} variant="secondary" onClick={() => navigate('/admin/routes?new=1')}>Add Route</Button>
+          <Button size="sm" icon={UserPlus} variant="secondary" onClick={() => navigate('/admin/accounts?new=driver')}>Register Driver</Button>
+          <Button size="sm" icon={Siren} variant="danger" onClick={() => navigate('/admin/emergency-logs')}>View Emergencies</Button>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
@@ -110,19 +94,10 @@ export default function Dashboard() {
         )}
       </div>
 
-      {settings.showRecentActivity && (
-        <div className="mt-5 grid gap-5 xl:grid-cols-3">
-          <RecentList title="Recent system logs" to="/admin/logs" items={logs.slice(0, 5)} render={(l) => (
-            <><div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-navy">{l.action}</p><Badge>{l.severity}</Badge></div><p className="text-xs text-slate-500">{l.module} · {fmtDateTime(l.timestamp)}</p></>
-          )} />
-          <RecentList title="Recent report logs" to="/admin/report-logs" items={[...reports].sort((a, b) => b.datetime.localeCompare(a.datetime)).slice(0, 5)} render={(r) => (
-            <><div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-navy">{r.type} · {r.busId}</p><Badge>{r.status}</Badge></div><p className="text-xs text-slate-500">{r.id} · {fmtDateTime(r.datetime)}</p></>
-          )} />
-          <RecentList title="Recent emergency logs" to="/admin/emergency-logs" items={[...emergencies].sort((a, b) => b.datetime.localeCompare(a.datetime)).slice(0, 5)} render={(e) => (
-            <><div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-navy">{e.type} · {e.busId}</p><div className="flex gap-1"><Badge>{e.severity}</Badge><Badge>{e.status}</Badge></div></div><p className="text-xs text-slate-500">{e.id} · {fmtDateTime(e.datetime)}</p></>
-          )} />
-        </div>
-      )}
+      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <div className="xl:col-span-2"><PassengerTrend buses={buses} /></div>
+        <RecentActivity emergencies={emergencies} reports={reports} logs={logs} />
+      </div>
     </>
   )
 }
