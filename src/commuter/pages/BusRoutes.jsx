@@ -26,9 +26,6 @@ export default function BusRoutes() {
 
   return (
     <div className="space-y-5">
-<<<<<<< HEAD
-      <PageHeader title="Bus Routes" description="Explore QC Bus routes and stops." />
-=======
       <PageHeader
         title="Bus Routes"
         description={<>
@@ -45,7 +42,6 @@ export default function BusRoutes() {
           <p className="text-xs text-slate-500">Except on holidays</p>
         </div>
       </div>
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-2xl border border-slate-300 bg-white shadow-sm md:border-slate-200">
@@ -157,24 +153,6 @@ export default function BusRoutes() {
           </div>
 
           <div className="grid grid-cols-3 gap-2 md:gap-4">
-<<<<<<< HEAD
-            <div className="rounded-2xl border border-slate-200 bg-white p-2 text-center shadow-sm sm:p-4">
-              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs">Active Buses</p>
-              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">8</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-2 text-center shadow-sm sm:p-4">
-              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs">Frequency</p>
-              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">15–20</p>
-              <p className="!text-xs text-slate-500">minutes</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-2 text-center shadow-sm sm:p-4">
-              <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs">Trip Duration</p>
-              <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">30–45</p>
-              <p className="!text-xs text-slate-500">minutes</p>
-            </div>
-          </div>
-          <p className="mt-2 text-center !text-xs text-slate-500">Official City Bus Routes • Quezon City Government (QC Bus System)</p>
-=======
             <div className="rounded-2xl border border-slate-300 bg-white p-2 text-center shadow-sm sm:p-4 md:border-slate-200">
               <p className="!text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500 sm:!text-xs md:tracking-[0.12em]">Active Buses</p>
               <p className="mt-1.5 !text-lg font-bold text-navy sm:!text-3xl">8</p>
@@ -191,7 +169,6 @@ export default function BusRoutes() {
             </div>
           </div>
           <p className="mt-2 hidden text-center !text-xs text-slate-500 md:block">Official City Bus Routes • Quezon City Government (QC Bus System)</p>
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
-import { FileText, MapPin, Upload, X } from 'lucide-react'
+import { CircleAlert, FileText, MapPin, Phone, ShieldCheck, Upload, X } from 'lucide-react'
 
 const itemCategories = [
   'Bags & Backpacks',
@@ -129,8 +129,6 @@ export default function LostItem() {
       <PageHeader
         title="Lost Item"
         description="File an inquiry, track depot verification, and claim recovered items."
-<<<<<<< HEAD
-=======
         actions={<div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 md:flex">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
             <ShieldCheck size={16} />
@@ -140,7 +138,6 @@ export default function LostItem() {
             <div className="text-xs text-slate-500">Open Now • 08:00 – 17:00 PHT</div>
           </div>
         </div>}
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
       />
 
       <div className="border-b border-slate-200 bg-white px-3 py-3 shadow-sm md:px-4">
@@ -162,10 +159,7 @@ export default function LostItem() {
             </div>
             <div>
               <p className="text-xl font-black text-navy">Tell us about your lost item</p>
-<<<<<<< HEAD
-=======
               <p className="hidden text-sm text-slate-500 md:block">Provide specific identifiers so fleet conductors and depot managers can locate your item faster.</p>
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
             </div>
           </div>
 
@@ -307,9 +301,6 @@ export default function LostItem() {
 
         <aside className="space-y-5">
           <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-<<<<<<< HEAD
-            <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-=======
             <div className="mb-4 hidden items-center justify-between md:flex">
               <div className="flex items-center gap-2 text-lg font-black text-navy">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
@@ -319,7 +310,6 @@ export default function LostItem() {
               </div>
             </div>
             <div className="mb-4 rounded-xl border border-brand/20 bg-brand/5 p-3 md:border-slate-200 md:bg-slate-50">
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 font-bold text-navy">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white text-[10px]">R</div>
@@ -337,11 +327,7 @@ export default function LostItem() {
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-brand text-xs font-bold text-white">R</span>
                     <span className="text-sm font-bold text-navy">{inquiry.title}</span>
                   </div>
-<<<<<<< HEAD
-                  <span className="commuter-status-tag rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">{inquiry.status}</span>
-=======
                   <span className="commuter-status-tag rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-800 md:text-amber-700">{inquiry.status}</span>
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
                 </div>
                 <div className="mt-2 text-xs text-slate-500">{inquiry.bus} · {inquiry.date}</div>
                 <div className="mt-1 text-xs text-slate-500">Case Ref: {inquiry.id}</div>
@@ -354,8 +340,6 @@ export default function LostItem() {
             </div>
           </div>
 
-<<<<<<< HEAD
-=======
           <div className="hidden rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm md:block">
             <div className="mb-4 flex items-center gap-3 text-lg font-black text-navy">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand">
@@ -386,7 +370,6 @@ export default function LostItem() {
             <div className="mt-1 text-sm text-blue-100">QC Hotline 122</div>
           </div>
 
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
         </aside>
       </div>
     </div>

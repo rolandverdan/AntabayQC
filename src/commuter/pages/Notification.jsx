@@ -193,11 +193,7 @@ export default function Notification() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{category}</span>
                     {unread && (
-<<<<<<< HEAD
-                      <span className="commuter-status-tag inline-flex items-center rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-brand">
-=======
                       <span className="commuter-status-tag inline-flex items-center rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white md:bg-brand/10 md:text-brand">
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
                         New
                       </span>
                     )}

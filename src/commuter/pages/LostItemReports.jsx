@@ -87,18 +87,6 @@ export default function LostItemReports() {
         </div>
       </nav>
 
-<<<<<<< HEAD
-      <section className="flex flex-col gap-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
-        <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <Search size={15} className="shrink-0 text-slate-500" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by Case ID, item brand, route..."
-            className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-          />
-        </label>
-=======
       <section className="hidden grid-cols-1 gap-4 md:grid md:grid-cols-3 xl:grid-cols-5" aria-label="Lost item report summary">
         {stats.map(({ label, value, detail }) => (
           <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
@@ -131,7 +119,6 @@ export default function LostItemReports() {
             <span className="hidden md:inline">Date: {newestFirst ? 'Newest First' : 'Oldest First'}</span>
           </button>
         </div>
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
 
         <div className="flex flex-wrap gap-2" aria-label="Filter reports">
           {filters.map((filter) => (
@@ -164,13 +151,8 @@ export default function LostItemReports() {
                   <span>Filed {report.filed}</span>
                 </div>
                 <span className={`commuter-status-tag inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${
-<<<<<<< HEAD
-                  report.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                  report.status === 'Claimed' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
-=======
                   report.status === 'Ready' ? 'bg-green-100 text-green-800 md:text-green-700' :
                   report.status === 'Claimed' ? 'bg-slate-100 text-slate-700 md:text-slate-600' : 'bg-blue-100 text-blue-800 md:text-blue-700'
->>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
                 }`}>
                   {report.status === 'Ready' ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
                   {report.status === 'Ready' ? 'Ready for Pickup' : report.status}
