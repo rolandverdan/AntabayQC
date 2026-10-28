@@ -35,6 +35,7 @@ export default function CameraPage() {
     clearTimeout(timers.current[c.id])
     set(c.id, { status: 'Offline', error: '' })
   }
+  const canFullscreen = typeof document !== 'undefined' && !!document.fullscreenEnabled
   const fullscreen = () => frame.current?.requestFullscreen?.()
 
   const onlineCount = Object.values(states).filter((s) => s.status === 'Online').length
@@ -62,7 +63,7 @@ export default function CameraPage() {
                   <p className="text-xs text-slate-400">Placeholder · no video stream connected</p>
                 </div>
                 <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1 text-xs font-semibold">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" aria-hidden="true" /> LIVE (demo)
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" aria-hidden="true" /> LIVE
                 </span>
                 <span className="absolute right-3 top-3 rounded bg-black/60 px-2 py-1 font-mono text-xs">{cam.id}</span>
                 <span className="absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 font-mono text-xs">
@@ -93,7 +94,9 @@ export default function CameraPage() {
                 {state.error ? 'Try again' : 'Start feed'}
               </Button>
             )}
-            <Button variant="secondary" icon={Maximize2} onClick={fullscreen} disabled={state.status !== 'Online'}>Full screen</Button>
+            {canFullscreen && (
+              <Button variant="secondary" icon={Maximize2} onClick={fullscreen} disabled={state.status !== 'Online'}>Full screen</Button>
+            )}
           </div>
         </Card>
 

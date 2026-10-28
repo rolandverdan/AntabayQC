@@ -115,12 +115,12 @@ export default function Notification() {
                   {label === 'Unread' ? unreadCount : label === 'Active alerts' ? activeAlertCount : value}
                 </p>
               </div>
-              <div className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:flex sm:h-11 sm:w-11 sm:rounded-xl ${
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11 sm:rounded-xl ${
                 tone === 'blue' ? 'bg-brand/10 text-brand' :
                 tone === 'amber' ? 'bg-amber-100 text-amber-700' :
                 'bg-green-100 text-green-700'
               }`}>
-                <Icon size={16} className="sm:hidden" />
+                <Icon size={18} className="sm:hidden" />
                 <Icon size={20} className="hidden sm:block" />
               </div>
             </div>
@@ -151,8 +151,8 @@ export default function Notification() {
                   aria-pressed={activeFilter === filter}
                   className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 ${
                     activeFilter === filter
-                      ? 'bg-brand text-white shadow-sm'
-                      : 'border border-slate-200 bg-slate-50 text-slate-600 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm'
+                      ? 'bg-brand text-white shadow-sm ring-2 ring-brand/20 md:ring-0'
+                      : 'border border-slate-300 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-brand/50 hover:bg-slate-50 hover:text-brand hover:shadow-sm md:border-slate-200 md:bg-slate-50 md:text-slate-600 md:hover:border-brand/30 md:hover:bg-white'
                   }`}
                 >
                   {filter}
@@ -170,11 +170,15 @@ export default function Notification() {
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-3 p-4">
             {filteredNotifications.length ? filteredNotifications.map(({ id, category, title, detail, time, icon: Icon, tone, unread }) => (
               <div
                 key={id}
-                className={`flex gap-4 p-4 transition ${unread ? 'bg-slate-50/70' : 'bg-white'}`}
+                className={`flex gap-3 rounded-xl border p-3 transition sm:gap-4 sm:p-4 ${
+                  unread
+                    ? 'border-brand/25 bg-brand/5'
+                    : 'border-slate-200 bg-white'
+                }`}
               >
                 <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
                   tone === 'amber' ? 'bg-amber-100 text-amber-700' :
@@ -189,7 +193,11 @@ export default function Notification() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{category}</span>
                     {unread && (
+<<<<<<< HEAD
                       <span className="commuter-status-tag inline-flex items-center rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-brand">
+=======
+                      <span className="commuter-status-tag inline-flex items-center rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white md:bg-brand/10 md:text-brand">
+>>>>>>> 9629adac0f0947eb1f2143c4bf901738736851c8
                         New
                       </span>
                     )}

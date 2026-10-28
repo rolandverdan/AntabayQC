@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Pencil, Info, IdCard, Bus, Phone, Mail, Route as RouteIcon } from 'lucide-react'
+import { useOutletContext } from 'react-router-dom'
+import { Pencil, Info, IdCard, Bus, Phone, Mail, LogOut, Route as RouteIcon } from 'lucide-react'
 import Card, { PageHeader, Notice } from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
 import Modal from '../../admin/components/Modal.jsx'
@@ -26,6 +27,7 @@ function Item({ icon: Icon, label, value }) {
 export default function AccountPage() {
   const { profile, updateProfile } = useConductor()
   const { notify } = useToast()
+  const { requestLogout } = useOutletContext()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(profile)
   const [errors, setErrors] = useState({})
@@ -51,7 +53,7 @@ export default function AccountPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Account" description="Your conductor profile." actions={<Button icon={Pencil} onClick={openEdit}>Edit profile</Button>} />
-      <Notice tone="amber" icon={Info}>All details on this page are sample data for the demo. Edits stay on this device and reset when you log out.</Notice>
+      <Notice tone="amber" icon={Info}>All details on this page are sample data. Edits stay on this device and reset when you log out.</Notice>
 
       <Card bodyClass="p-0">
         <div className="flex items-center gap-4 border-b border-slate-100 p-5">
@@ -69,6 +71,11 @@ export default function AccountPage() {
           <Item icon={Mail} label="Email address" value={profile.email} />
         </dl>
       </Card>
+
+      {/* Phones and tablets have no sidebar, so Logout lives here (it still asks for confirmation). */}
+      <div className="mt-4 lg:hidden">
+        <Button variant="secondary" icon={LogOut} onClick={requestLogout} className="w-full text-red-600! hover:bg-red-50!">Log out</Button>
+      </div>
 
       <Modal
         open={open}

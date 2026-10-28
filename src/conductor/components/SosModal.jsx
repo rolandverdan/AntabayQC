@@ -48,7 +48,7 @@ export default function SosModal({ open, onClose, location }) {
     setStep('sending')
     setTimeout(() => {
       const r = {
-        id: `SOS-DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
+        id: `SOS-${Math.floor(1000 + Math.random() * 9000)}`,
         type: type.label,
         description: description.trim(),
         location,
@@ -68,29 +68,30 @@ export default function SosModal({ open, onClose, location }) {
 
   let title = 'Report an emergency'
   let footer = null
+  const rowCls = 'flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end'
   if (step === 'select') {
     footer = (
-      <>
-        <Button variant="secondary" onClick={onClose}>Cancel</Button>
-        <Button variant="danger" onClick={toConfirm}>Continue</Button>
-      </>
+      <div className={rowCls}>
+        <Button variant="secondary" onClick={onClose} className="flex-1 sm:flex-none">Cancel</Button>
+        <Button variant="danger" onClick={toConfirm} className="flex-1 sm:flex-none">Continue</Button>
+      </div>
     )
   } else if (step === 'confirm') {
     title = 'Confirm emergency report'
     footer = (
-      <>
-        <Button variant="secondary" onClick={() => setStep('select')}>Back</Button>
-        <Button variant="secondary" onClick={onClose}>Cancel</Button>
+      <div className={rowCls}>
         {settings.sos.holdToConfirm
-          ? <HoldButton seconds={settings.sos.holdSeconds} onComplete={submit}>Hold to send report</HoldButton>
-          : <Button variant="danger" onClick={submit}>Send report</Button>}
-      </>
+          ? <HoldButton seconds={settings.sos.holdSeconds} onComplete={submit} className="order-first w-full sm:order-last sm:w-auto">Hold to send report</HoldButton>
+          : <Button variant="danger" onClick={submit} className="order-first w-full sm:order-last sm:w-auto">Send report</Button>}
+        <Button variant="secondary" onClick={() => setStep('select')} className="flex-1 sm:flex-none">Back</Button>
+        <Button variant="secondary" onClick={onClose} className="flex-1 sm:flex-none">Cancel</Button>
+      </div>
     )
   } else if (step === 'sending') {
     title = 'Sending report…'
   } else {
     title = 'Report recorded (demo)'
-    footer = <Button onClick={onClose}>Done</Button>
+    footer = <Button onClick={onClose} className="w-full sm:w-auto">Done</Button>
   }
 
   return (
@@ -181,9 +182,9 @@ export default function SosModal({ open, onClose, location }) {
           <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-3 text-sm text-green-900" role="status">
             <CircleCheck size={20} className="mt-0.5 shrink-0" />
             <div>
-              <p className="font-semibold">Demo report created</p>
+              <p className="font-semibold">Report created</p>
               <p className="mt-0.5 text-xs">
-                This is a frontend demonstration. No dispatcher, emergency service, or other personnel has been contacted.
+                No dispatcher, emergency service, or other personnel has been contacted from this version.
               </p>
             </div>
           </div>

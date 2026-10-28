@@ -23,8 +23,27 @@ export default function CommuterLayout() {
   const activeRoutes = routes.filter((r) => r.status === 'Active').length
 
   const title = NAV_ITEMS.find((item) => pathname === item.to)?.label
+    || ({
+      '/commuter/terms-and-conditions': 'Terms & Conditions',
+      '/commuter/settings/privacy-policy': 'Privacy Policy',
+    }[pathname])
     || NAV_ITEMS.find((item) => pathname.startsWith(item.to))?.label
     || 'Home'
+  const footerPageName = {
+    '/commuter/home': 'Home',
+    '/commuter/route-and-schedule': 'Routes & Schedules',
+    '/commuter/timetable': 'Timetable',
+    '/commuter/live-tracking': 'Live Tracking',
+    '/commuter/my-trip': 'My Trips',
+    '/commuter/lost-item': 'Lost Items',
+    '/commuter/lost-item-reports': 'Lost Item Reports',
+    '/commuter/report': 'Incident Reports',
+    '/commuter/feedback': 'Feedback',
+    '/commuter/notification': 'Notifications',
+    '/commuter/settings': 'Settings',
+    '/commuter/settings/privacy-policy': 'Privacy Policy',
+    '/commuter/help-support': 'Help & Support',
+  }[pathname] || title
   const handleLogout = () => {
     leave()
     navigate('/', { replace: true })
@@ -53,8 +72,15 @@ export default function CommuterLayout() {
           commuterMeta={`${activeBuses} buses · ${activeRoutes} routes`}
         />
 
-        <main className="p-4 md:p-6">
-          <Outlet />
+        <div aria-hidden="true" className="h-16 md:hidden" />
+
+        <main className="flex min-h-[calc(100vh-4rem)] flex-col p-4 md:min-h-0 md:p-6">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <footer className="mt-auto border-t border-slate-200/80 pt-4 text-center text-[11px] leading-5 text-slate-500 md:hidden">
+            Official City Bus {footerPageName} • Quezon City Government (QC Bus System)
+          </footer>
         </main>
       </div>
     </div>
