@@ -1,167 +1,132 @@
 import { useMemo, useState } from 'react'
-import { MapPinned, Search } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { Search, X } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
-import { PageHeader } from '../../admin/components/Card.jsx'
-
-const buttonBase = 'rounded-xl px-3 py-2 text-sm font-semibold transition'
+import MapView from '../../admin/components/MapView.jsx'
+import { routeColor } from '../../admin/utils/geo.js'
+import RouteChip, { readableOn } from '../components/RouteChip.jsx'
+import RouteTabs from '../components/RouteTabs.jsx'
 
 export default function BusRoutes() {
-  const { routes, stopsById } = useAdminData()
-  const [query, setQuery] = useState('')
-  const [selectedRouteId, setSelectedRouteId] = useState(routes[0]?.id || '')
+  const { routes, stopsById, buses } = useAdminData()
+  const [params] = useSearchParams()
+  const [query, setQuery] = useState(params.get('q') || '') // Home's quick search lands here with ?q=
+  const [selectedRouteId, setSelectedRouteId] = useState('')
 
   const filteredRoutes = useMemo(() => {
     const needle = query.trim().toLowerCase()
     if (!needle) return routes
-
     return routes.filter((route) => {
       const haystack = `${route.id} ${route.name} ${route.stopIds.map((id) => stopsById[id]?.name || '').join(' ')}`.toLowerCase()
       return haystack.includes(needle)
     })
   }, [query, routes, stopsById])
 
-  const selectedRoute = filteredRoutes.find((route) => route.id === selectedRouteId) || filteredRoutes[0] || routes[0]
+  const selectedRoute = filteredRoutes.find((route) => route.id === selectedRouteId) || filteredRoutes[0]
   const selectedStops = selectedRoute ? selectedRoute.stopIds.map((id) => stopsById[id]).filter(Boolean) : []
+  const color = selectedRoute ? routeColor(selectedRoute.id, selectedRoute) : '#244A9B'
+  const activeOnRoute = selectedRoute ? buses.filter((b) => b.routeId === selectedRoute.id && b.status === 'Active').length : 0
+
+  const origin = selectedStops[0]?.name || 'Origin'
+  const destination = selectedStops[selectedStops.length - 1]?.name || 'Destination'
 
   return (
-    <div className="space-y-5">
-      <PageHeader title="Bus Routes" description="Explore QC Bus routes, stops, and daily service hours." />
+    <div className="space-y-3">
+      <RouteTabs />
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-slate-500">Daily service · Weekdays &amp; weekends · Holiday operations may vary.</p>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center sm:min-w-[250px]">
-          <p className="text-xl font-bold leading-tight text-navy sm:text-2xl">6:00 AM – 9:00 PM</p>
-          <p className="mt-1.5 text-sm font-medium text-slate-600">Monday – Sunday</p>
-          <p className="text-xs text-slate-500">Except on holidays</p>
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-brand/40">
+          <Search size={16} className="shrink-0 text-slate-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="min-h-9 w-full min-w-0 border-0 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+            placeholder="Search routes or stops"
+            aria-label="Search routes or stops"
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Choose a route">
+          {filteredRoutes.map((route) => (
+            <RouteChip key={route.id} route={route} selected={route.id === selectedRoute?.id} onClick={() => setSelectedRouteId(route.id)} />
+          ))}
+          {!filteredRoutes.length && <p className="py-1 text-sm text-slate-500">No route or stop matches “{query}”.</p>}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-            <div className="flex gap-2 text-sm font-bold text-slate-700">
-              <NavLink to="/commuter/route-and-schedule" className={({ isActive }) => `${buttonBase} ${isActive ? 'bg-brand text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}>
-                Bus Routes
-              </NavLink>
-              <NavLink to="/commuter/timetable" className={({ isActive }) => `${buttonBase} ${isActive ? 'bg-brand text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}>
-                Timetable
-              </NavLink>
+      {selectedRoute && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={{ background: color, color: readableOn(color) }}>
+              {selectedRoute.id.replace('R-', '')}
+            </span>
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-bold leading-tight text-navy">{selectedRoute.name}</h2>
+              <p className="truncate text-xs text-slate-500">{origin} → {destination} · {selectedStops.length} stops</p>
             </div>
           </div>
 
-          <div className="p-4">
-            <div className="mb-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <Search size={16} className="text-slate-400" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full border-0 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
-                placeholder="Search routes or stops"
-              />
-            </div>
-
-            <div className="space-y-3">
-              {filteredRoutes.map((route) => {
-                const isSelected = route.id === selectedRoute?.id
-                const short = route.id.replace('R-', '')
-                const stops = route.stopIds.map((id) => stopsById[id]).filter(Boolean)
-
-                return (
-                  <button
-                    key={route.id}
-                    type="button"
-                    onClick={() => setSelectedRouteId(route.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
-                      isSelected ? 'border-brand bg-brand/5 shadow-sm' : 'border-slate-200 bg-slate-50 hover:border-brand/30 hover:bg-white'
-                    }`}
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ background: route.color }}>
-                      {short}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-base font-bold text-navy">{route.name}</span>
-                      <span className="block truncate text-xs text-slate-500">{stops[0]?.name || 'Origin'} → {stops[stops.length - 1]?.name || 'Destination'}</span>
-                    </span>
-                    <span className="text-xl text-slate-400">›</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-brand">
-                  {selectedRoute?.id?.replace('R-', '') || 'R'}
-                </span>
-                <span className="text-lg font-bold text-navy">{selectedRoute?.name || 'No route selected'}</span>
+          {/* Map and stop list share one height on desktop so both columns end together. */}
+          <div className="grid grid-cols-1 gap-4 lg:h-[26rem] lg:grid-cols-[1.25fr_1fr]">
+            <div className="flex min-h-0 flex-col gap-2">
+              <div className="relative h-64 overflow-hidden rounded-xl border border-slate-200 lg:h-auto lg:flex-1">
+                <MapView
+                  routes={[{ id: selectedRoute.id, name: selectedRoute.name, color, points: selectedStops }]}
+                  stops={selectedStops}
+                  scrollWheelZoom={false}
+                  terminalLabels
+                  className="h-full"
+                />
               </div>
-            </div>
-
-            <div className="mb-4 flex items-center gap-2 text-sm text-slate-600">
-              <MapPinned size={16} className="text-brand" />
-              <span>{selectedStops.length} stops</span>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#dff0ff_0%,#e7f4ea_50%,#cfe7ff_100%)] p-4">
-              <svg viewBox="0 0 400 240" className="h-56 w-full rounded-xl bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.75),_rgba(255,255,255,0.15)_60%,_rgba(255,255,255,0)_100%)]">
-                <g opacity="0.9">
-                  <path d="M20 30 L110 60 L180 50 L240 110 L320 105 L360 190" fill="none" stroke="#dfe7f5" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20 30 L110 60 L180 50 L240 110 L320 105 L360 190" fill="none" stroke="#e12645" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-                </g>
-                <g fill="#fff" stroke="#193b70" strokeWidth="2">
-                  <circle cx="20" cy="30" r="7" />
-                  <circle cx="110" cy="60" r="7" />
-                  <circle cx="180" cy="50" r="7" />
-                  <circle cx="240" cy="110" r="7" />
-                  <circle cx="320" cy="105" r="7" />
-                  <circle cx="360" cy="190" r="7" />
-                </g>
-              </svg>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                <span className="h-2.5 w-2.5 rounded-full bg-brand" />
-                Main Stops
-              </div>
-
-              {selectedStops.slice(0, 6).map((stop, index) => (
-                <div key={stop.id} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-navy">{stop.name}</p>
-                    <p className="text-xs text-slate-500">{stop.address}</p>
+              {/* Small indicators after the map instead of three big cards */}
+              <dl className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  ['Active buses', activeOnRoute],
+                  ['Every', '15–20 min'],
+                  ['Trip time', '30–45 min'],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+                    <dt className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
+                    <dd className="text-sm font-bold text-navy">{value}</dd>
                   </div>
-                </div>
-              ))}
+                ))}
+              </dl>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Active Buses</p>
-              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">8</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Frequency</p>
-              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">15–20</p>
-              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm sm:p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Trip Duration</p>
-              <p className="mt-1.5 text-2xl font-bold text-navy sm:text-3xl">30–45</p>
-              <p className="text-xs text-slate-500 sm:text-sm">minutes</p>
+            <div className="flex min-h-0 flex-col">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Stops in order</h3>
+              <ol className="max-h-80 min-h-0 flex-1 overflow-y-auto pr-1 lg:max-h-none">
+                {selectedStops.map((stop, index) => {
+                  const terminal = index === 0 || index === selectedStops.length - 1
+                  return (
+                    <li key={stop.id} className="relative flex gap-3 pb-3 last:pb-0">
+                      {index < selectedStops.length - 1 && <span className="absolute left-[11px] top-6 h-full w-0.5" style={{ background: `${color}55` }} />}
+                      <span
+                        className="relative z-[1] mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                        style={terminal ? { background: color, color: readableOn(color) } : { background: '#fff', color: '#193B70', border: `2px solid ${color}` }}
+                      >
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-snug text-navy">
+                          {stop.name}
+                          {terminal && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-slate-500">{index === 0 ? 'Start' : 'End'}</span>}
+                        </p>
+                        <p className="text-xs text-slate-500">{stop.address}</p>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

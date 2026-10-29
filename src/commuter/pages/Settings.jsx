@@ -113,15 +113,15 @@ export default function Settings() {
         description="Manage your commuter profile, alerts, and travel preferences."
       />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <UserRound size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-navy">Profile</h2>
+                <h2 className="text-base font-bold text-navy">Profile</h2>
                 <p className="text-sm text-slate-500">Your commuter account information</p>
               </div>
             </div>
@@ -175,20 +175,20 @@ export default function Settings() {
               </label>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={cancelProfile}>Cancel</Button>
               <Button type="submit">Save profile</Button>
             </div>
             </form>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
                 <Bell size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-navy">Notification preferences</h2>
+                <h2 className="text-base font-bold text-navy">Notification preferences</h2>
                 <p className="text-sm text-slate-500">Choose what updates you want to receive</p>
               </div>
             </div>
@@ -222,14 +222,14 @@ export default function Settings() {
           </div>
         </section>
 
-        <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
                 <Palette size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-navy">App preferences</h2>
+                <h2 className="text-base font-bold text-navy">App preferences</h2>
               </div>
             </div>
 
@@ -262,13 +262,13 @@ export default function Settings() {
             <p className="mt-3 text-xs leading-5 text-slate-500">These options are saved locally as UI preferences. Theme, layout density, location, and sound behavior need application or device-service support before they can take effect.</p>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-700">
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-navy">Privacy & security</h2>
+                <h2 className="text-base font-bold text-navy">Privacy & security</h2>
               </div>
             </div>
 
@@ -296,8 +296,8 @@ export default function Settings() {
             if (event.target === event.currentTarget) setActiveDialog('')
           }}
         >
-          <section role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
-            <h2 id="settings-dialog-title" className="text-xl font-black text-navy">
+          <section role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title" className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl">
+            <h2 id="settings-dialog-title" className="text-base font-bold text-navy">
               {activeDialog === 'password' ? 'Password settings' : activeDialog === 'devices' ? 'Signed-in devices' : 'Privacy controls'}
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -307,7 +307,7 @@ export default function Settings() {
                   ? 'Signed-in devices are not tracked. Connect an account service to review or revoke active sessions.'
                   : 'You can manage notification and location preferences above. Location access is not requested or collected.'}
             </p>
-            <div className="mt-5 flex justify-end">
+            <div className="mt-4 flex justify-end">
               <Button onClick={() => setActiveDialog('')}>Close</Button>
             </div>
           </section>

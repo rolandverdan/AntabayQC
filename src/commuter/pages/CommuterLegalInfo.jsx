@@ -4,24 +4,24 @@ import { PageHeader } from '../../admin/components/Card.jsx'
 
 const privacySections = [
   {
-    title: 'This is a demonstration',
-    body: 'This commuter experience is a prototype, not a connected QC Bus account or reporting service. Routes, bus activity, notifications, and report examples may be sample data and may not describe current service.',
+    title: 'About this service',
+    body: 'This commuter experience is a prototype, not a connected QC Bus account or reporting service. Routes, bus activity, notifications, and and reports may not describe current service.',
   },
   {
     title: 'Information saved in this browser',
-    body: 'The commuter profile fields (name, email, phone, and route preference) and alert or display preferences are saved in this browser’s local storage. A demo sign-in identifier and commuter session mode are held in session storage. The app does not save your password.',
+    body: 'The commuter profile fields (name, email, phone, and route preference) and alert or display preferences are saved in this browser’s local storage. A sign-in identifier and commuter session mode are held in session storage. The app does not save your password.',
   },
   {
     title: 'Forms, attachments, and location',
-    body: 'Incident reports, lost-item inquiries, and feedback are demonstrations. Submissions and selected attachments stay in page memory and are not sent to a QC Bus service; refreshing the page clears them. This version does not request your device location. The “Use my location” setting is a demo preference only.',
+    body: 'Incident reports, lost-item inquiries, and feedback are not sent to a QC Bus service. Submissions and selected attachments stay in page memory; refreshing the page clears them. This version does not request your device location. The “Use my location” setting is a display preference only.',
   },
   {
     title: 'External resources',
     body: 'The app requests the Inter font from Google Fonts. Your browser contacts Google to load the font files. The commuter forms do not send their contents with these font requests.',
   },
   {
-    title: 'Removing saved demo information',
-    body: 'To remove the saved commuter profile and preferences, clear this site’s browser data. This also signs you out of the demo and may reset other locally saved prototype information.',
+    title: 'Removing saved information',
+    body: 'To remove the saved commuter profile and preferences, clear this site’s browser data. This also signs you out and may reset other locally saved information.',
   },
   {
     title: 'Before public release',
@@ -31,7 +31,7 @@ const privacySections = [
 
 export default function PrivacyPolicy() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         title="Privacy Policy"
         description="What the commuter prototype stores and sends."
@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
         )}
       />
 
-      <section className="rounded-[18px] border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-5">
+      <section className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-4">
         <div className="mb-4 flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
             <ShieldCheck size={19} />

@@ -21,14 +21,15 @@ export default function Access() {
   const [feedback, setFeedback] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  if (session && !busy) return <Navigate to="/commuter/home" replace />
+  if (session && !busy) return <Navigate to={session.mode === 'guest' ? '/commuter/live-tracking' : '/commuter/home'} replace />
 
   const go = (mode, id) => {
     setBusy(true)
     signOutOthers('commuter')
     enter(mode, id)
     const from = location.state?.from
-    navigate(from && from.startsWith('/commuter') ? from : '/commuter/home', { replace: true })
+    const home = mode === 'guest' ? '/commuter/live-tracking' : '/commuter/home'
+    navigate(mode !== 'guest' && from && from.startsWith('/commuter') ? from : home, { replace: true })
   }
 
   const submit = (e) => {
@@ -58,8 +59,8 @@ export default function Access() {
       blurb="Check bus routes, stops, timetables, and trip updates. No account is needed to look around."
       footer="Commuter portal · frontend demo"
     >
-      <h1 className="text-2xl font-bold text-navy">Commuter Access</h1>
-      <p className="mb-5 mt-1 text-sm text-slate-500">Continue as a guest, or sign in with a demo commuter account.</p>
+      <h1 className="text-xl font-bold text-navy">Commuter Access</h1>
+      <p className="mb-4 mt-1 text-sm text-slate-500">Continue as a guest, or sign in with a demo commuter account.</p>
 
       <Button type="button" className="w-full" icon={ArrowRight} onClick={() => go('guest')} disabled={busy}>Continue as guest</Button>
 
@@ -85,7 +86,7 @@ export default function Access() {
         </div>
       </form>
 
-      <div className="mt-5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+      <div className="mt-4 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
         <Info size={14} className="mt-0.5 shrink-0" />
         <p>
           Demo only. Use <span className="font-semibold">commuter</span> and password <span className="font-semibold">{COMMUTER_PASSWORD}</span>, or just continue as a guest. No real authentication is used.

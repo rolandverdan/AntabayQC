@@ -3,6 +3,7 @@ import { MessageSquareText, Star, Send, CheckCircle2 } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
+import BackToSupport from '../components/BackToSupport.jsx'
 
 const ratingOptions = [1, 2, 3, 4, 5]
 const categories = ['Driver behavior', 'Route reliability', 'Bus cleanliness', 'Schedule and timing', 'Station experience', 'Accessibility', 'Other']
@@ -22,7 +23,7 @@ const createInitialForm = () => ({
 })
 
 export default function Feedback() {
-  const { routes, buses } = useAdminData()
+  const { routes, buses, addReport } = useAdminData()
   const { notify } = useToast()
   const [form, setForm] = useState(createInitialForm)
   const [recentFeedback, setRecentFeedback] = useState([
@@ -56,13 +57,26 @@ export default function Feedback() {
       details: form.details,
       bus: bus ? `${bus.id} · ${bus.plate}` : form.otherBus,
     }
+    // Send to the admin side (Report Logs, type "Feedback").
+    addReport({
+      type: 'Feedback',
+      priority: form.rating <= 2 ? 'Medium' : 'Low',
+      busId: bus?.id || '',
+      otherBus: bus ? '' : form.otherBus,
+      routeId: route?.id || '',
+      reportedBy: 'Passenger',
+      rating: form.rating,
+      description: `${form.category} · rated ${form.rating}/5. ${form.details}`,
+    })
+
     setRecentFeedback((items) => [feedback, ...items])
     setForm(createInitialForm())
-    notify('Feedback added to Recent Feedback. It has not been sent to a service.', 'success')
+    notify('Thank you! Your feedback was sent to the QC Bus team.', 'success')
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      <BackToSupport />
       <PageHeader
         title="Feedback"
         description="Help us improve service quality, route reliability, and your commuter experience."
@@ -77,14 +91,14 @@ export default function Feedback() {
           </div>}
       />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_0.6fr]">
-        <form onSubmit={handleSubmit} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_0.6fr]">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
               <MessageSquareText size={20} />
             </div>
             <div>
-              <p className="text-xl font-black text-navy">Share your experience</p>
+              <p className="text-base font-bold text-navy">Share your experience</p>
               <p className="text-sm text-slate-500">We review every commuter submission to improve city bus service.</p>
             </div>
           </div>
@@ -155,15 +169,15 @@ export default function Feedback() {
               <button type="button" onClick={clearForm} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-100 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
                 Clear
               </button>
-              <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
+              <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
                 Submit Feedback <Send size={16} />
               </button>
             </div>
           </div>
         </form>
 
-        <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-3 text-lg font-black text-navy">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand">
                 <CheckCircle2 size={18} />
@@ -186,7 +200,7 @@ export default function Feedback() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-brand px-4 py-5 text-white shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-brand px-4 py-4 text-white shadow-sm">
             <h2 className="text-lg font-black">Service response</h2>
             <p className="mt-3 text-sm leading-6 text-blue-100">
               Your feedback is reviewed by QC Bus operations and service desk teams for route planning, communication, and commuter experience improvements.

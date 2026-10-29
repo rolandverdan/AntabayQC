@@ -28,7 +28,7 @@ export default function RecentActivity({ emergencies, reports, logs }) {
       items: [...reports].sort(byDate('datetime')).slice(0, 5),
       render: (r) => (
         <>
-          <div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-navy">{r.type} · {r.busId}</p><Badge>{r.status}</Badge></div>
+          <div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-navy">{r.type} · {r.busId || 'No bus'}</p><Badge>{r.status}</Badge></div>
           <p className="truncate text-xs text-slate-500">{r.id} · {fmtDateTime(r.datetime)}</p>
         </>
       ),

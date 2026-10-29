@@ -123,7 +123,7 @@ export default function Header({
                     onToggle={() => setOpenList(openList === 'reports' ? null : 'reports')}
                     onOpenAll={() => goHighlight('/admin/report-logs', pendingList.map((r) => r.id))}
                     disabled={pendingReports === 0}
-                    items={pendingList.map((r) => ({ id: r.id, title: `${r.id} · ${r.type}`, sub: `${r.busId} · ${r.priority} priority`, tone: r.priority === 'High' ? 'bg-amber-500' : 'bg-slate-400' }))}
+                    items={pendingList.map((r) => ({ id: r.id, title: `${r.id} · ${r.type}`, sub: `${r.busId || 'No bus'} · ${r.priority} priority`, tone: r.priority === 'High' ? 'bg-amber-500' : 'bg-slate-400' }))}
                     onPick={(id) => goHighlight('/admin/report-logs', [id])}
                   />
                 </div>

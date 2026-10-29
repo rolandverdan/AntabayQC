@@ -14,6 +14,7 @@ import {
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
+import BackToSupport from '../components/BackToSupport.jsx'
 
 const categoryGuide = [
   { label: 'Driver', desc: 'Driver conduct, route issues, speeding, unsafe driving.' },
@@ -52,7 +53,7 @@ const createInitialForm = () => ({
 })
 
 export default function Report() {
-  const { routes, buses, stops } = useAdminData()
+  const { routes, buses, stops, addReport } = useAdminData()
   const { notify } = useToast()
   const fileInputRef = useRef(null)
   const [form, setForm] = useState(createInitialForm)
@@ -101,16 +102,34 @@ export default function Report() {
       tone: 'amber',
       details: `${category} · ${form.severity} urgency · ${location || 'Location not specified'} · ${form.date} ${form.time}${bus ? ` · ${bus.id} (${bus.plate})` : form.otherBus ? ` · ${form.otherBus}` : ''}${form.anonymous ? ' · Submitted anonymously' : ''}${evidence.length ? ` · Evidence: ${evidence.map((file) => file.name).join(', ')}` : ''}. ${form.details}`,
     }
+    // Send to the admin side (Report Logs). Category names map onto the admin report types.
+    const TYPE_MAP = { Driver: 'Driver Conduct', Conductor: 'Conductor Conduct', Passenger: 'Passenger Conduct' }
+    const adminType = TYPE_MAP[form.category] || form.category || 'General Concern'
+    const priority = form.severity === 'High' ? 'High' : form.severity === 'Low' ? 'Low' : 'Medium'
+    addReport({
+      type: adminType,
+      priority,
+      busId: bus?.id || '',
+      otherBus: bus ? '' : form.otherBus,
+      routeId: selectedRoute?.id || '',
+      reportedBy: form.anonymous ? 'Anonymous' : 'Passenger',
+      location,
+      contactPhone: !form.anonymous && form.phone ? form.phone : '',
+      evidence: evidence.map((file) => file.name),
+      description: `${form.details} (Incident on ${form.date} ${form.time}${location ? `, ${location}` : ''}.)`,
+    })
+
     setActiveReports((current) => [newReport, ...current])
     setSelectedReport(newReport)
     setForm(createInitialForm())
     setEvidence([])
     if (fileInputRef.current) fileInputRef.current.value = ''
-    notify('Incident report added to My Active Reports. It has not been sent to a service.', 'success')
+    notify('Incident report sent to the QC Commuter Protection & Safety Office.', 'success')
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      <BackToSupport />
       <PageHeader
         title="Incident Report"
         description="Report a service incident, safety concern, or operational delay to the QC Commuter Protection & Safety Office."
@@ -122,15 +141,15 @@ export default function Report() {
         </div>}
       />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.55fr_0.75fr]">
-        <form onSubmit={handleSubmit} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.55fr_0.75fr]">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <FileText size={18} />
               </div>
               <div>
-                <div className="text-xl font-black text-navy">Submit an Incident Report</div>
+                <div className="text-base font-bold text-navy">Submit an Incident Report</div>
                 <div className="text-sm text-slate-500">Fields with an asterisk (*) are required for investigation.</div>
               </div>
             </div>
@@ -266,7 +285,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+          <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-brand">
                 <Bell size={18} />
@@ -296,18 +315,18 @@ export default function Report() {
             </div>
           )}
 
-          <div className="mt-5 flex items-center justify-end gap-3">
+          <div className="mt-4 flex items-center justify-end gap-3">
             <button type="button" onClick={resetForm} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-100 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
               Clear Form
             </button>
-            <button type="submit" className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
+            <button type="submit" className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
               Submit Report
             </button>
           </div>
         </form>
 
-        <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-3 text-base font-black text-navy">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <FileText size={16} />
@@ -335,7 +354,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-2 text-base font-black text-navy">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <ShieldCheck size={16} />
@@ -372,7 +391,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-brand/20 bg-brand p-4 text-white shadow-sm">
+          <div className="rounded-2xl border border-brand/20 bg-brand p-4 text-white shadow-sm">
             <div className="mb-3 flex items-center gap-3 text-lg font-black">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
                 <ShieldAlert size={18} />

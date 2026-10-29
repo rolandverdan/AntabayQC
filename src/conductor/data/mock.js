@@ -49,5 +49,5 @@ export const CAMERAS = [
 export const NOTIFICATIONS = [
   { id: 'n1', category: 'delays', title: 'Slow traffic ahead', body: 'Kalayaan Ave is moving slowly. Expect about 4 minutes of delay.', time: '5 min ago' },
   { id: 'n2', category: 'passengerAlerts', title: 'High load at next stop', body: 'Many passengers are waiting at Barangay Silangan Hall.', time: '12 min ago' },
-  { id: 'n3', category: 'adminMessages', title: 'Message from operations', body: 'Sample message: please log your end-of-route headcount.', time: '30 min ago' },
+  { id: 'n3', category: 'adminMessages', title: 'Message from operations', body: 'Please log your end-of-route headcount.', time: '30 min ago' },
 ]

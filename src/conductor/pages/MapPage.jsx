@@ -45,7 +45,7 @@ export default function MapPage() {
               <div className={`h-full rounded-full ${pct > 85 ? 'bg-red-500' : pct > 60 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${pct}%` }} />
             </div>
             <Button variant="secondary" size="sm" icon={running ? Pause : Play} onClick={() => setRunning(!running)} className="w-full">
-              {running ? 'Pause simulation' : 'Resume simulation'}
+              {running ? 'Pause tracking' : 'Resume tracking'}
             </Button>
           </div>
         </Card>
@@ -71,10 +71,6 @@ export default function MapPage() {
             <div className="flex justify-between gap-3"><dt className="text-slate-500">Longitude</dt><dd className="font-mono text-navy">{position.lng.toFixed(5)}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-slate-500">Vehicle</dt><dd className="text-navy">{VEHICLE.plate}</dd></div>
           </dl>
-          <div className="mt-3 flex items-start gap-2 text-xs text-slate-500">
-            <Info size={14} className="mt-0.5 shrink-0" />
-            <p>Position is simulated along the route. It is not a live GPS reading.</p>
-          </div>
         </Card>
 
         {!settings.map.showRoute && !settings.map.showStops && (

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../admin/components/Card.jsx'
+import BackToSupport from '../components/BackToSupport.jsx'
 import {
   BadgeCheck,
   BusFront,
@@ -13,7 +15,7 @@ import {
   Store,
 } from 'lucide-react'
 
-const reports = [
+const sampleReports = [
   {
     id: 'QC-LR-2026-0891',
     title: 'Wallet & QC Resident Card',
@@ -38,10 +40,43 @@ const reports = [
 
 const filters = ['All', 'Ready', 'In Review', 'Claimed']
 
+
+// Admin statuses -> what the commuter sees.
+const STATUS_FOR_COMMUTER = { Pending: 'In Review', 'Under Review': 'In Review', Resolved: 'Ready', Dismissed: 'Claimed' }
+const fmtFiled = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
 export default function LostItemReports() {
+  const { reports: adminReports, routesById } = useAdminData()
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
   const [newestFirst, setNewestFirst] = useState(true)
+
+  // Reports this commuter filed (they arrive in the admin Report Logs) plus the demo samples.
+  const reports = useMemo(() => {
+    const submitted = adminReports
+      .filter((r) => r.source === 'Commuter' && r.type === 'Lost Item')
+      .map((r) => ({
+        id: r.caseRef || r.id,
+        title: r.description.split(':')[0] || 'Lost item',
+        status: STATUS_FOR_COMMUTER[r.status] || 'In Review',
+        filed: fmtFiled(r.datetime),
+        description: r.description,
+        route: routesById[r.routeId]?.name || 'Route not specified',
+        bus: r.busId || r.otherBus || 'Bus not specified',
+        priority: false,
+      }))
+    return [...submitted, ...sampleReports]
+  }, [adminReports, routesById])
+
+  const stats = useMemo(() => {
+    const countBy = (status) => reports.filter((report) => report.status === status).length
+    return [
+      { label: 'Total Reports', value: reports.length, detail: 'Filed by you' },
+      { label: 'Ready for Pickup', value: countBy('Ready'), detail: 'Bring a valid ID' },
+      { label: 'In Review', value: countBy('In Review'), detail: 'Being checked by the depot' },
+      { label: 'Claimed', value: countBy('Claimed'), detail: 'Already returned to you' },
+    ]
+  }, [reports])
 
   const filteredReports = useMemo(() => {
     const search = query.trim().toLowerCase()
@@ -54,10 +89,11 @@ export default function LostItemReports() {
       const dateDifference = new Date(second.filed).getTime() - new Date(first.filed).getTime()
       return newestFirst ? dateDifference : -dateDifference
     })
-  }, [activeFilter, newestFirst, query])
+  }, [reports, activeFilter, newestFirst, query])
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      <BackToSupport />
       <PageHeader
         title="Lost Item Report"
         description="Review report progress and manage recovered-item claims."
@@ -72,7 +108,7 @@ export default function LostItemReports() {
         </div>}
       />
 
-      <nav className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm" aria-label="Lost item pages">
+      <nav className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm" aria-label="Lost item pages">
         <div className="flex flex-wrap items-center gap-3">
           <Link to="/commuter/lost-item" className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
             Report Lost Item
@@ -87,17 +123,17 @@ export default function LostItemReports() {
         </div>
       </nav>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" aria-label="Lost item report summary">
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Lost item report summary">
         {stats.map(({ label, value, detail }) => (
-          <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-            <p className="mt-2 text-3xl font-black text-navy">{value}</p>
+            <p className="mt-2 text-xl font-bold text-navy">{value}</p>
             <p className="text-xs font-medium text-slate-500">{detail}</p>
           </div>
         ))}
       </section>
 
-      <section className="flex flex-col gap-3 rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
+      <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
         <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
           <Search size={15} className="shrink-0 text-slate-500" />
           <input
@@ -137,10 +173,10 @@ export default function LostItemReports() {
         </button>
       </section>
 
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-4" aria-label="Lost item reports">
           {filteredReports.length ? filteredReports.map((report) => (
-            <article key={report.id} className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+            <article key={report.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 text-slate-500">
                   {report.priority && <span className="font-bold text-slate-700">Priority Resolution</span>}
@@ -170,23 +206,23 @@ export default function LostItemReports() {
               </div>
             </article>
           )) : (
-            <div className="rounded-[18px] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500">
               No lost-item reports match your search.
             </div>
           )}
         </section>
 
-        <aside className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+        <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
               <CirclePlus size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-black text-navy">Have another lost item?</h2>
+              <h2 className="text-base font-bold text-navy">Have another lost item?</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">Every city bus is checked after each completed loop. File early to notify conductors immediately.</p>
             </div>
           </div>
-          <Link to="/commuter/lost-item" className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
+          <Link to="/commuter/lost-item" className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
             <BusFront size={14} />
             File New Lost Report
           </Link>

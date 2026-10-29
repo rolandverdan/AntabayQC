@@ -66,7 +66,7 @@ export default function ReportLogs() {
     { key: 'id', header: 'Report ID', render: (r) => <span className="font-mono text-xs font-semibold text-navy">{r.id}</span> },
     { key: 'type', header: 'Type' },
     { key: 'datetime', header: 'Date & time', render: (r) => <span className="whitespace-nowrap">{fmtDateTime(r.datetime)}</span> },
-    { key: 'ref', header: 'Bus / route', render: (r) => `${r.busId} · ${r.routeId}` },
+    { key: 'ref', header: 'Bus / route', render: (r) => `${r.busId || 'No bus'}${r.routeId ? ` · ${r.routeId}` : ''}` },
     { key: 'by', header: 'Reported by', render: (r) => r.reportedBy },
     { key: 'desc', header: 'Description', render: (r) => <span className="line-clamp-2 max-w-64">{r.description}</span> },
     { key: 'priority', header: 'Priority', render: (r) => <Badge>{r.priority}</Badge> },
@@ -105,7 +105,16 @@ export default function ReportLogs() {
           <div className="space-y-5">
             <DetailGrid items={[
               ['Report ID', view.id], ['Type', view.type], ['Date & time', fmtDateTime(view.datetime)], ['Priority', view.priority],
-              ['Bus', view.busId], ['Route', view.routeId], ['Reported by', view.reportedBy], ['Current status', view.status], ['Description', view.description, true],
+              ['Bus', view.busId || view.otherBus], ['Route', view.routeId], ['Reported by', view.reportedBy], ['Current status', view.status],
+              ...(view.source === 'Commuter' ? [
+                ['Source', 'Commuter app'],
+                ['Case reference', view.caseRef],
+                ['Location', view.location],
+                ['Contact phone', view.contactPhone],
+                ['Rating', view.rating ? `${view.rating} / 5` : ''],
+                ['Evidence files', view.evidence?.length ? view.evidence.join(', ') : ''],
+              ] : []),
+              ['Description', view.description, true],
             ]} />
             <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-end">
               <Field label="Update status" className="flex-1">

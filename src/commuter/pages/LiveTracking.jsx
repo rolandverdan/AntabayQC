@@ -1,172 +1,183 @@
-import { useMemo, useState } from 'react'
-import { Search, MapPinned, BusFront, LocateFixed, Clock3, AlertTriangle } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { BusFront, Clock3, Gauge, MapPinned, Users } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
-import { PageHeader } from '../../admin/components/Card.jsx'
-
-const routeCodeMap = {
-  all: 'ALL ACTIVE BUSES',
-}
+import MapView from '../../admin/components/MapView.jsx'
+import { busMarkerStyle, computeBusLive, routeColor } from '../../admin/utils/geo.js'
+import { OCCUPANCY, occupancyLevel } from '../../admin/utils/occupancy.js'
+import RouteChip from '../components/RouteChip.jsx'
 
 export default function LiveTracking() {
-  const { routes, buses } = useAdminData()
-  const [query, setQuery] = useState('')
+  const { routes, buses, stopsById, routesById } = useAdminData()
   const [selectedRoute, setSelectedRoute] = useState('all')
+  const [selectedBusId, setSelectedBusId] = useState(null)
+  const [progress, setProgress] = useState(() => Object.fromEntries(buses.map((b) => [b.id, b.progress || 0])))
 
-  const routeOptions = useMemo(() => {
-    const items = routes.map((route) => ({
-      id: route.id,
-      label: route.id,
-      name: route.name,
-    }))
+  // Active buses creep along their route lines (time-lapsed), same simulation as the admin Live Map.
+  const dataRef = useRef({ buses, routesById, stopsById })
+  useEffect(() => { dataRef.current = { buses, routesById, stopsById } }, [buses, routesById, stopsById])
+  useEffect(() => {
+    const t = setInterval(() => {
+      const { buses: bs, routesById: rb, stopsById: sb } = dataRef.current
+      setProgress((prev) => {
+        const next = { ...prev }
+        bs.forEach((b) => {
+          if (b.status !== 'Active') return
+          const cur = prev[b.id] ?? b.progress ?? 0
+          const live = computeBusLive(b, rb[b.routeId], sb, cur)
+          if (live) next[b.id] = (cur + (live.speed * 0.0125) / live.routeLengthKm) % 1
+        })
+        return next
+      })
+    }, 1500)
+    return () => clearInterval(t)
+  }, [])
 
-    return [{ id: 'all', label: routeCodeMap.all, name: 'All active buses' }, ...items]
-  }, [routes])
+  // Commuters only see buses that are actually running.
+  const runningBuses = useMemo(() => buses.filter((b) => b.status === 'Active'), [buses])
+  const countFor = (routeId) => runningBuses.filter((b) => b.routeId === routeId).length
 
-  const filteredRoutes = useMemo(() => {
-    const needle = query.trim().toLowerCase()
+  const visible = useMemo(
+    () =>
+      runningBuses
+        .filter((b) => selectedRoute === 'all' || b.routeId === selectedRoute)
+        .flatMap((bus) => {
+          const live = computeBusLive(bus, routesById[bus.routeId], stopsById, progress[bus.id] ?? bus.progress ?? 0)
+          return live ? [{ bus, live }] : []
+        }),
+    [runningBuses, selectedRoute, routesById, stopsById, progress],
+  )
 
-    if (!needle) return routeOptions
+  const selected = visible.find((x) => x.bus.id === selectedBusId) || null
+  const focusRoute = selectedRoute === 'all' ? null : routesById[selectedRoute]
+  const routeStops = focusRoute ? focusRoute.stopIds.map((id) => stopsById[id]).filter(Boolean) : []
 
-    return routeOptions.filter((route) => {
-      const haystack = `${route.label} ${route.name || ''}`.toLowerCase()
-      return haystack.includes(needle)
-    })
-  }, [query, routeOptions])
+  const shownRoutes = (focusRoute ? [focusRoute] : routes.filter((r) => r.status === 'Active')).map((r) => ({
+    id: r.id,
+    name: r.name,
+    color: routeColor(r.id, r),
+    points: r.stopIds.map((id) => stopsById[id]).filter(Boolean),
+  }))
 
-  const activeBusCount = buses.filter((bus) => bus.status === 'Active').length
-  const delayedBuses = buses.filter((bus) => bus.status === 'Delayed').length
-  const averageHeadway = '8 min'
+  const markers = visible.map(({ bus, live }) => ({
+    id: bus.id,
+    lat: live.lat,
+    lng: live.lng,
+    ...busMarkerStyle(bus),
+    selected: bus.id === selected?.bus.id,
+    tooltip: `${bus.id} · ${routesById[bus.routeId]?.name || bus.routeId}`,
+  }))
+
+  const focus = selected ? { lat: selected.live.lat, lng: selected.live.lng, key: selected.bus.id } : null
+
+  const pickRoute = (id) => {
+    setSelectedRoute(id)
+    setSelectedBusId(null)
+  }
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Live Tracking"
-        description="See active buses and service updates across QC Bus routes."
-        actions={<div className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:w-auto sm:min-w-72">
-          <Search size={16} className="text-slate-500" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search route or stop..."
-            className="w-full border-0 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
-          />
-        </div>}
-      />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {[
-          { label: 'Active buses', value: activeBusCount, icon: BusFront, tone: 'blue' },
-          { label: 'Avg headway', value: averageHeadway, icon: Clock3, tone: 'green' },
-          { label: 'Delayed', value: delayedBuses, icon: AlertTriangle, tone: 'amber' },
-        ].map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-                <p className="mt-2 text-3xl font-black text-navy">{value}</p>
-              </div>
-              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                tone === 'blue' ? 'bg-brand/10 text-brand' :
-                tone === 'green' ? 'bg-green-100 text-green-700' :
-                'bg-amber-100 text-amber-700'
-              }`}>
-                <Icon size={20} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-4">
-          <div className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <MapPinned size={12} />
-            Select Bus Routes
-          </div>
-          <p className="text-sm text-slate-500">Choose a route to view live bus movement and stop updates.</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {filteredRoutes.map((route) => {
-            const isSelected = selectedRoute === route.id
-            const isAll = route.id === 'all'
-
-            return (
-              <button
-                key={route.id}
-                type="button"
-                onClick={() => setSelectedRoute(route.id)}
-                className={`rounded-xl border px-3 py-2.5 text-xs font-bold transition sm:py-2 ${
-                  isSelected
-                    ? 'border-brand bg-brand text-white shadow-sm'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-brand/40 hover:text-brand'
-                } ${isAll ? 'min-w-[140px]' : ''}`}
-              >
-                {route.label}
-              </button>
-            )
-          })}
+    <div className="space-y-3">
+      {/* 1. Pick a route */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <MapPinned size={13} /> Select bus route
+        </p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Choose a route">
+          <button
+            type="button"
+            onClick={() => pickRoute('all')}
+            aria-pressed={selectedRoute === 'all'}
+            className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+              selectedRoute === 'all' ? 'border-brand bg-brand text-white shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-brand/40 hover:text-brand'
+            }`}
+          >
+            All active buses
+            <span className={`rounded-full px-1.5 text-[11px] leading-5 ${selectedRoute === 'all' ? 'bg-white/25' : 'bg-white'}`}>{runningBuses.length}</span>
+          </button>
+          {routes.map((route) => (
+            <RouteChip
+              key={route.id}
+              route={route}
+              selected={selectedRoute === route.id}
+              count={countFor(route.id)}
+              dim={countFor(route.id) === 0}
+              onClick={() => pickRoute(route.id)}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.3fr_0.7fr]">
-        <div className="rounded-[18px] border border-slate-200 bg-white p-0 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
-            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-slate-700">
-              <BusFront size={16} className="text-brand" />
-              {selectedRoute === 'all' ? 'All Active Buses' : selectedRoute}
-            </div>
-
-            <div className="text-xs font-medium text-slate-500">
-              Live updates <span className="font-bold text-slate-700">12:00 PM</span>
-            </div>
-          </div>
-
-          <div className="rounded-b-[18px] bg-white p-4">
-            <div className="relative h-[60dvh] min-h-[320px] md:h-[540px] overflow-hidden rounded-[14px] bg-slate-200">
-              <button
-                type="button"
-                aria-label="Locate me"
-                title="Locate me"
-                className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50"
-              >
-                <LocateFixed size={20} />
-              </button>
-            </div>
-          </div>
+      {/* 2. Map */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50 px-4 py-2.5">
+          <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+            <BusFront size={16} className="text-brand" />
+            {focusRoute ? `${focusRoute.id} · ${focusRoute.name}` : 'All active buses'}
+          </p>
+          <p className="shrink-0 text-xs font-medium text-slate-500">
+            {visible.length} bus{visible.length === 1 ? '' : 'es'} running
+          </p>
         </div>
+        <div className="h-[46dvh] min-h-[300px] md:h-[460px]">
+          <MapView routes={shownRoutes} stops={routeStops} buses={markers} onBusClick={setSelectedBusId} focus={focus} className="h-full" />
+        </div>
+      </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-lg font-black text-navy">Route status</h3>
-            {[
-              { route: 'R-02', status: 'On time', detail: 'Quezon Memorial Circle to Commonwealth', tone: 'green' },
-              { route: 'R-03', status: 'Crowded', detail: 'Cubao to Katipunan', tone: 'amber' },
-              { route: 'R-01', status: 'Delayed', detail: 'QC Hall to Cubao', tone: 'red' },
-            ].map(({ route, status, detail, tone }) => (
-              <div key={route} className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 last:mb-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-navy">{route}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
-                    tone === 'green' ? 'bg-green-100 text-green-700' :
-                    tone === 'amber' ? 'bg-amber-100 text-amber-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>{status}</span>
-                </div>
-                <p className="mt-2 text-xs text-slate-500">{detail}</p>
-              </div>
-            ))}
-          </div>
+      {/* 3. Buses on this route: pick one */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <h2 className="mb-2 text-base font-bold text-navy">
+          {focusRoute ? `Buses on ${focusRoute.id}` : 'All active buses'}
+          <span className="ml-2 text-sm font-medium text-slate-500">Tap a bus to find it on the map</span>
+        </h2>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-lg font-black text-navy">Service notes</h3>
-            <ul className="space-y-2 text-sm text-slate-600">
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Boarding is busiest between 7:00–9:00 AM.</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Temporary detours are active near Commonwealth Avenue.</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Use the nearest stop marker for turn-by-turn guidance.</li>
-            </ul>
-          </div>
-        </aside>
+        {visible.length ? (
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {visible.map(({ bus, live }) => {
+              const route = routesById[bus.routeId]
+              const level = OCCUPANCY[occupancyLevel(bus.passengers, bus.capacity)]
+              const isSelected = bus.id === selected?.bus.id
+              return (
+                <li key={bus.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBusId(isSelected ? null : bus.id)}
+                    aria-pressed={isSelected}
+                    className={`w-full rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                      isSelected ? 'border-brand bg-brand/5 shadow-sm ring-1 ring-brand/30' : 'border-slate-200 bg-slate-50 hover:border-brand/30 hover:bg-white'
+                    }`}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 font-bold text-navy">
+                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: routeColor(bus.routeId, route) }} />
+                        {bus.id}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500">{bus.routeId}</span>
+                    </span>
+                    <span className="mt-2 flex items-center gap-1.5 text-sm text-slate-600">
+                      <Clock3 size={14} className="shrink-0 text-slate-400" />
+                      <span className="min-w-0 truncate">
+                        Next: {live.nextStop?.name || '—'}{live.etaMin ? ` · ${live.etaMin} min` : ''}
+                      </span>
+                    </span>
+                    <span className="mt-1 flex items-center gap-1.5 text-sm">
+                      <Users size={14} className="shrink-0 text-slate-400" />
+                      <span className={`font-semibold ${level.text}`}>{level.label}</span>
+                    </span>
+                    {isSelected && (
+                      <span className="mt-2 flex items-center gap-3 border-t border-slate-200 pt-2 text-xs text-slate-500">
+                        <span className="flex items-center gap-1"><Gauge size={13} /> {live.speed} km/h</span>
+                        <span>{bus.passengers}/{bus.capacity} passengers</span>
+                      </span>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm text-slate-500">
+            No buses are running on {focusRoute?.id} right now. Try another route or check the Timetable.
+          </p>
+        )}
       </div>
     </div>
   )

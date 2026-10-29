@@ -22,12 +22,12 @@ function load() {
 }
 
 /** Adds a frontend-generated log entry to a db snapshot. */
-function withLog(db, { action, module, description, severity = 'Info' }) {
+function withLog(db, { action, module, description, severity = 'Info', user }) {
   const entry = {
     id: nextId('LOG', db.logs, 4),
     timestamp: new Date().toISOString(),
     action,
-    user: db.settings.name,
+    user: user || db.settings.name,
     module,
     description,
     severity,
@@ -48,8 +48,43 @@ export function AdminDataProvider({ children }) {
     }
   }, [db])
 
+  // Another tab (e.g. the admin console) changed the shared data: pick it up so commuter submissions show up live.
+  useEffect(() => {
+    const onStorage = (event) => { if (event.key === STORAGE_KEY && event.newValue) setDb(load()) }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   const actions = {
     addLog: (entry) => setDb((p) => withLog(p, entry)),
+
+    // ---------- Commuter submissions (Lost Item, Incident Report, Feedback) ----------
+    // Lands in Report Logs, the Dashboard "Pending reports" card, the header bell and the system logs.
+    addReport: (report) => {
+      const id = nextId('RPT', db.reports, 4)
+      const record = {
+        status: 'Pending',
+        priority: 'Medium',
+        busId: '',
+        routeId: '',
+        reportedBy: 'Passenger',
+        source: 'Commuter',
+        ...report,
+        id,
+        datetime: new Date().toISOString(),
+      }
+      setDb((p) => {
+        const safeId = p.reports.some((r) => r.id === id) ? nextId('RPT', p.reports, 4) : id
+        return withLog({ ...p, reports: [{ ...record, id: safeId }, ...p.reports] }, {
+          action: `${record.type} submitted by commuter`,
+          module: 'Reports',
+          severity: record.priority === 'High' ? 'Warning' : 'Info',
+          user: record.reportedBy === 'Anonymous' ? 'Anonymous commuter' : 'Commuter',
+          description: `${safeId} (${record.type}) received${record.busId ? ` for ${record.busId}` : ''}${record.routeId ? ` on ${record.routeId}` : ''}.`,
+        })
+      })
+      return id
+    },
 
     // ---------- Accounts ----------
     saveAccount: (acc, busId) =>

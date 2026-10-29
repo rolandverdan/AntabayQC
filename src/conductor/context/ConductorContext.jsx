@@ -17,7 +17,7 @@ function readSession() {
 
 export function ConductorProvider({ children }) {
   const [session, setSession] = useState(readSession)
-  const [profile, setProfile] = useState(initialProfile)
+  const profile = initialProfile // read-only: only the administrator can change conductor details
   const [settings, setSettings] = useState(initialSettings)
   const [sosReport, setSosReport] = useState(null)
 
@@ -38,7 +38,6 @@ export function ConductorProvider({ children }) {
       /* ignore */
     }
     setSession(null)
-    setProfile(initialProfile)
     setSettings(initialSettings)
     setSosReport(null)
   }, [])
@@ -51,7 +50,7 @@ export function ConductorProvider({ children }) {
 
   const value = {
     session, login, logout,
-    profile, updateProfile: (changes) => setProfile((p) => ({ ...p, ...changes })),
+    profile,
     settings, updateSetting, resetSettings,
     sosReport, setSosReport,
   }

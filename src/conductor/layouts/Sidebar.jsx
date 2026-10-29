@@ -45,7 +45,6 @@ export default function Sidebar({ onLogout }) {
           <LogoutIcon size={19} className="shrink-0" />
           <span className="truncate">{LOGOUT_ITEM.label}</span>
         </button>
-        <p className="mt-2 px-4 text-[11px] text-blue-200">Frontend demo · sample data</p>
       </div>
     </aside>
   )

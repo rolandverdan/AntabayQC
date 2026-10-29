@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { NAV_ITEMS, LOGOUT_ITEM } from './navItems.js'
 
 // `expanded` is false only on desktop when the sidebar is collapsed and not hovered/focused.
@@ -13,17 +13,21 @@ export default function Sidebar({
   commuterMode = false,
   navLabel,
 }) {
+  const { pathname } = useLocation()
   const LogoutIcon = LOGOUT_ITEM.icon
   const labelCls = `truncate whitespace-nowrap transition-opacity duration-200 ${expanded ? '' : 'lg:pointer-events-none lg:opacity-0'}`
   const itemBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150'
   const navClass = ({ isActive }) =>
     `${itemBase} ${isActive ? 'bg-white text-navy shadow-sm' : 'text-blue-100 hover:bg-white/10 hover:text-white'}`
 
-  const renderLink = ({ to, label, icon: Icon }) => (
-    <NavLink key={to} to={to} title={label} className={navClass}>
+  // `also` lists extra paths that should keep an item highlighted (e.g. Support covers Lost Item / Report / Feedback).
+  const alsoActive = (also) => !!also?.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+
+  const renderLink = ({ to, label, icon: Icon, also }) => (
+    <NavLink key={to} to={to} title={label} className={({ isActive }) => navClass({ isActive: isActive || alsoActive(also) })}>
       {({ isActive }) => (
         <>
-          <Icon size={19} className={`shrink-0 ${isActive ? 'text-brand' : ''}`} />
+          <Icon size={19} className={`shrink-0 ${isActive || alsoActive(also) ? 'text-brand' : ''}`} />
           <span className={labelCls}>{label}</span>
         </>
       )}

@@ -40,6 +40,7 @@ import LiveTracking from './commuter/pages/LiveTracking.jsx'
 import MyTrip from './commuter/pages/MyTrip.jsx'
 import LostItem from './commuter/pages/LostItem.jsx'
 import LostItemReports from './commuter/pages/LostItemReports.jsx'
+import Support from './commuter/pages/Support.jsx'
 import Report from './commuter/pages/Report.jsx'
 import Feedback from './commuter/pages/Feedback.jsx'
 import Notification from './commuter/pages/Notification.jsx'
@@ -115,6 +116,7 @@ export default function App() {
                     <Route path="timetable" element={<Timetable />} />
                     <Route path="live-tracking" element={<LiveTracking />} />
                     <Route path="my-trip" element={<MyTrip />} />
+                    <Route path="support" element={<Support />} />
                     <Route path="lost-item" element={<LostItem />} />
                     <Route path="lost-item-reports" element={<LostItemReports />} />
                     <Route path="report" element={<Report />} />

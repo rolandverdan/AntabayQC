@@ -44,14 +44,14 @@ export default function Login() {
   if (!busy) {
     if (admin.user) return <Navigate to={HOME.admin} replace />
     if (conductor.session) return <Navigate to={HOME.conductor} replace />
-    if (commuter.session) return <Navigate to={HOME.commuter} replace />
+    if (commuter.session) return <Navigate to={commuter.session.mode === 'guest' ? '/commuter/live-tracking' : HOME.commuter} replace />
   }
 
-  const finish = (role, signIn) => {
+  const finish = (role, signIn, dest) => {
     signOutOthers(role)
     signIn()
     const from = location.state?.from
-    navigate(from && from.startsWith(`/${role}`) ? from : HOME[role], { replace: true })
+    navigate(dest || (from && from.startsWith(`/${role}`) ? from : HOME[role]), { replace: true })
   }
 
   const submit = (e) => {
@@ -85,7 +85,7 @@ export default function Login() {
 
   const guest = () => {
     setBusy(true)
-    finish('commuter', () => commuter.enter('guest'))
+    finish('commuter', () => commuter.enter('guest'), '/commuter/live-tracking')
   }
 
   return (

@@ -5,11 +5,11 @@ import { PageHeader } from '../../admin/components/Card.jsx'
 const terms = [
   {
     title: 'Prototype use',
-    body: 'This commuter experience is a front-end capstone prototype. Routes, schedules, bus locations, alerts, reports, and other service details may be sample information and are not official QC Bus service updates.',
+    body: 'This commuter experience is a front-end capstone prototype. Routes, schedules, bus locations, alerts, reports, and other service details are for general information and are not official QC Bus service updates.',
   },
   {
     title: 'Reports and feedback',
-    body: 'Lost-item reports, incident reports, and feedback created in this prototype are demonstration entries. They are not sent to QC Bus or an operations team and should not be used to request real-world assistance.',
+    body: 'Lost-item reports, incident reports, and feedback created in this prototype are not sent to QC Bus or an operations team and should not be used to request real-world assistance.',
   },
   {
     title: 'Account features',
@@ -23,7 +23,7 @@ const terms = [
 
 export default function TermsConditions() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         title="Terms & Conditions"
         description="Draft terms for the Antabay QC commuter prototype."
@@ -35,7 +35,7 @@ export default function TermsConditions() {
         )}
       />
 
-      <section className="rounded-[18px] border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-5">
+      <section className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-4">
         <div className="mb-4 flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
             <FileText size={19} />

@@ -4,56 +4,11 @@ import {
   Bell,
   CheckCircle2,
   ChevronRight,
-  Clock3,
-  MapPinned,
-  ShieldCheck,
   Sparkles,
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
-
-const notificationList = [
-  {
-    id: 1,
-    category: 'Service update',
-    title: 'Route 2 delay expected',
-    detail: 'Traffic congestion near Quezon Memorial Circle may affect arrivals by 8 to 12 minutes this afternoon.',
-    time: '2 mins ago',
-    icon: Clock3,
-    tone: 'amber',
-    unread: true,
-  },
-  {
-    id: 2,
-    category: 'Safety alert',
-    title: 'Weather advisory',
-    detail: 'Light rain is expected along Commonwealth and Katipunan corridors. Please allow extra time for boarding.',
-    time: '1 hour ago',
-    icon: ShieldCheck,
-    tone: 'blue',
-    unread: true,
-  },
-  {
-    id: 3,
-    category: 'Travel update',
-    title: 'Bus stop temporarily rerouted',
-    detail: 'Stop at Batasan Road will be temporarily moved to the adjacent curb due to road repair works.',
-    time: 'Today, 8:45 AM',
-    icon: MapPinned,
-    tone: 'green',
-    unread: false,
-  },
-  {
-    id: 4,
-    category: 'Important',
-    title: 'Report status update',
-    detail: 'Your lost item report has been reviewed and the operations desk has assigned a follow-up team to check the terminal desk.',
-    time: 'Yesterday',
-    icon: Bell,
-    tone: 'red',
-    unread: true,
-  },
-]
+import { useNotifications } from '../context/NotificationsContext.jsx'
 
 const summaryStats = [
   { label: 'Unread', value: '3', icon: Bell, tone: 'blue' },
@@ -72,7 +27,7 @@ const initialPreferences = {
 
 export default function Notification() {
   const { notify } = useToast()
-  const [notifications, setNotifications] = useState(notificationList)
+  const { notifications, markRead, markAllRead: markEveryRead } = useNotifications()
   const [activeFilter, setActiveFilter] = useState('All')
   const [preferences, setPreferences] = useState(initialPreferences)
   const unreadCount = notifications.filter((notification) => notification.unread).length
@@ -84,13 +39,11 @@ export default function Notification() {
     return true
   }), [activeFilter, notifications])
 
-  const markNotificationRead = (id) => {
-    setNotifications((items) => items.map((item) => (item.id === id ? { ...item, unread: false } : item)))
-  }
+  const markNotificationRead = markRead
 
   const markAllRead = () => {
     if (!unreadCount) return
-    setNotifications((items) => items.map((item) => ({ ...item, unread: false })))
+    markEveryRead()
     notify('All notifications marked as read.', 'success')
   }
 
@@ -105,13 +58,13 @@ export default function Notification() {
         description="Stay up to date with service changes, safety advisories, and updates on your reports."
       />
 
-      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
         {summaryStats.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-                <p className="mt-2 text-3xl font-black text-navy">
+                <p className="mt-2 text-xl font-bold text-navy">
                   {label === 'Unread' ? unreadCount : label === 'Active alerts' ? activeAlertCount : value}
                 </p>
               </div>
@@ -127,9 +80,9 @@ export default function Notification() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.35fr_0.65fr]">
-        <section className="rounded-[18px] border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <Bell size={18} />
@@ -214,12 +167,12 @@ export default function Notification() {
                   </div>
                 </div>
               </div>
-            )) : <p className="p-8 text-center text-sm text-slate-500">No notifications match this filter.</p>}
+            )) : <p className="p-5 text-center text-sm text-slate-500">No notifications match this filter.</p>}
           </div>
         </section>
 
-        <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <Sparkles size={18} />
@@ -238,7 +191,7 @@ export default function Notification() {
             <p className="mt-3 text-xs text-slate-500">Preferences are saved for this page session only.</p>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-100 text-green-700">
                 <CheckCircle2 size={18} />

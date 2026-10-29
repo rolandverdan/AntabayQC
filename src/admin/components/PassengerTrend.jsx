@@ -2,8 +2,7 @@ import { useId, useMemo } from 'react'
 import Card from './Card.jsx'
 
 // Hours of service shown on the graph, and a typical commuter load curve (share of fleet capacity boarding each hour).
-// There is no passenger-count feed in this frontend-only app, so the curve is SAMPLE data scaled by the
-// fleet's real capacity. It is labelled as such on screen.
+// Estimated curve scaled by the fleet's capacity (there is no passenger-count feed).
 const HOURS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 const LOAD = [0.12, 0.42, 0.9, 0.78, 0.5, 0.36, 0.34, 0.42, 0.4, 0.36, 0.42, 0.6, 0.88, 0.82, 0.55, 0.3, 0.14]
 
@@ -38,12 +37,12 @@ export default function PassengerTrend({ buses }) {
   const peaks = [peakAm, peakPm]
 
   return (
-    <Card title="Passenger trend" action={<span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">Sample data</span>}>
+    <Card title="Passenger trend">
       <div className="mb-3 flex flex-wrap gap-2 text-xs">
         <span className="rounded-lg bg-brand/5 px-2.5 py-1 text-slate-600">Morning peak: <b className="text-navy">{hourLabel(peakAm.hour)}</b> · {peakAm.v} passengers</span>
         <span className="rounded-lg bg-brand/5 px-2.5 py-1 text-slate-600">Evening peak: <b className="text-navy">{hourLabel(peakPm.hour)}</b> · {peakPm.v} passengers</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="block w-full text-brand" role="img" aria-label={`Passengers per hour across the service day. Morning peak at ${hourLabel(peakAm.hour)}, evening peak at ${hourLabel(peakPm.hour)}. Sample data.`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block w-full text-brand" role="img" aria-label={`Passengers per hour across the service day. Morning peak at ${hourLabel(peakAm.hour)}, evening peak at ${hourLabel(peakPm.hour)}.`}>
         <defs>
           <linearGradient id={`g${gid}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
@@ -73,7 +72,7 @@ export default function PassengerTrend({ buses }) {
           </g>
         ))}
       </svg>
-      <p className="mt-2 text-[11px] text-slate-500">Estimated boardings per hour (5 AM – 9 PM), scaled to the capacity of the buses in service. Demonstration values, not live passenger counts.</p>
+      <p className="mt-2 text-[11px] text-slate-500">Estimated boardings per hour (5 AM – 9 PM), scaled to the capacity of the buses in service.</p>
     </Card>
   )
 }

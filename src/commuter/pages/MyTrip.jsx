@@ -82,16 +82,16 @@ export default function MyTrip() {
         description="Review your upcoming commute, recent trips, and route details in one place."
       />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                   <Ticket size={18} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-navy">Upcoming trip</h2>
+                  <h2 className="text-base font-bold text-navy">Upcoming trip</h2>
                   <p className="text-sm text-slate-500">Your next scheduled ride</p>
                 </div>
               </div>
@@ -150,16 +150,15 @@ export default function MyTrip() {
                 <div className="mt-3 rounded-xl border border-brand/15 bg-white p-3 text-sm text-slate-600">
                   <p className="font-semibold text-navy">Trip details</p>
                   <p className="mt-1">Route R-02 · Quezon City Hall to Commonwealth Avenue.</p>
-                  <p className="mt-1 text-xs text-slate-500">Schedule and bus status are sample information.</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-black text-navy">Saved trips</h2>
+                <h2 className="text-base font-bold text-navy">Saved trips</h2>
                 <p className="text-sm text-slate-500">Your frequent route patterns</p>
               </div>
               <button
@@ -236,8 +235,8 @@ export default function MyTrip() {
           </div>
         </section>
 
-        <aside className="space-y-5">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
                 <Star size={18} />
@@ -271,7 +270,7 @@ export default function MyTrip() {
                   </button>
                   {expandedHistory === trip.route && (
                     <p className="mt-3 border-t border-slate-200 pt-2 text-xs leading-5 text-slate-500">
-                      Sample trip · Fare and rating are sample details. You can share feedback from the Feedback page.
+                      You can share feedback from the Feedback page.
                     </p>
                   )}
                 </div>
@@ -279,7 +278,7 @@ export default function MyTrip() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <h3 className="mb-3 text-lg font-black text-navy">Quick actions</h3>
             <div className="space-y-3">
               {[

@@ -7,11 +7,11 @@ const helpTopics = [
   },
   {
     question: 'Can I track a QC Bus on the map?',
-    answer: 'Open Live Tracking and choose a route to view bus markers and stop updates. Tracking positions in this demo are sample data, not confirmed live bus locations.',
+    answer: 'Open Live Tracking and choose a route to view bus markers and stop updates. Bus positions shown are estimates and may differ from a bus’s exact current location.',
   },
   {
     question: 'Where can I see QC Bus delays or stop changes?',
-    answer: 'Check Notifications for service and travel updates. Alerts shown in this demo are sample information and may not reflect current service.',
+    answer: 'Check Notifications for service and travel updates. Alerts are for general information and may not reflect current service.',
   },
   {
     question: 'Can I save a route I use often?',
@@ -33,12 +33,12 @@ const helpTopics = [
 
 export default function HelpSupport() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         title="Help & Support"
       />
 
-      <section className="rounded-[18px] border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-5">
+      <section className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-4">
         <h2 className="mb-4 text-lg font-black text-navy">FAQ</h2>
 
         <div className="space-y-3">

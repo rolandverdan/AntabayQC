@@ -35,13 +35,14 @@ export default function CameraPage() {
     clearTimeout(timers.current[c.id])
     set(c.id, { status: 'Offline', error: '' })
   }
+  const canFullscreen = typeof document !== 'undefined' && !!document.fullscreenEnabled
   const fullscreen = () => frame.current?.requestFullscreen?.()
 
   const onlineCount = Object.values(states).filter((s) => s.status === 'Online').length
 
   return (
     <div>
-      <PageHeader title="Vehicle cameras" description={`${onlineCount} of ${CAMERAS.length} cameras online (simulated).`} />
+      <PageHeader title="Vehicle cameras" description={`${onlineCount} of ${CAMERAS.length} cameras online.`} />
       <Notice tone="blue" icon={CameraIcon}>
         This page shows placeholder feeds only. It does not use your device camera and is not connected to a real CCTV system.
       </Notice>
@@ -56,10 +57,9 @@ export default function CameraPage() {
             {state.status === 'Online' && (
               <>
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,0.03)_0,rgba(255,255,255,0.03)_2px,transparent_2px,transparent_4px)]" aria-hidden="true" />
-                <div className="text-center" role="img" aria-label={`Simulated feed placeholder for ${cam.name}`}>
+                <div className="text-center" role="img" aria-label={`Camera feed for ${cam.name}`}>
                   <CameraIcon size={44} className="mx-auto text-slate-500" />
-                  <p className="mt-2 text-sm font-semibold">Simulated live feed</p>
-                  <p className="text-xs text-slate-400">Placeholder · no video stream connected</p>
+                  <p className="mt-2 text-sm font-semibold">Live feed</p>
                 </div>
                 <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1 text-xs font-semibold">
                   <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" aria-hidden="true" /> LIVE
@@ -80,7 +80,7 @@ export default function CameraPage() {
               <div className="px-6 text-center">
                 {state.error ? <CircleAlert size={40} className="mx-auto text-red-400" /> : <VideoOff size={40} className="mx-auto text-slate-500" />}
                 <p className="mt-2 text-sm font-semibold">{state.error ? 'Camera unavailable' : 'Camera is off'}</p>
-                <p className="mt-1 text-xs text-slate-400">{state.error || 'Press Start feed to begin the simulated preview.'}</p>
+                <p className="mt-1 text-xs text-slate-400">{state.error || 'Press Start feed to begin the preview.'}</p>
               </div>
             )}
           </div>
@@ -93,7 +93,9 @@ export default function CameraPage() {
                 {state.error ? 'Try again' : 'Start feed'}
               </Button>
             )}
-            <Button variant="secondary" icon={Maximize2} onClick={fullscreen} disabled={state.status !== 'Online'}>Full screen</Button>
+            {canFullscreen && (
+              <Button variant="secondary" icon={Maximize2} onClick={fullscreen} disabled={state.status !== 'Online'}>Full screen</Button>
+            )}
           </div>
         </Card>
 

@@ -4,6 +4,16 @@ import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Tooltip, useMa
 
 export const QC_CENTER = [14.65, 121.05]
 
+// Smoothly centres the map on a point (e.g. the bus a commuter just picked).
+function FocusOn({ focus }) {
+  const map = useMap()
+  useEffect(() => {
+    if (focus) map.flyTo([focus.lat, focus.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.key, map])
+  return null
+}
+
 function FitBounds({ points, fitKey }) {
   const map = useMap()
   useEffect(() => {
@@ -29,7 +39,7 @@ const busIcon = (b) =>
  * routes: [{ id, name, color, points: [{lat,lng}] }]
  * buses:  [{ id, lat, lng, color, label, pulse, selected, tooltip }]
  */
-export default function MapView({ stops = [], routes = [], buses = [], onBusClick, className = 'h-80', scrollWheelZoom = true }) {
+export default function MapView({ stops = [], routes = [], buses = [], onBusClick, className = 'h-80', scrollWheelZoom = true, terminalLabels = false, focus = null }) {
   const fitPoints = stops.length ? stops : routes.flatMap((r) => r.points)
   const fitKey = fitPoints.map((p) => `${p.lat},${p.lng}`).join('|')
 
@@ -40,6 +50,7 @@ export default function MapView({ stops = [], routes = [], buses = [], onBusClic
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitBounds points={fitPoints} fitKey={fitKey} />
+      <FocusOn focus={focus} />
       {routes.map((r) => {
         const pos = r.points.map((p) => [p.lat, p.lng])
         return (
@@ -53,7 +64,9 @@ export default function MapView({ stops = [], routes = [], buses = [], onBusClic
       })}
       {routes.map((r) =>
         r.points.length > 1 ? [r.points[0], r.points[r.points.length - 1]].map((p, i) => (
-          <CircleMarker key={`${r.id}-end-${i}`} center={[p.lat, p.lng]} radius={9} pathOptions={{ color: '#fff', weight: 3, fillColor: r.color, fillOpacity: 1 }} interactive={false} />
+          <CircleMarker key={`${r.id}-end-${i}`} center={[p.lat, p.lng]} radius={9} pathOptions={{ color: '#fff', weight: 3, fillColor: r.color, fillOpacity: 1 }} interactive={false}>
+            {terminalLabels && <Tooltip permanent direction="top" offset={[0, -8]}>{i === 0 ? 'Start' : 'End'}</Tooltip>}
+          </CircleMarker>
         )) : null,
       )}
       {stops.map((s) => (

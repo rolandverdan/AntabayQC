@@ -168,15 +168,15 @@ export default function RoutesAndSchedules() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-[clamp(1.6rem,2vw,2.5rem)] font-bold leading-tight text-navy">Standard City Operations Schedule</h1>
             <p className="mt-1 text-sm text-slate-500">Daily • Weekdays &amp; Weekends<br />Holiday operations may vary.</p>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-100/80 px-5 py-4 text-center shadow-inner">
+          <div className="rounded-xl border border-slate-200 bg-slate-100/80 px-4 py-4 text-center shadow-inner">
             <p className="text-[2rem] font-bold leading-none text-navy">6:00 AM – 9:00 PM</p>
             <p className="mt-2 text-base text-slate-600">Monday – Sunday</p>
             <p className="text-sm text-slate-500">Except on holidays</p>
@@ -184,7 +184,7 @@ export default function RoutesAndSchedules() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
             <div className="flex gap-2 text-sm font-bold text-slate-700">
