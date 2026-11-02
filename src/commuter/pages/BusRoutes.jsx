@@ -7,6 +7,10 @@ import { routeColor } from '../../admin/utils/geo.js'
 import RouteChip, { readableOn } from '../components/RouteChip.jsx'
 import RouteTabs from '../components/RouteTabs.jsx'
 
+const routeTitle = (name) => name
+  .replace(/\bQC Hall\b/g, 'Quezon City Hall')
+  .replace(/\s+[–-]\s+/, ' ↔ ')
+
 export default function BusRoutes() {
   const { routes, stopsById, buses } = useAdminData()
   const [params] = useSearchParams()
@@ -25,6 +29,13 @@ export default function BusRoutes() {
   const selectedRoute = filteredRoutes.find((route) => route.id === selectedRouteId) || filteredRoutes[0]
   const selectedStops = selectedRoute ? selectedRoute.stopIds.map((id) => stopsById[id]).filter(Boolean) : []
   const color = selectedRoute ? routeColor(selectedRoute.id, selectedRoute) : '#244A9B'
+  const activeBusCounts = useMemo(
+    () => buses.reduce((counts, bus) => {
+      if (bus.status === 'Active' && bus.routeId) counts[bus.routeId] = (counts[bus.routeId] || 0) + 1
+      return counts
+    }, {}),
+    [buses],
+  )
   const activeOnRoute = selectedRoute ? buses.filter((b) => b.routeId === selectedRoute.id && b.status === 'Active').length : 0
 
   const origin = selectedStops[0]?.name || 'Origin'
@@ -51,11 +62,19 @@ export default function BusRoutes() {
           )}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Choose a route">
+        <div className="mt-3 grid grid-cols-4 gap-2 md:flex md:flex-wrap" role="group" aria-label="Choose a route">
           {filteredRoutes.map((route) => (
-            <RouteChip key={route.id} route={route} selected={route.id === selectedRoute?.id} onClick={() => setSelectedRouteId(route.id)} />
+            <RouteChip
+              key={route.id}
+              route={route}
+              selected={route.id === selectedRoute?.id}
+              count={activeBusCounts[route.id] || 0}
+              dim={!activeBusCounts[route.id]}
+              className="w-full justify-center md:w-auto"
+              onClick={() => setSelectedRouteId(route.id)}
+            />
           ))}
-          {!filteredRoutes.length && <p className="py-1 text-sm text-slate-500">No route or stop matches “{query}”.</p>}
+          {!filteredRoutes.length && <p className="col-span-full py-1 text-sm text-slate-500">No route or stop matches “{query}”.</p>}
         </div>
       </div>
 
@@ -66,7 +85,7 @@ export default function BusRoutes() {
               {selectedRoute.id.replace('R-', '')}
             </span>
             <div className="min-w-0">
-              <h2 className="truncate text-lg font-bold leading-tight text-navy">{selectedRoute.name}</h2>
+              <h2 className="truncate text-lg font-bold leading-tight text-navy">{routeTitle(selectedRoute.name)}</h2>
               <p className="truncate text-xs text-slate-500">{origin} → {destination} · {selectedStops.length} stops</p>
             </div>
           </div>

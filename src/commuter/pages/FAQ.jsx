@@ -31,15 +31,15 @@ const helpTopics = [
   },
 ]
 
-export default function HelpSupport() {
+export default function FAQ() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Help & Support"
+        title="FAQ"
       />
 
       <section className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm md:border-slate-200 md:p-4">
-        <h2 className="mb-4 text-lg font-black text-navy">FAQ</h2>
+        <h2 className="mb-4 text-lg font-black text-navy">Frequently asked questions</h2>
 
         <div className="space-y-3">
           {helpTopics.map(({ question, answer }) => (

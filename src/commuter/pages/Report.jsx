@@ -159,7 +159,7 @@ export default function Report() {
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Report Category <span className="text-red-500">*</span></label>
               <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="">Select concern category...</option>
+                <option value="" disabled>Select concern category...</option>
                 {categoryGuide.map(({ label }) => <option key={label}>{label}</option>)}
               </select>
             </div>
@@ -195,7 +195,7 @@ export default function Report() {
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Route</label>
               <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="">Select route if known...</option>
+                <option value="" disabled>Select route if known...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
                   <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
                 ))}
@@ -206,7 +206,7 @@ export default function Report() {
               <label className="mb-2 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
               <div className="relative">
                 <select value={form.location} onChange={updateForm('location')} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand">
-                  <option value="">Select stop or location if known...</option>
+                  <option value="" disabled>Select stop or location if known...</option>
                   {availableStops.map((stop) => <option key={stop.id} value={stop.name}>{stop.name}</option>)}
                   <option value="other">Other location...</option>
                 </select>

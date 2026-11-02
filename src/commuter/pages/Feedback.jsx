@@ -14,6 +14,7 @@ const today = () => {
 
 const createInitialForm = () => ({
   category: '',
+  otherCategory: '',
   routeId: '',
   busId: '',
   otherBus: '',
@@ -44,6 +45,11 @@ export default function Feedback() {
 
   const handleSubmit = (event) => {
     event.preventDefault()
+    const category = form.category === 'Other' ? form.otherCategory.trim() : form.category
+    if (!category) {
+      notify('Please enter the feedback category.', 'error')
+      return
+    }
     if (!form.rating) {
       notify('Choose a star rating before submitting feedback.', 'error')
       return
@@ -51,7 +57,7 @@ export default function Feedback() {
     const route = routes.find((item) => item.id === form.routeId)
     const bus = buses.find((item) => item.id === form.busId)
     const feedback = {
-      title: form.category,
+      title: category,
       meta: route?.name || 'Route not specified',
       value: `${form.rating}/5`,
       details: form.details,
@@ -66,7 +72,7 @@ export default function Feedback() {
       routeId: route?.id || '',
       reportedBy: 'Passenger',
       rating: form.rating,
-      description: `${form.category} · rated ${form.rating}/5. ${form.details}`,
+      description: `${category} · rated ${form.rating}/5. ${form.details}`,
     })
 
     setRecentFeedback((items) => [feedback, ...items])
@@ -80,7 +86,7 @@ export default function Feedback() {
       <PageHeader
         title="Feedback"
         description="Help us improve service quality, route reliability, and your commuter experience."
-        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        actions={<div className="hidden items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 sm:flex">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
               <MessageSquareText size={16} />
             </div>
@@ -105,17 +111,23 @@ export default function Feedback() {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Feedback category</label>
-              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="">Select feedback category...</option>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Feedback category <span aria-hidden="true" className="text-red-500">*</span></label>
+              <select required value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, otherCategory: event.target.value === 'Other' ? current.otherCategory : '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+                <option value="" disabled>Select feedback category...</option>
                 {categories.map((category) => <option key={category}>{category}</option>)}
               </select>
+              {form.category === 'Other' && (
+                <>
+                  <label htmlFor="other-feedback-category" className="mb-1 mt-2 block text-sm font-semibold text-slate-700">Please specify <span aria-hidden="true" className="text-red-500">*</span></label>
+                  <input id="other-feedback-category" required value={form.otherCategory} onChange={updateForm('otherCategory')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter another feedback category" />
+                </>
+              )}
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Route / line</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Route / line <span className="font-normal text-slate-400">(optional)</span></label>
               <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="">Select Bus Route...</option>
+                <option value="" disabled>Select Bus Route...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
                   <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
                 ))}
@@ -144,23 +156,28 @@ export default function Feedback() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Tell us more</label>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Tell us more <span aria-hidden="true" className="text-red-500">*</span></label>
               <textarea required minLength={5} rows={6} value={form.details} onChange={updateForm('details')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Share what went well, what needs improvement, and how we can make the trip better." />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Bus number</label>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Bus number <span className="font-normal text-slate-400">(optional)</span></label>
                 <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
                   <option value="">Bus unknown / not listed</option>
                   {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
                   <option value="other">Other bus...</option>
                 </select>
-                {form.busId === 'other' && <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number" />}
+                {form.busId === 'other' && (
+                  <>
+                    <label htmlFor="other-feedback-bus" className="mb-1 mt-2 block text-sm font-semibold text-slate-700">Other bus number <span aria-hidden="true" className="text-red-500">*</span></label>
+                    <input id="other-feedback-bus" required value={form.otherBus} onChange={updateForm('otherBus')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number" />
+                  </>
+                )}
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Date of trip</label>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Date of trip <span aria-hidden="true" className="text-red-500">*</span></label>
                 <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
               </div>
             </div>
@@ -178,23 +195,25 @@ export default function Feedback() {
 
         <aside className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center gap-3 text-lg font-black text-navy">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand">
+            <div className="mb-3 flex items-center gap-3 text-base font-black text-navy">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-brand">
                 <CheckCircle2 size={18} />
               </div>
               Recent feedback
             </div>
 
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-100">
               {recentFeedback.map((item, index) => (
-                <details key={`${item.title}-${index}`} className="group rounded-xl border border-slate-200 bg-slate-50 p-3 open:bg-white">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-bold text-navy marker:hidden">
-                    <span>{item.title}</span>
-                    <span className="text-xs font-bold text-brand">{item.value}</span>
+                <details key={`${item.title}-${index}`} className="group py-3 first:pt-1 last:pb-1">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-navy marker:hidden transition-colors hover:text-brand">
+                    <span className="min-w-0 flex-1">{item.title}</span>
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-sm font-bold text-amber-700">
+                      <Star size={13} fill="currentColor" /> {item.value}
+                    </span>
                   </summary>
-                  <div className="mt-2 text-xs text-slate-500">{item.meta}</div>
+                  <div className="mt-2 text-sm text-slate-500">{item.meta}</div>
                   {item.details && <p className="mt-2 text-sm leading-5 text-slate-600">{item.details}</p>}
-                  {item.bus && <p className="mt-1 text-xs text-slate-500">{item.bus}</p>}
+                  {item.bus && <p className="mt-1 text-sm text-slate-500">{item.bus}</p>}
                 </details>
               ))}
             </div>

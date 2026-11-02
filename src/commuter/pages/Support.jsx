@@ -32,21 +32,23 @@ export default function Support() {
     <>
       <PageHeader title="Support" description="What do you need help with? Choose one below." />
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:items-stretch">
         {options.map(({ title, description, to, icon: Icon, tile }) => (
           <Link
             key={title}
             to={to}
-            className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 md:flex-col md:items-start md:gap-3 md:p-4"
+            className="group flex h-full min-h-[140px] items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 md:flex-col md:items-start md:justify-between md:gap-3 md:p-4"
           >
-            <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${tile}`}>
-              <Icon size={28} />
+            <span className="flex items-center gap-4 md:w-full md:flex-col md:items-start md:gap-3">
+              <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${tile}`}>
+                <Icon size={28} />
+              </span>
+              <span className="min-w-0 flex-1 md:flex-1">
+                <span className="block text-lg font-bold text-navy">{title}</span>
+                <span className="mt-1 block text-sm leading-5 text-slate-500">{description}</span>
+              </span>
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-lg font-bold text-navy">{title}</span>
-              <span className="mt-1 block text-sm leading-5 text-slate-500">{description}</span>
-            </span>
-            <ChevronRight size={22} className="shrink-0 text-slate-300 transition group-hover:text-brand md:hidden" />
+            <ChevronRight size={22} className="ml-auto shrink-0 self-center text-slate-300 transition group-hover:text-brand md:hidden" />
           </Link>
         ))}
       </div>

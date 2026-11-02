@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Search, X } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { routeColor } from '../../admin/utils/geo.js'
 import RouteChip, { readableOn } from '../components/RouteChip.jsx'
@@ -126,17 +127,34 @@ const todayKey = () => {
 }
 
 export default function Timetable() {
-  const { routes, stopsById } = useAdminData()
+  const { routes, buses, stopsById } = useAdminData()
   const [selectedRouteId, setSelectedRouteId] = useState('R-01')
   const [mobileDay, setMobileDay] = useState(todayKey) // on phones only one day is shown at a time
+  const [query, setQuery] = useState('')
+
+  const filteredRoutes = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    if (!needle) return routes
+    return routes.filter((route) => {
+      const stopNames = route.stopIds.map((id) => stopsById[id]?.name || '').join(' ')
+      return `${route.id} ${route.name} ${stopNames}`.toLowerCase().includes(needle)
+    })
+  }, [query, routes, stopsById])
 
   const selectedRoute = useMemo(
-    () => routes.find((route) => route.id === selectedRouteId) || routes[0],
-    [routes, selectedRouteId],
+    () => filteredRoutes.find((route) => route.id === selectedRouteId) || filteredRoutes[0],
+    [filteredRoutes, selectedRouteId],
   )
 
   const timetable = ROUTE_TIMETABLE[selectedRoute?.id] || ROUTE_TIMETABLE['R-01']
   const color = selectedRoute ? routeColor(selectedRoute.id, selectedRoute) : '#244A9B'
+  const activeBusCounts = useMemo(
+    () => buses.reduce((counts, bus) => {
+      if (bus.status === 'Active' && bus.routeId) counts[bus.routeId] = (counts[bus.routeId] || 0) + 1
+      return counts
+    }, {}),
+    [buses],
+  )
   const first = stopsById[selectedRoute?.stopIds[0]]?.name || 'Quezon City Hall'
   const last = stopsById[selectedRoute?.stopIds[selectedRoute.stopIds.length - 1]]?.name || 'Destination'
 
@@ -153,14 +171,42 @@ export default function Timetable() {
       <RouteTabs />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
-        {/* The chips are the only route picker; the table below no longer repeats the route code. */}
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Choose a route">
-          {routes.map((route) => (
-            <RouteChip key={route.id} route={route} selected={route.id === selectedRoute?.id} onClick={() => setSelectedRouteId(route.id)} />
-          ))}
+        {/* Route search and chips stay separate from the selected timetable. */}
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-brand/40">
+          <Search size={16} className="shrink-0 text-slate-400" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="min-h-9 w-full min-w-0 border-0 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+            placeholder="Search routes or stops"
+            aria-label="Search routes or stops"
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="rounded-md p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+              <X size={14} />
+            </button>
+          )}
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-3 grid grid-cols-4 gap-2 md:flex md:flex-wrap" role="group" aria-label="Choose a route">
+          {filteredRoutes.map((route) => (
+            <RouteChip
+              key={route.id}
+              route={route}
+              selected={route.id === selectedRoute?.id}
+              count={activeBusCounts[route.id] || 0}
+              dim={!activeBusCounts[route.id]}
+              className="w-full justify-center md:w-auto"
+              onClick={() => setSelectedRouteId(route.id)}
+            />
+          ))}
+          {!filteredRoutes.length && <p className="col-span-full py-1 text-sm text-slate-500">No route or stop matches “{query}”.</p>}
+        </div>
+
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold" style={{ background: color, color: readableOn(color) }}>
             {selectedRoute?.id.replace('R-', '')}
           </span>
@@ -190,7 +236,7 @@ export default function Timetable() {
               <tr className="text-sm text-white" style={{ background: color, color: readableOn(color) }}>
                 <th scope="col" className="w-[38%] px-3 py-3 font-bold md:w-[28%] md:px-4">Direction</th>
                 {DAYS.map(({ key, label, short }) => (
-                  <th key={key} scope="col" className={`px-3 py-3 font-bold md:px-4 ${dayCell(key)}`}>
+                  <th key={key} scope="col" className={`px-3 py-3 text-center font-bold md:px-4 md:text-left ${dayCell(key)}`}>
                     <span className="md:hidden">{short}</span>
                     <span className="hidden md:inline">{label}</span>
                   </th>
@@ -212,7 +258,7 @@ export default function Timetable() {
                       {DAYS.map(({ key }) => {
                         const slot = timetable[key][dir][idx]
                         return (
-                          <td key={key} className={`px-3 py-2.5 md:px-4 ${dayCell(key)}`}>
+                          <td key={key} className={`px-3 py-2.5 text-center md:px-4 md:text-left ${dayCell(key)}`}>
                             {slot ? (
                               <>
                                 <span className="block text-sm font-semibold text-slate-800">{slot}</span>

@@ -12,7 +12,7 @@ export function readableOn(hex = '#244A9B') {
 // so R-01 looks the same on Bus Routes, Timetable and Live Tracking.
 export default function RouteChip({ route, selected = false, onClick, children, count, dim = false, className = '' }) {
   const color = routeColor(route.id, route)
-  const base = 'inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40'
+  const base = 'relative inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40'
   const style = selected
     ? { background: color, borderColor: color, color: readableOn(color) }
     : { background: `${color}1A`, borderColor: `${color}66`, color: '#193B70' }
@@ -23,8 +23,10 @@ export default function RouteChip({ route, selected = false, onClick, children, 
       <span>{children ?? route.id}</span>
       {count != null && (
         <span
-          className="rounded-full px-1.5 text-[11px] leading-5"
-          style={selected ? { background: 'rgba(255,255,255,0.28)' } : { background: '#ffffffcc' }}
+          className="absolute -right-2 -top-2 z-10 flex h-5 min-w-5 items-center justify-center rounded-full border border-white px-1 text-[10px] font-bold leading-none shadow-sm"
+          style={count === 0
+            ? { background: '#e2e8f0', color: '#64748b' }
+            : { background: '#ffffff', color: '#193B70' }}
         >
           {count}
         </span>
@@ -39,7 +41,7 @@ export default function RouteChip({ route, selected = false, onClick, children, 
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`${base} ${selected ? 'shadow-sm ring-2 ring-offset-1' : 'hover:brightness-95'} ${dim && !selected ? 'opacity-60' : ''} ${className}`}
+      className={`${base} cursor-pointer ${selected ? 'shadow-sm ring-2 ring-offset-1 hover:brightness-95' : 'hover:-translate-y-0.5 hover:brightness-95 hover:shadow-md active:translate-y-0'} ${dim && !selected ? 'opacity-60' : ''} ${className}`}
       style={{ ...style, ...(selected ? { '--tw-ring-color': `${color}55` } : null) }}
     >
       {content}

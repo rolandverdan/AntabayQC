@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
+import Modal from '../../admin/components/Modal.jsx'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 
@@ -69,6 +70,8 @@ export default function Settings() {
   const [alerts, setAlerts] = useState(savedSettings.alerts)
   const [preferences, setPreferences] = useState(savedSettings.preferences)
   const [activeDialog, setActiveDialog] = useState('')
+  const [passwordDraft, setPasswordDraft] = useState({ current: '', next: '', confirm: '' })
+  const [passwordErrors, setPasswordErrors] = useState({})
 
   const persistSettings = (nextSettings, successMessage) => {
     try {
@@ -104,6 +107,23 @@ export default function Settings() {
   const cancelProfile = () => {
     setProfile(savedSettings.profile)
     notify('Profile changes discarded.', 'info')
+  }
+
+  const submitPasswordChange = (event) => {
+    event.preventDefault()
+    const nextErrors = {}
+
+    if (!passwordDraft.current.trim()) nextErrors.current = 'Enter your current password.'
+    if (passwordDraft.next.length < 8) nextErrors.next = 'New password must be at least 8 characters.'
+    if (passwordDraft.confirm !== passwordDraft.next) nextErrors.confirm = 'Passwords do not match.'
+
+    setPasswordErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+
+    setPasswordDraft({ current: '', next: '', confirm: '' })
+    setPasswordErrors({})
+    setActiveDialog('')
+    notify('Password change form validated for this front-end design.', 'info')
   }
 
   return (
@@ -289,7 +309,100 @@ export default function Settings() {
           </div>
         </aside>
       </div>
-      {activeDialog && (
+      {activeDialog === 'password' && (
+        <Modal
+          open={activeDialog === 'password'}
+          onClose={() => {
+            setActiveDialog('')
+            setPasswordDraft({ current: '', next: '', confirm: '' })
+            setPasswordErrors({})
+          }}
+          title="Change password"
+          size="sm"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => {
+                setActiveDialog('')
+                setPasswordDraft({ current: '', next: '', confirm: '' })
+                setPasswordErrors({})
+              }}>Cancel</Button>
+              <Button type="submit" form="commuter-password-form">Update password</Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <form id="commuter-password-form" onSubmit={submitPasswordChange} className="space-y-3">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold text-slate-700">Current password</span>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={passwordDraft.current}
+                  onChange={(event) => setPasswordDraft((current) => ({ ...current, current: event.target.value }))}
+                  className={`w-full rounded-xl border bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand ${passwordErrors.current ? 'border-red-300' : 'border-slate-200'}`}
+                />
+                {passwordErrors.current && <span className="mt-1 block text-xs text-red-600">{passwordErrors.current}</span>}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold text-slate-700">New password</span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordDraft.next}
+                  onChange={(event) => setPasswordDraft((current) => ({ ...current, next: event.target.value }))}
+                  className={`w-full rounded-xl border bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand ${passwordErrors.next ? 'border-red-300' : 'border-slate-200'}`}
+                />
+                {passwordErrors.next && <span className="mt-1 block text-xs text-red-600">{passwordErrors.next}</span>}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold text-slate-700">Confirm new password</span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordDraft.confirm}
+                  onChange={(event) => setPasswordDraft((current) => ({ ...current, confirm: event.target.value }))}
+                  className={`w-full rounded-xl border bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand ${passwordErrors.confirm ? 'border-red-300' : 'border-slate-200'}`}
+                />
+                {passwordErrors.confirm && <span className="mt-1 block text-xs text-red-600">{passwordErrors.confirm}</span>}
+              </label>
+            </form>
+          </div>
+        </Modal>
+      )}
+
+      {activeDialog === 'devices' && (
+        <Modal
+          open={activeDialog === 'devices'}
+          onClose={() => setActiveDialog('')}
+          title="Manage devices"
+          size="md"
+          footer={<Button onClick={() => setActiveDialog('')}>Close</Button>}
+        >
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {[
+                { name: 'This phone', type: 'Mobile', location: 'Manila, Philippines', status: 'Active now' },
+                { name: 'Office tablet', type: 'Tablet', location: 'Quezon City, Philippines', status: 'Last used 2 hours ago' },
+                { name: 'Work computer', type: 'Desktop', location: 'Metro Manila, Philippines', status: 'Last used yesterday' },
+              ].map((device) => (
+                <div key={device.name} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                  <div>
+                    <p className="text-sm font-semibold text-navy">{device.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">{device.type} · {device.location}</p>
+                  </div>
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700">
+                    {device.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {activeDialog === 'privacy' && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
           onMouseDown={(event) => {
@@ -297,15 +410,9 @@ export default function Settings() {
           }}
         >
           <section role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title" className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl">
-            <h2 id="settings-dialog-title" className="text-base font-bold text-navy">
-              {activeDialog === 'password' ? 'Password settings' : activeDialog === 'devices' ? 'Signed-in devices' : 'Privacy controls'}
-            </h2>
+            <h2 id="settings-dialog-title" className="text-base font-bold text-navy">Privacy controls</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              {activeDialog === 'password'
-                ? 'Password updates are not available because commuter accounts are not connected to an authentication service.'
-                : activeDialog === 'devices'
-                  ? 'Signed-in devices are not tracked. Connect an account service to review or revoke active sessions.'
-                  : 'You can manage notification and location preferences above. Location access is not requested or collected.'}
+              You can manage notification and location preferences above. Location access is not requested or collected.
             </p>
             <div className="mt-4 flex justify-end">
               <Button onClick={() => setActiveDialog('')}>Close</Button>

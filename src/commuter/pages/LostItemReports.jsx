@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../admin/components/Card.jsx'
@@ -10,9 +10,11 @@ import {
   CirclePlus,
   Clock3,
   ArrowDownWideNarrow,
+  FileText,
   Search,
   ShieldCheck,
   Store,
+  X,
 } from 'lucide-react'
 
 const sampleReports = [
@@ -45,11 +47,48 @@ const filters = ['All', 'Ready', 'In Review', 'Claimed']
 const STATUS_FOR_COMMUTER = { Pending: 'In Review', 'Under Review': 'In Review', Resolved: 'Ready', Dismissed: 'Claimed' }
 const fmtFiled = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
+const isTtmdOpenNow = () => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date())
+  const value = (type) => parts.find((part) => part.type === type)?.value
+  const weekday = value('weekday')
+  const minutes = Number(value('hour')) * 60 + Number(value('minute'))
+  return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(weekday) && minutes >= 8 * 60 && minutes < 17 * 60
+}
+
 export default function LostItemReports() {
   const { reports: adminReports, routesById } = useAdminData()
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
   const [newestFirst, setNewestFirst] = useState(true)
+  const [ttmdOpen, setTtmdOpen] = useState(isTtmdOpenNow)
+  const [selectedReport, setSelectedReport] = useState(null)
+  const detailTriggerRef = useRef(null)
+  const dialogCloseRef = useRef(null)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTtmdOpen(isTtmdOpenNow()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!selectedReport) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setSelectedReport(null)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    dialogCloseRef.current?.focus()
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+      detailTriggerRef.current?.focus()
+    }
+  }, [selectedReport])
 
   // Reports this commuter filed (they arrive in the admin Report Logs) plus the demo samples.
   const reports = useMemo(() => {
@@ -95,29 +134,32 @@ export default function LostItemReports() {
     <div className="space-y-4">
       <BackToSupport />
       <PageHeader
-        title="Lost Item Report"
-        description="Review report progress and manage recovered-item claims."
-        actions={<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+        title="Lost Item"
+        description="Track report progress and manage recovered-item claims."
+        actions={<div className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 shadow-sm sm:w-auto sm:bg-slate-50 sm:py-2 sm:shadow-none">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-brand sm:h-8 sm:w-8 sm:rounded-lg sm:bg-brand/10">
             <Store size={16} />
           </div>
-          <div className="text-sm text-slate-600">
-            <p className="font-bold text-slate-800">QC Central Terminal Depot</p>
-            <p className="text-xs text-slate-500">Open Now · 08:00 – 17:00 PHT</p>
+          <div className="min-w-0 text-sm text-slate-600">
+            <p className="font-bold text-slate-800">QC TTMD Lost &amp; Found</p>
+            <p className="flex items-center gap-1.5 text-xs text-slate-500 sm:hidden"><span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${ttmdOpen ? 'bg-green-500' : 'bg-slate-400'}`} />{ttmdOpen ? 'Open now' : 'Closed now'}</p>
+            <p className="text-xs text-slate-500 sm:hidden">Mon–Fri · 8:00 AM–5:00 PM PHT</p>
+            <p className="hidden text-xs text-slate-500 sm:block">{ttmdOpen ? 'Open now' : 'Closed now'} · Mon–Fri · 8:00 AM–5:00 PM PHT</p>
+            <p className="text-[11px] text-slate-400 sm:hidden">2nd Floor, DPOS Building, QC Hall Compound</p>
           </div>
         </div>}
       />
 
-      <nav className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm" aria-label="Lost item pages">
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to="/commuter/lost-item" className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
+      <nav className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:rounded-2xl sm:bg-white sm:px-3 sm:py-2.5 sm:shadow-sm" aria-label="Lost item pages">
+        <div className="col-span-2 grid grid-cols-2 gap-1 sm:flex sm:items-center sm:gap-3">
+          <Link to="/commuter/lost-item" className="flex min-h-10 items-center justify-center rounded-lg px-2 text-center text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-navy sm:inline-flex sm:rounded-xl sm:px-4 sm:py-2 sm:text-left sm:shadow-sm sm:hover:border-slate-300 sm:hover:bg-slate-100">
             Report Lost Item
           </Link>
-          <Link to="/commuter/lost-item-reports" aria-current="page" className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm ring-2 ring-brand/20 transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
-            Check My Reports / Claims
+          <Link to="/commuter/lost-item-reports" aria-current="page" className="flex min-h-10 items-center justify-center rounded-lg bg-brand px-2 text-center text-sm font-bold text-white shadow-sm ring-2 ring-brand/20 transition hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 sm:inline-flex sm:rounded-xl sm:px-4 sm:py-2 sm:text-left sm:shadow-sm">
+            My Reports / Claims
           </Link>
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+        <div className="col-span-2 hidden items-center gap-2 text-xs font-semibold text-slate-700 sm:flex">
           <ShieldCheck size={15} className="text-sky-500" />
           Official QC Bus Commuter Protection Program
         </div>
@@ -177,13 +219,13 @@ export default function LostItemReports() {
         <section className="space-y-4" aria-label="Lost item reports">
           {filteredReports.length ? filteredReports.map((report) => (
             <article key={report.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-slate-500">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                <div className="flex items-center gap-2 text-slate-600">
                   {report.priority && <span className="font-bold text-slate-700">Priority Resolution</span>}
                   <span>•</span>
                   <span>Filed {report.filed}</span>
                 </div>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
                   report.status === 'Ready' ? 'bg-green-100 text-green-700' :
                   report.status === 'Claimed' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
                 }`}>
@@ -193,8 +235,8 @@ export default function LostItemReports() {
               </div>
 
               <h2 className="mt-3 text-lg font-bold text-navy">{report.title}</h2>
-              <p className="mt-1 text-xs text-slate-500">Case Ref: <span className="font-semibold text-slate-700">{report.id}</span></p>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{report.description}</p>
+              <p className="mt-1 text-sm text-slate-600">Case Ref: <span className="font-semibold text-slate-700">{report.id}</span></p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 line-clamp-2">{report.description}</p>
 
               <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <span className="rounded-md bg-rose-600 px-2 py-1 text-[10px] font-black text-white">R-01</span>
@@ -204,6 +246,15 @@ export default function LostItemReports() {
                 </div>
                 {report.status === 'Ready' && <BadgeCheck size={17} className="ml-auto shrink-0 text-green-600" />}
               </div>
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={selectedReport?.id === report.id}
+                onClick={(event) => { detailTriggerRef.current = event.currentTarget; setSelectedReport(report) }}
+                className="mt-3 flex min-h-10 w-full items-center justify-between rounded-lg border border-blue-100 bg-white px-3 text-sm font-semibold text-brand transition-colors hover:border-brand/40 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:min-h-0 sm:w-auto sm:justify-start sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:text-xs sm:hover:bg-transparent sm:hover:underline"
+              >
+                <span>View details</span>
+              </button>
             </article>
           )) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500">
@@ -228,6 +279,64 @@ export default function LostItemReports() {
           </Link>
         </aside>
       </div>
+      {selectedReport && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedReport(null)
+          }}
+        >
+          <section role="dialog" aria-modal="true" aria-labelledby="lost-report-dialog-title" className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                  <FileText size={20} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Lost item report</p>
+                  <h2 id="lost-report-dialog-title" className="mt-1 break-words text-lg font-bold text-navy">{selectedReport.title}</h2>
+                </div>
+              </div>
+              <button ref={dialogCloseRef} type="button" onClick={() => setSelectedReport(null)} aria-label="Close report details" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+              <span className="text-sm font-semibold text-slate-600">Claim status</span>
+              <span className={`rounded-full px-3 py-1 text-sm font-bold ${
+                selectedReport.status === 'Ready' ? 'bg-green-100 text-green-700' :
+                selectedReport.status === 'Claimed' ? 'bg-slate-200 text-slate-700' : 'bg-blue-100 text-blue-700'
+              }`}>
+                {selectedReport.status === 'Ready' ? 'Ready for Pickup' : selectedReport.status}
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                ['Case reference', selectedReport.id],
+                ['Filed', selectedReport.filed],
+                ['Route', selectedReport.route],
+                ['Bus', selectedReport.bus],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{label}</p>
+                  <p className="mt-1 break-words text-sm font-semibold leading-5 text-slate-800">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <h3 className="text-sm font-bold text-navy">Report description</h3>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{selectedReport.description}</p>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button type="button" onClick={() => setSelectedReport(null)} className="min-h-11 rounded-xl bg-brand px-5 text-sm font-bold text-white transition-colors hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">Close</button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

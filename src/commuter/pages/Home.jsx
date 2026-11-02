@@ -120,23 +120,30 @@ export default function CommuterHome() {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {features.map(({ title, to, icon: Icon, tile, summary, extra }) => (
-            <Link
-              key={title}
-              to={to}
-              className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-            >
-              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${tile}`}>
-                <Icon size={24} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-base font-bold text-navy">{title}</span>
-                <span className="mt-0.5 block text-sm leading-5 text-slate-500">{summary}</span>
-                {extra}
-              </span>
-              <ChevronRight size={20} className="shrink-0 text-slate-300 transition group-hover:text-brand" />
-            </Link>
-          ))}
+          {features.map(({ title, to, icon: Icon, tile, summary, extra }) => {
+            const featured = title === 'Live Tracking'
+
+            return (
+              <Link
+                key={title}
+                to={to}
+                className={`group flex items-center gap-4 rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${featured ? 'order-first border-slate-200 bg-white text-navy sm:order-none' : 'border-slate-200 bg-white'}`}
+              >
+                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${tile}`}>
+                  <Icon size={24} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 text-base font-bold text-navy">
+                    {title}
+                    {featured && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-800">Live</span>}
+                  </span>
+                  <span className="mt-0.5 block text-sm leading-5 text-slate-500">{summary}</span>
+                  {extra}
+                </span>
+                <ChevronRight size={20} className="shrink-0 text-slate-300 transition group-hover:text-brand" />
+              </Link>
+            )
+          })}
         </div>
       </section>
 
