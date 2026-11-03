@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import {
   Bell,
   Check,
-  Clock3,
   FileText,
   MapPin,
   ShieldAlert,
@@ -15,6 +14,9 @@ import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
 import BackToSupport from '../components/BackToSupport.jsx'
+import Select from '../../shared/components/Select.jsx'
+import DatePicker from '../../shared/components/DatePicker.jsx'
+import TimePicker from '../../shared/components/TimePicker.jsx'
 
 const categoryGuide = [
   { label: 'Driver', desc: 'Driver conduct, route issues, speeding, unsafe driving.' },
@@ -158,19 +160,19 @@ export default function Report() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Report Category <span className="text-red-500">*</span></label>
-              <select required value={form.category} onChange={updateForm('category')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="" disabled>Select concern category...</option>
+              <Select required value={form.category} onChange={updateForm('category')} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white">
+                <option value="">Select concern category...</option>
                 {categoryGuide.map(({ label }) => <option key={label}>{label}</option>)}
-              </select>
+              </Select>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Bus Fleet / Unit Number</label>
-              <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+              <Select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white">
                 <option value="">Bus unknown / not listed</option>
                 {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
                 <option value="other">Other unit...</option>
-              </select>
+              </Select>
               {form.busId === 'other' && (
                 <input required value={form.otherBus} onChange={updateForm('otherBus')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter bus number or plate" />
               )}
@@ -178,40 +180,31 @@ export default function Report() {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Operational Date</label>
-              <div className="relative">
-                <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
-                <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
+              <DatePicker required value={form.date} onChange={updateForm('date')} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white" />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Time</label>
-              <div className="relative">
-                <input required type="time" value={form.time} onChange={updateForm('time')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand" />
-                <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
+              <TimePicker required value={form.time} onChange={updateForm('time')} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white" />
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Route</label>
-              <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="" disabled>Select route if known...</option>
+              <Select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white">
+                <option value="">Select route if known...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
-                  <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
+                  <option key={route.id} value={route.id} data-desc={route.name}>{route.id}</option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Estimated Location / Terminal / Seat Position</label>
-              <div className="relative">
-                <select value={form.location} onChange={updateForm('location')} className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none focus:border-brand">
-                  <option value="" disabled>Select stop or location if known...</option>
-                  {availableStops.map((stop) => <option key={stop.id} value={stop.name}>{stop.name}</option>)}
-                  <option value="other">Other location...</option>
-                </select>
-                <MapPin className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
+              <Select value={form.location} onChange={updateForm('location')} leading={<MapPin size={16} className="shrink-0 text-brand" aria-hidden="true" />} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white">
+                <option value="">Select stop or location if known...</option>
+                {availableStops.map((stop) => <option key={stop.id} value={stop.name}>{stop.name}</option>)}
+                <option value="other">Other location...</option>
+              </Select>
               {form.location === 'other' && (
                 <input required value={form.otherLocation} onChange={updateForm('otherLocation')} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Enter terminal, stop, or landmark" />
               )}

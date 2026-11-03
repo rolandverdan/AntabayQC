@@ -24,7 +24,7 @@ body {
 .leaflet-container { z-index: 0; font-family: var(--font-sans); border-radius: 0.75rem; }
 
 /* Table density preference (Settings -> Display) */
-.admin-table th, .admin-table td { padding: 0.75rem 1rem; }
+.admin-table th, .admin-table td { padding: 0.875rem 1rem; }
 [data-density="compact"] .admin-table th,
 [data-density="compact"] .admin-table td { padding: 0.35rem 0.75rem; font-size: 0.8125rem; }
 
@@ -88,10 +88,17 @@ html, body { overflow-x: hidden; }
 /* Height of the full-width top header (plus the phone notch). Sidebars and page content start below it. */
 :root { --topbar-h: calc(4rem + env(safe-area-inset-top, 0px)); }
 
-/* Admin tables: breathing room at the left edge of the first column and right edge of the last one. */
-.admin-table th:first-child, .admin-table td:first-child { padding-left: 1.25rem; }
-.admin-table th:last-child, .admin-table td:last-child { padding-right: 1.25rem; }
+/* Admin tables: equal breathing room at the left edge of the first column and the right edge of the last one. */
+.admin-table th:first-child, .admin-table td:first-child { padding-left: 1.5rem; }
+.admin-table th:last-child, .admin-table td:last-child { padding-right: 1.5rem; }
 @media (min-width: 768px) {
-  .admin-table th:first-child, .admin-table td:first-child { padding-left: 1.5rem; }
-  .admin-table th:last-child, .admin-table td:last-child { padding-right: 1.5rem; }
+  .admin-table th:first-child, .admin-table td:first-child { padding-left: 2rem; }
+  .admin-table th:last-child, .admin-table td:last-child { padding-right: 2rem; }
 }
+/* Column headers are centred over their content (the first, name-like column stays left-aligned). */
+.admin-table th:not(:first-child), .admin-table td:not(:first-child) { text-align: center; }
+.admin-table td:not(:first-child) > .flex, .admin-table td:not(:first-child) > div { justify-content: center; }
+.admin-table th { vertical-align: middle; }
+
+/* Commuter: a slimmer top bar (3.5rem) so more of the page shows on phones. */
+.commuter-layout { --topbar-h: calc(3.5rem + env(safe-area-inset-top, 0px)); }

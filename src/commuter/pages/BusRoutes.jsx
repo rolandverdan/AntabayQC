@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import MapView from '../../admin/components/MapView.jsx'
-import { routeColor } from '../../admin/utils/geo.js'
+import { routeColor, routeStopMarks } from '../../admin/utils/geo.js'
 import RouteChip, { readableOn } from '../components/RouteChip.jsx'
 import RouteTabs from '../components/RouteTabs.jsx'
 
@@ -42,7 +42,7 @@ export default function BusRoutes() {
   const destination = selectedStops[selectedStops.length - 1]?.name || 'Destination'
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <RouteTabs />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -62,7 +62,7 @@ export default function BusRoutes() {
           )}
         </div>
 
-        <div className="mt-3 grid grid-cols-4 gap-2 md:flex md:flex-wrap" role="group" aria-label="Choose a route">
+        <div className="mt-4 grid grid-cols-4 gap-x-2.5 gap-y-3.5 pt-1 md:grid-cols-8" role="group" aria-label="Choose a route">
           {filteredRoutes.map((route) => (
             <RouteChip
               key={route.id}
@@ -70,7 +70,7 @@ export default function BusRoutes() {
               selected={route.id === selectedRoute?.id}
               count={activeBusCounts[route.id] || 0}
               dim={!activeBusCounts[route.id]}
-              className="w-full justify-center md:w-auto"
+              className="w-full justify-center"
               onClick={() => setSelectedRouteId(route.id)}
             />
           ))}
@@ -79,7 +79,7 @@ export default function BusRoutes() {
       </div>
 
       {selectedRoute && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
           <div className="mb-3 flex items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold" style={{ background: color, color: readableOn(color) }}>
               {selectedRoute.id.replace('R-', '')}
@@ -97,6 +97,7 @@ export default function BusRoutes() {
                 <MapView
                   routes={[{ id: selectedRoute.id, name: selectedRoute.name, color, points: selectedStops }]}
                   stops={selectedStops}
+                  stopMarks={routeStopMarks(selectedRoute)}
                   scrollWheelZoom={false}
                   terminalLabels
                   className="h-full"

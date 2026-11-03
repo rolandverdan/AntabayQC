@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Download, Eye, Siren, TriangleAlert, CircleCheck, Activity } from 'lucide-react'
+import { AlignLeft, ArrowLeft, Bus, Clock, Download, Eye, Hash, MapPin, ShieldAlert, Siren, TriangleAlert, CircleCheck, Activity, User } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { StatCard, PageHeader } from '../components/Card.jsx'
@@ -11,13 +11,12 @@ import useHighlight from '../hooks/useHighlight.js'
 import SearchFilterBar, { DateRange } from '../components/SearchFilterBar.jsx'
 import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
-import Field from '../components/FormField.jsx'
-import DetailGrid from '../components/DetailGrid.jsx'
-import { inputClass } from '../utils/ui.js'
+import { DetailHeader, InfoTile, SmallLabel, toneOf } from '../components/FormParts.jsx'
 import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
 import { EMERGENCY_SEVERITIES, EMERGENCY_STATUSES, INCIDENT_TYPES } from '../data/constants.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { exportCategory } from '../utils/exportConfig.js'
+import Select from '../../shared/components/Select.jsx'
 
 const SEV_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 }
 const unresolved = (e) => e.status !== 'Resolved'
@@ -85,7 +84,7 @@ export default function EmergencyLogs() {
 
   return (
     <>
-      <PageHeader hideTitle title="Emergency Logs" description="Incident monitoring. Critical and High unresolved incidents are highlighted and listed first." actions={<><Button icon={ArrowLeft} variant="secondary" onClick={() => navigate('/admin/dashboard')}>Back to Dashboard</Button><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button></>} />
+      <PageHeader title="Emergency Logs" description="Incident monitoring. Critical and High unresolved incidents are highlighted and listed first." actions={<><Button icon={ArrowLeft} variant="secondary" onClick={() => navigate('/admin/dashboard')}>Back to Dashboard</Button><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button></>} />
       <div className="mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard icon={Siren} label="Total emergencies" value={emergencies.length} />
         <StatCard icon={Activity} label="Active incidents" value={emergencies.filter(unresolved).length} tone="amber" sub="Not yet resolved" />
@@ -105,25 +104,37 @@ export default function EmergencyLogs() {
       </SearchFilterBar>
       <DataTable columns={columns} rows={rows} rowClassName={rowClass} highlightKeys={highlight} emptyTitle="No incidents match" />
 
-      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Incident ${view.id}` : ''} footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
+      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Incident ${view.id}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (
-          <div className="space-y-5">
-            <div className="flex flex-wrap gap-2"><Badge>{view.severity}</Badge><Badge>{view.status}</Badge></div>
-            <DetailGrid items={[
-              ['Emergency ID', view.id], ['Date & time', fmtDateTime(view.datetime)], ['Bus', view.busId], ['Route', view.routeId],
-              ['Incident type', view.type], ['Reported by', view.reportedBy], ['Location', view.location, true], ['Description', view.description, true],
-            ]} />
-            <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-end">
-              <Field label="Update status" className="flex-1">
-                <select className={inputClass(false)} value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>{EMERGENCY_STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
-              </Field>
-              <Button onClick={requestUpdate} disabled={newStatus === view.status}>Update status</Button>
+          <div className="space-y-3">
+            <DetailHeader icon={ShieldAlert} tone={toneOf(view.severity)} title={view.type}>
+              <Badge dot>{view.severity}</Badge>
+              <Badge dot>{view.status}</Badge>
+            </DetailHeader>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoTile icon={Hash} label="Emergency ID" value={view.id} mono />
+              <InfoTile icon={Clock} label="Date & time" value={fmtDateTime(view.datetime)} />
+              <InfoTile icon={Bus} label="Bus / route" value={[view.busId, view.routeId].filter(Boolean).join(' · ')} />
+              <InfoTile icon={User} label="Reported by" value={view.reportedBy} />
+              <InfoTile icon={MapPin} label="Location" value={view.location} className="sm:col-span-2" />
+              <InfoTile icon={AlignLeft} label="Description" value={view.description} className="sm:col-span-2" />
             </div>
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Status history</p>
-              <ol className="space-y-1.5 border-l-2 border-slate-200 pl-4">
-                {(view.history || []).map((h, i) => (
-                  <li key={i} className="text-sm"><Badge>{h.status}</Badge> <span className="text-xs text-slate-500">{fmtDateTime(h.at)} · {h.by}</span></li>
+            <div className="pt-2">
+              <SmallLabel className="mb-1.5">Update status</SmallLabel>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Select wrapperClassName="flex-1" value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>{EMERGENCY_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select>
+                <Button onClick={requestUpdate} disabled={newStatus === view.status}>Update status</Button>
+              </div>
+            </div>
+            <div className="pt-2">
+              <SmallLabel className="mb-2">Status history</SmallLabel>
+              <ol className="space-y-2.5">
+                {(view.history || []).map((h, i, arr) => (
+                  <li key={i} className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${i === arr.length - 1 ? 'bg-red-500 ring-2 ring-red-200' : 'bg-slate-300'}`} aria-hidden="true" />
+                    <Badge>{h.status}</Badge>
+                    <span>{fmtDateTime(h.at)} · {h.by}</span>
+                  </li>
                 ))}
               </ol>
             </div>

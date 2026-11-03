@@ -80,10 +80,13 @@ export default function Header({
       </button>
       <span className="ml-1 lg:hidden"><LogoTile size="sm" /></span>
       <TopBrand expanded={expanded} roleLabel={roleLabel} />
-      <div className="min-w-0 pl-3 lg:pl-6">
-        <h1 className="truncate text-lg font-bold">{headerTitle}</h1>
-        {commuterMode && commuterMeta && <p className="truncate text-[11px] text-cyan-100">{commuterMeta}</p>}
-      </div>
+      {/* Admin page titles live in each page's header (below the navbar); only commuter mode keeps a title here. */}
+      {commuterMode && (
+        <div className="min-w-0 pl-3 lg:pl-6">
+          <h1 className="truncate text-lg font-bold">{headerTitle}</h1>
+          {commuterMeta && <p className="truncate text-[11px] text-cyan-100">{commuterMeta}</p>}
+        </div>
+      )}
 
       <div className="ml-auto flex items-center gap-2">
         {menu && <button type="button" aria-label="Close menu" className="fixed inset-0 z-10 cursor-default" onClick={close} />}

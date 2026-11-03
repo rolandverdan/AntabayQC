@@ -167,10 +167,10 @@ export default function Timetable() {
   const dayCell = (day) => (mobileDay === day ? '' : 'hidden md:table-cell')
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <RouteTabs />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
         {/* Route search and chips stay separate from the selected timetable. */}
         <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-brand/40">
           <Search size={16} className="shrink-0 text-slate-400" />
@@ -188,7 +188,7 @@ export default function Timetable() {
           )}
         </div>
 
-        <div className="mt-3 grid grid-cols-4 gap-2 md:flex md:flex-wrap" role="group" aria-label="Choose a route">
+        <div className="mt-4 grid grid-cols-4 gap-x-2.5 gap-y-3.5 pt-1 md:grid-cols-8" role="group" aria-label="Choose a route">
           {filteredRoutes.map((route) => (
             <RouteChip
               key={route.id}
@@ -196,7 +196,7 @@ export default function Timetable() {
               selected={route.id === selectedRoute?.id}
               count={activeBusCounts[route.id] || 0}
               dim={!activeBusCounts[route.id]}
-              className="w-full justify-center md:w-auto"
+              className="w-full justify-center"
               onClick={() => setSelectedRouteId(route.id)}
             />
           ))}
@@ -205,7 +205,7 @@ export default function Timetable() {
 
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold" style={{ background: color, color: readableOn(color) }}>
             {selectedRoute?.id.replace('R-', '')}
@@ -216,7 +216,7 @@ export default function Timetable() {
           </div>
         </div>
 
-        <div className="mt-3 flex gap-1.5 rounded-xl bg-slate-100 p-1 md:hidden" role="group" aria-label="Choose a day">
+        <div className="mt-4 flex gap-1.5 rounded-xl bg-slate-100 p-1 md:hidden" role="group" aria-label="Choose a day">
           {DAYS.map(({ key, short }) => (
             <button
               key={key}
@@ -230,13 +230,13 @@ export default function Timetable() {
           ))}
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
           <table className="w-full table-fixed border-collapse text-left">
             <thead>
               <tr className="text-sm text-white" style={{ background: color, color: readableOn(color) }}>
-                <th scope="col" className="w-[38%] px-3 py-3 font-bold md:w-[28%] md:px-4">Direction</th>
+                <th scope="col" className="w-[38%] px-3.5 py-3.5 font-bold md:w-[28%] md:px-5">Direction</th>
                 {DAYS.map(({ key, label, short }) => (
-                  <th key={key} scope="col" className={`px-3 py-3 text-center font-bold md:px-4 md:text-left ${dayCell(key)}`}>
+                  <th key={key} scope="col" className={`px-3.5 py-3.5 text-center font-bold md:px-5 md:text-left ${dayCell(key)}`}>
                     <span className="md:hidden">{short}</span>
                     <span className="hidden md:inline">{label}</span>
                   </th>
@@ -251,18 +251,18 @@ export default function Timetable() {
                   {Array.from({ length: rows }, (_, idx) => (
                     <tr key={idx} className={`align-top ${idx > 0 ? 'border-t border-slate-100' : ''}`}>
                       {idx === 0 && (
-                        <th scope="row" rowSpan={rows} className="border-r border-slate-200 bg-slate-50 px-3 py-3 align-top text-sm font-bold leading-snug text-navy md:px-4">
+                        <th scope="row" rowSpan={rows} className="border-r border-slate-200 bg-slate-50 px-3.5 py-3.5 align-top text-sm font-bold leading-snug text-navy md:px-5">
                           {label}
                         </th>
                       )}
                       {DAYS.map(({ key }) => {
                         const slot = timetable[key][dir][idx]
                         return (
-                          <td key={key} className={`px-3 py-2.5 text-center md:px-4 md:text-left ${dayCell(key)}`}>
+                          <td key={key} className={`px-3.5 py-3.5 text-center md:px-5 md:text-left ${dayCell(key)}`}>
                             {slot ? (
                               <>
                                 <span className="block text-sm font-semibold text-slate-800">{slot}</span>
-                                <span className="block text-xs text-slate-500">{intervalLabel(key, idx)}</span>
+                                <span className="mt-0.5 block text-xs text-slate-500">{intervalLabel(key, idx)}</span>
                               </>
                             ) : (
                               <span className="text-slate-300" aria-label="No service">–</span>
@@ -278,7 +278,7 @@ export default function Timetable() {
           </table>
         </div>
 
-        <p className="mt-3 text-center text-xs text-slate-500">Official City Bus Timetable • Quezon City Government (QC Bus System)</p>
+        <p className="mt-4 text-center text-xs text-slate-500">Official City Bus Timetable • Quezon City Government (QC Bus System)</p>
       </div>
     </div>
   )

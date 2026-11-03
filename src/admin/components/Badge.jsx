@@ -17,11 +17,14 @@ const AUTO = {
   Driver: 'blue', Conductor: 'cyan', 
 }
 
-export default function Badge({ children, tone }) {
+const DOT = { green: 'bg-green-600', amber: 'bg-amber-500', red: 'bg-red-600', blue: 'bg-blue-600', gray: 'bg-slate-500', cyan: 'bg-cyan-600', orange: 'bg-orange-500' }
+
+export default function Badge({ children, tone, dot = false, suffix = '' }) {
   const t = tone || AUTO[children] || 'gray'
   return (
     <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONES[t]}`}>
-      {children}
+      {dot && <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${DOT[t]}`} aria-hidden="true" />}
+      {children}{suffix}
     </span>
   )
 }

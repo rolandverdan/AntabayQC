@@ -17,7 +17,7 @@ function readSession() {
 
 export function ConductorProvider({ children }) {
   const [session, setSession] = useState(readSession)
-  const profile = initialProfile // read-only: only the administrator can change conductor details
+  const [profile, setProfile] = useState(initialProfile) // sample data: edits stay on this device and reset on logout
   const [settings, setSettings] = useState(initialSettings)
   const [sosReport, setSosReport] = useState(null)
 
@@ -39,8 +39,11 @@ export function ConductorProvider({ children }) {
     }
     setSession(null)
     setSettings(initialSettings)
+    setProfile(initialProfile)
     setSosReport(null)
   }, [])
+
+  const updateProfile = useCallback((patch) => setProfile((p) => ({ ...p, ...patch })), [])
 
   const updateSetting = useCallback((group, key, value) => {
     setSettings((s) => ({ ...s, [group]: { ...s[group], [key]: value } }))
@@ -50,7 +53,7 @@ export function ConductorProvider({ children }) {
 
   const value = {
     session, login, logout,
-    profile,
+    profile, updateProfile,
     settings, updateSetting, resetSettings,
     sosReport, setSosReport,
   }

@@ -3,20 +3,20 @@ import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   ArrowDown,
-  ChevronDown,
   Clock3,
   MapPin,
   Navigation,
-  Route as RouteIcon,
   ShieldCheck,
   Star,
-  Ticket,
   X,
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
 import Modal from '../../admin/components/Modal.jsx'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
+import Select from '../../shared/components/Select.jsx'
+import DatePicker from '../../shared/components/DatePicker.jsx'
+import TimePicker from '../../shared/components/TimePicker.jsx'
 
 const upcomingTrips = [
   {
@@ -42,14 +42,6 @@ const tripHistory = [
   { route: 'R-05 Batasan ↔ Eastwood', date: 'Oct 20', rating: 4.6 },
   { route: 'R-02 QC Hall ↔ Commonwealth', date: 'Oct 18', rating: 4.9 },
 ]
-
-const formatTripDateInput = (value) => {
-  const digits = value.replace(/\D/g, '').slice(0, 8)
-
-  if (digits.length <= 2) return digits
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`
-}
 
 const normalizeTripDate = (dateValue) => {
   if (!dateValue) return null
@@ -279,63 +271,48 @@ export default function MyTrip() {
         <form id="add-trip-form" onSubmit={addSavedTrip} className="space-y-4">
           <div>
             <label htmlFor="saved-route" className="mb-2 block text-sm font-semibold text-slate-700">Choose a route to save</label>
-            <div className="relative">
-              <select
-                id="saved-route"
-                required
-                value={selectedRouteId}
-                onChange={(event) => setSelectedRouteId(event.target.value)}
-                className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
-                <option value="" disabled>Select a route...</option>
-                {routes.filter((route) => route.status === 'Active').map((route) => (
-                  <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-                <ChevronDown size={16} />
-              </span>
-            </div>
+            <Select id="saved-route" required value={selectedRouteId} onChange={(event) => setSelectedRouteId(event.target.value)} className="rounded-xl border-slate-200 py-2.5">
+              <option value="">Select a route...</option>
+              {routes.filter((route) => route.status === 'Active').map((route) => (
+                <option key={route.id} value={route.id} data-desc={route.name}>{route.id}</option>
+              ))}
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block">
+            <div className="block">
               <span className="mb-2 block text-sm font-semibold text-slate-700">Date</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="MM/DD/YYYY"
+              <DatePicker
                 value={tripDraft.date}
+                min={new Date().toISOString().slice(0, 10)}
                 onChange={(event) => {
-                  const formatted = formatTripDateInput(event.target.value)
-                  setTripDraft((current) => ({ ...current, date: formatted }))
+                  setTripDraft((current) => ({ ...current, date: event.target.value }))
                   setTripErrors((current) => ({ ...current, date: '' }))
                 }}
-                className={`h-12 w-full rounded-xl border bg-white px-3 py-2.5 text-base text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 ${tripErrors.date ? 'border-red-300' : 'border-slate-200'}`}
+                className={`rounded-xl py-2.5 ${tripErrors.date ? 'border-red-300' : 'border-slate-200'}`}
               />
               {tripErrors.date && <span className="mt-1 block text-xs text-red-600">{tripErrors.date}</span>}
-            </label>
+            </div>
 
-            <label className="block">
+            <div className="block">
               <span className="mb-2 block text-sm font-semibold text-slate-700">Time</span>
-              <input
-                type="time"
+              <TimePicker
                 value={tripDraft.time}
                 onChange={(event) => {
                   setTripDraft((current) => ({ ...current, time: event.target.value }))
                   setTripErrors((current) => ({ ...current, time: '' }))
                 }}
-                className={`h-12 w-full rounded-xl border bg-white px-3 py-2.5 text-base text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 ${tripErrors.time ? 'border-red-300' : 'border-slate-200'}`}
+                className={`rounded-xl py-2.5 ${tripErrors.time ? 'border-red-300' : 'border-slate-200'}`}
               />
               {tripErrors.time && <span className="mt-1 block text-xs text-red-600">{tripErrors.time}</span>}
-            </label>
+            </div>
           </div>
         </form>
       </Modal>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:hidden">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-semibold text-slate-500">Upcoming trip</p>
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700">
@@ -392,70 +369,6 @@ export default function MyTrip() {
               >
                 View details
               </button>
-            </div>
-          </div>
-
-          <div className="hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:block">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
-                  <Ticket size={18} />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-navy">Upcoming trip</h2>
-                  <p className="text-sm text-slate-500">Your next scheduled ride</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowTripDetails(true)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:text-brand hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
-              >
-                View details
-              </button>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm font-bold text-navy">
-                  <RouteIcon size={16} className="text-brand" />
-                  R-02 QC Hall ↔ Commonwealth
-                </div>
-                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700">
-                  On time
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
-                    <MapPin size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">From</p>
-                    <p className="font-semibold text-navy">Quezon Memorial Circle</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-center text-slate-400">
-                  <ArrowDown size={18} />
-                </div>
-
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand">
-                    <MapPin size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">To</p>
-                    <p className="font-semibold text-navy">Commonwealth Avenue</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
-                <span className="inline-flex items-center gap-2"><Clock3 size={15} /> Today · 7:40 AM</span>
-                <span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-green-700" /> Safety check passed</span>
-              </div>
             </div>
           </div>
 

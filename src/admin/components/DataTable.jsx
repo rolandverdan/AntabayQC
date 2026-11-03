@@ -37,7 +37,7 @@ export default function DataTable({ columns, rows, rowKey = 'id', pageSize, empt
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className={`whitespace-nowrap font-semibold ${c.className || ''}`}>{c.header}</th>
+                <th key={c.key} className={`whitespace-nowrap py-3.5 font-semibold ${c.className || ''}`}>{c.header}</th>
               ))}
             </tr>
           </thead>

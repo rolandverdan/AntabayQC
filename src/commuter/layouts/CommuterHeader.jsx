@@ -44,14 +44,14 @@ export default function CommuterHeader({ onLogout, meta, isGuest = false }) {
     <header className="pt-safe fixed inset-x-0 top-0 z-50 flex h-[var(--topbar-h)] items-center border-b border-white/10 bg-brand pr-2 text-white shadow-md sm:pr-4">
       <Link to={isGuest ? '/commuter/live-tracking' : '/commuter/home'} className="flex shrink-0 items-center gap-2 pl-3 lg:w-64 lg:pl-[18px]" aria-label="ANTABAY QC Commuter Console, go to Home">
         <LogoTile size="sm" />
-        <span className="min-w-0 whitespace-nowrap leading-tight">
+        <span className="hidden min-w-0 whitespace-nowrap leading-tight lg:block">
           <span className="block text-sm font-bold tracking-wide">ANTABAY QC</span>
           <span className="block text-[11px] text-blue-200">Commuter Console</span>
         </span>
       </Link>
 
-      <div className="hidden min-w-0 pl-6 lg:block">
-        <h1 className="truncate text-lg font-bold">{pageTitle(pathname)}</h1>
+      <div className="min-w-0 pl-1 lg:pl-6">
+        <h1 className="truncate text-base font-bold leading-tight lg:text-lg">{pageTitle(pathname)}</h1>
         {meta && <p className="truncate text-[11px] text-cyan-100">{meta}</p>}
       </div>
 

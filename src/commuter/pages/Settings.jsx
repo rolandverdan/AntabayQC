@@ -14,6 +14,7 @@ import Button from '../../admin/components/Button.jsx'
 import Modal from '../../admin/components/Modal.jsx'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
+import Select from '../../shared/components/Select.jsx'
 
 const SETTINGS_KEY = 'antabayqc_commuter_settings'
 const SETTINGS_UPDATED_EVENT = 'antabayqc:commuter-settings-updated'
@@ -182,16 +183,16 @@ export default function Settings() {
 
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-700">Default route</span>
-                <select
+                <Select
                   value={profile.routePreference}
                   onChange={(e) => setProfile((current) => ({ ...current, routePreference: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand"
+                  className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white"
                 >
                   <option value="">No default route</option>
                   {routes.filter((route) => route.status === 'Active').map((route) => (
-                    <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
+                    <option key={route.id} value={route.id} data-desc={route.name}>{route.id}</option>
                   ))}
-                </select>
+                </Select>
               </label>
             </div>
 

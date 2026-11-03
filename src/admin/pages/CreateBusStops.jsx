@@ -19,6 +19,8 @@ import { includesText, nextId } from '../utils/format.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { exportCategory } from '../utils/exportConfig.js'
 import { ACCOUNT_STATUSES } from '../data/constants.js'
+import Select from '../../shared/components/Select.jsx'
+import { Section } from '../components/FormParts.jsx'
 
 export default function CreateBusStops() {
   const { stops, routes, saveStop, deleteStop } = useAdminData()
@@ -115,7 +117,7 @@ export default function CreateBusStops() {
 
   return (
     <>
-      <PageHeader hideTitle title="Bus Stops" description="Create and manage bus stops. Click the map in the form to set coordinates." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button></>} />
+      <PageHeader title="Create Bus Stops" description="Create and manage bus stops. Click the map in the form to set coordinates." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search stop ID, name, address…"
         filters={[
@@ -131,11 +133,13 @@ export default function CreateBusStops() {
         footer={<><Button variant="secondary" onClick={() => setForm(null)}>Cancel</Button><Button type="submit" form="stop-form">{isEdit ? 'Save changes' : 'Add bus stop'}</Button></>}
       >
         {form && (
-          <form id="stop-form" onSubmit={submit} noValidate className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-4">
+          <form id="stop-form" onSubmit={submit} noValidate className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-6">
+              <Section title="Stop details">
+              <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Stop ID" required error={errors.id}><input className={inputClass(errors.id)} value={form.id} onChange={set('id')} disabled={isEdit} /></Field>
-                <Field label="Status"><select className={inputClass(false)} value={form.status} onChange={set('status')}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</select></Field>
+                <Field label="Status"><Select value={form.status} onChange={set('status')}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
               </div>
               <Field label="Bus stop name" required error={errors.name}><input className={inputClass(errors.name)} value={form.name} onChange={set('name')} /></Field>
               <Field label="Address / location description" required error={errors.address}><input className={inputClass(errors.address)} value={form.address} onChange={set('address')} /></Field>
@@ -144,9 +148,10 @@ export default function CreateBusStops() {
                 <Field label="Longitude" required error={errors.lng}><input className={inputClass(errors.lng)} value={form.lng} onChange={set('lng')} inputMode="decimal" placeholder="121.0500" /></Field>
               </div>
               {outsideQC && <p className="text-xs font-medium text-amber-700">These coordinates look outside Quezon City. Double-check before saving.</p>}
-              <div>
-                <p className="mb-1 text-xs font-semibold text-navy">Routes serving this stop</p>
-                <div className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-2">
+              </div>
+              </Section>
+              <Section title="Routes serving this stop">
+                <div className="max-h-44 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3">
                   {routes.map((r) => (
                     <label key={r.id} className="flex items-center gap-2 text-sm text-slate-700">
                       <input type="checkbox" className="accent-brand" checked={form.routeIds.includes(r.id)} onChange={() => toggleRoute(r.id)} />
@@ -154,13 +159,12 @@ export default function CreateBusStops() {
                     </label>
                   ))}
                 </div>
-                <p className="mt-1 text-xs text-slate-500">Newly ticked routes get this stop added at the end; reorder it in Create Routes.</p>
-              </div>
+                <p className="mt-2.5 text-xs text-slate-500">New routes add this stop at the end. Reorder in Create Routes.</p>
+              </Section>
             </div>
-            <div>
-              <p className="mb-1 text-xs font-semibold text-navy">Pick location on map (OpenStreetMap)</p>
-              <MapPicker className="h-72 md:h-full md:min-h-80" value={picked} onChange={({ lat, lng }) => setForm((f) => ({ ...f, lat: String(lat), lng: String(lng) }))} />
-            </div>
+            <Section title="Pick location on map" className="flex min-h-0 flex-col">
+              <MapPicker className="h-72 md:h-auto md:min-h-72 md:flex-1" value={picked} onChange={({ lat, lng }) => setForm((f) => ({ ...f, lat: String(lat), lng: String(lng) }))} />
+            </Section>
           </form>
         )}
       </Modal>
@@ -169,7 +173,7 @@ export default function CreateBusStops() {
         {view && (
           <div className="space-y-4">
             <DetailGrid items={[
-              ['Stop ID', view.id], ['Status', view.status], ['Address', view.address, true],
+              ['Stop ID', view.id], ['Status', <Badge>{view.status}</Badge>], ['Address', view.address, true],
               ['Latitude', view.lat], ['Longitude', view.lng],
               ['Routes serving', routesOf(view.id).map((r) => `${r.id} ${r.name}`).join(', ') || 'None', true],
             ]} />

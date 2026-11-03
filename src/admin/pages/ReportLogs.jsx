@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Download, Eye, FileText, Clock, CircleCheck, TriangleAlert } from 'lucide-react'
+import { Bus, Download, Eye, FileText, Clock, CircleCheck, Hash, Inbox, MapPin, Paperclip, Phone, Star, TriangleAlert, User } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { StatCard, PageHeader } from '../components/Card.jsx'
@@ -10,12 +10,11 @@ import useHighlight from '../hooks/useHighlight.js'
 import SearchFilterBar, { DateRange } from '../components/SearchFilterBar.jsx'
 import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
-import Field from '../components/FormField.jsx'
-import DetailGrid from '../components/DetailGrid.jsx'
-import { inputClass } from '../utils/ui.js'
+import { DetailHeader, InfoTile, SmallLabel, toneOf } from '../components/FormParts.jsx'
 import { downloadCsv } from '../utils/csv.js'
 import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
 import { REPORT_STATUSES, REPORT_TYPES } from '../data/constants.js'
+import Select from '../../shared/components/Select.jsx'
 
 const needsAttention = (r) => (r.status === 'Pending' || r.status === 'Under Review') && r.priority === 'High'
 
@@ -76,7 +75,7 @@ export default function ReportLogs() {
 
   return (
     <>
-      <PageHeader hideTitle
+      <PageHeader
         title="Report Logs"
         description="Operational reports submitted about buses and routes (separate from system logs)."
         actions={<Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button>}
@@ -100,27 +99,35 @@ export default function ReportLogs() {
       </SearchFilterBar>
       <DataTable columns={columns} rows={rows} highlightKeys={highlight} emptyTitle="No reports match" />
 
-      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Report ${view.id}` : ''} footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
+      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Report ${view.id}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (
-          <div className="space-y-5">
-            <DetailGrid items={[
-              ['Report ID', view.id], ['Type', view.type], ['Date & time', fmtDateTime(view.datetime)], ['Priority', view.priority],
-              ['Bus', view.busId || view.otherBus], ['Route', view.routeId], ['Reported by', view.reportedBy], ['Current status', view.status],
-              ...(view.source === 'Commuter' ? [
-                ['Source', 'Commuter app'],
-                ['Case reference', view.caseRef],
-                ['Location', view.location],
-                ['Contact phone', view.contactPhone],
-                ['Rating', view.rating ? `${view.rating} / 5` : ''],
-                ['Evidence files', view.evidence?.length ? view.evidence.join(', ') : ''],
-              ] : []),
-              ['Description', view.description, true],
-            ]} />
-            <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-end">
-              <Field label="Update status" className="flex-1">
-                <select className={inputClass(false)} value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>{REPORT_STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
-              </Field>
-              <Button onClick={requestUpdate} disabled={newStatus === view.status}>Update status</Button>
+          <div className="space-y-3">
+            <DetailHeader icon={TriangleAlert} tone={toneOf(view.priority)} title={view.type} subtitle={view.description}>
+              <Badge dot suffix=" priority">{view.priority}</Badge>
+              <Badge dot>{view.status}</Badge>
+            </DetailHeader>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoTile icon={Hash} label="Report ID" value={view.id} mono />
+              <InfoTile icon={Clock} label="Date & time" value={fmtDateTime(view.datetime)} />
+              <InfoTile icon={Bus} label="Bus / route" value={[view.busId || view.otherBus, view.routeId].filter(Boolean).join(' · ')} />
+              <InfoTile icon={User} label="Reported by" value={view.reportedBy} />
+              {view.source === 'Commuter' && (
+                <>
+                  <InfoTile icon={Inbox} label="Source" value="Commuter app" />
+                  <InfoTile icon={Hash} label="Case reference" value={view.caseRef} />
+                  <InfoTile icon={MapPin} label="Location" value={view.location} />
+                  <InfoTile icon={Phone} label="Contact phone" value={view.contactPhone} />
+                  <InfoTile icon={Star} label="Rating" value={view.rating ? `${view.rating} / 5` : ''} />
+                  <InfoTile icon={Paperclip} label="Evidence files" value={view.evidence?.length ? view.evidence.join(', ') : ''} />
+                </>
+              )}
+            </div>
+            <div className="pt-2">
+              <SmallLabel className="mb-1.5">Update status</SmallLabel>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Select wrapperClassName="flex-1" value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>{REPORT_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select>
+                <Button onClick={requestUpdate} disabled={newStatus === view.status}>Update status</Button>
+              </div>
             </div>
           </div>
         )}

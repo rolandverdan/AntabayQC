@@ -4,6 +4,8 @@ import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { PageHeader } from '../../admin/components/Card.jsx'
 import BackToSupport from '../components/BackToSupport.jsx'
+import Select from '../../shared/components/Select.jsx'
+import DatePicker from '../../shared/components/DatePicker.jsx'
 
 const ratingOptions = [1, 2, 3, 4, 5]
 const categories = ['Driver behavior', 'Route reliability', 'Bus cleanliness', 'Schedule and timing', 'Station experience', 'Accessibility', 'Other']
@@ -112,10 +114,10 @@ export default function Feedback() {
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Feedback category <span aria-hidden="true" className="text-red-500">*</span></label>
-              <select required value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, otherCategory: event.target.value === 'Other' ? current.otherCategory : '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="" disabled>Select feedback category...</option>
+              <Select required value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, otherCategory: event.target.value === 'Other' ? current.otherCategory : '' }))} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white">
+                <option value="">Select feedback category...</option>
                 {categories.map((category) => <option key={category}>{category}</option>)}
-              </select>
+              </Select>
               {form.category === 'Other' && (
                 <>
                   <label htmlFor="other-feedback-category" className="mb-1 mt-2 block text-sm font-semibold text-slate-700">Please specify <span aria-hidden="true" className="text-red-500">*</span></label>
@@ -126,12 +128,12 @@ export default function Feedback() {
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Route / line <span className="font-normal text-slate-400">(optional)</span></label>
-              <select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
-                <option value="" disabled>Select Bus Route...</option>
+              <Select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value, busId: '' }))} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white">
+                <option value="">Select Bus Route...</option>
                 {routes.filter((route) => route.status === 'Active').map((route) => (
-                  <option key={route.id} value={route.id}>{route.id} · {route.name}</option>
+                  <option key={route.id} value={route.id} data-desc={route.name}>{route.id}</option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
@@ -157,17 +159,17 @@ export default function Feedback() {
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Tell us more <span aria-hidden="true" className="text-red-500">*</span></label>
-              <textarea required minLength={5} rows={6} value={form.details} onChange={updateForm('details')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Share what went well, what needs improvement, and how we can make the trip better." />
+              <textarea required minLength={5} rows={3} value={form.details} onChange={updateForm('details')} className="h-28 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" placeholder="Share what went well, what needs improvement, and how we can make the trip better." />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">Bus number <span className="font-normal text-slate-400">(optional)</span></label>
-                <select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand">
+                <Select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, otherBus: '' }))} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white">
                   <option value="">Bus unknown / not listed</option>
                   {availableBuses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
                   <option value="other">Other bus...</option>
-                </select>
+                </Select>
                 {form.busId === 'other' && (
                   <>
                     <label htmlFor="other-feedback-bus" className="mb-1 mt-2 block text-sm font-semibold text-slate-700">Other bus number <span aria-hidden="true" className="text-red-500">*</span></label>
@@ -178,15 +180,15 @@ export default function Feedback() {
 
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">Date of trip <span aria-hidden="true" className="text-red-500">*</span></label>
-                <input required type="date" value={form.date} onChange={updateForm('date')} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand" />
+                <DatePicker required value={form.date} onChange={updateForm('date')} className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white" />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button type="button" onClick={clearForm} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-100 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
+            <div className="flex items-center gap-3 pt-2">
+              <button type="button" onClick={clearForm} className="h-12 shrink-0 rounded-xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 transition-all duration-150 hover:border-slate-300 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2">
                 Clear
               </button>
-              <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 active:translate-y-0">
+              <button type="submit" className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand px-4 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:bg-brand/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
                 Submit Feedback <Send size={16} />
               </button>
             </div>
@@ -202,7 +204,7 @@ export default function Feedback() {
               Recent feedback
             </div>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 border-t border-slate-100">
               {recentFeedback.map((item, index) => (
                 <details key={`${item.title}-${index}`} className="group py-3 first:pt-1 last:pb-1">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-navy marker:hidden transition-colors hover:text-brand">

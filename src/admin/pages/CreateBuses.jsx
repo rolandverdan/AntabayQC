@@ -18,6 +18,8 @@ import { includesText, nextId } from '../utils/format.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { exportCategory } from '../utils/exportConfig.js'
 import { BUS_STATUSES } from '../data/constants.js'
+import Select from '../../shared/components/Select.jsx'
+import { Section } from '../components/FormParts.jsx'
 
 export default function CreateBuses() {
   const { buses, routes, accounts, accountsById, routesById, saveBus, setBusStatus } = useAdminData()
@@ -77,7 +79,7 @@ export default function CreateBuses() {
   const staffOptions = (type, field) =>
     accounts.filter((a) => a.type === type && (a.status === 'Active' || a.id === form?.[field])).map((a) => {
       const other = buses.find((b) => b.id !== form.id && (b.driverId === a.id || b.conductorId === a.id))
-      return <option key={a.id} value={a.id}>{a.fullName}{other ? ` (moves from ${other.id})` : ''}</option>
+      return <option key={a.id} value={a.id} data-avatar={a.fullName} data-desc={`${a.employeeId}${other ? ` · moves from ${other.id}` : ''}`}>{a.fullName}</option>
     })
 
   const view = buses.find((b) => b.id === viewId)
@@ -116,7 +118,7 @@ export default function CreateBuses() {
 
   return (
     <>
-      <PageHeader hideTitle title="Buses" description="Add, edit, and manage the bus fleet." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Bus} onClick={openCreate}>Add Bus</Button></>} />
+      <PageHeader title="Create Buses" description="Add, edit, and manage the bus fleet." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Bus} onClick={openCreate}>Add Bus</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search bus ID, plate, model, driver…"
         filters={[
@@ -132,29 +134,53 @@ export default function CreateBuses() {
         footer={<><Button variant="secondary" onClick={() => setForm(null)}>Cancel</Button><Button type="submit" form="bus-form">{isEdit ? 'Save changes' : 'Add bus'}</Button></>}
       >
         {form && (
-          <form id="bus-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
-            <Field label="Bus ID / number" required error={errors.id}><input className={inputClass(errors.id)} value={form.id} onChange={set('id')} disabled={isEdit} /></Field>
-            <Field label="Plate number" required error={errors.plate}><input className={inputClass(errors.plate)} value={form.plate} onChange={set('plate')} placeholder="NCB 1234" /></Field>
-            <Field label="Bus model / description" required error={errors.model} className="sm:col-span-2"><input className={inputClass(errors.model)} value={form.model} onChange={set('model')} placeholder="e.g. Higer KLQ6118 City Bus" /></Field>
-            <Field label="Passenger capacity" required error={errors.capacity}><input type="number" min="10" max="120" className={inputClass(errors.capacity)} value={form.capacity} onChange={set('capacity')} /></Field>
-            <Field label="Operational status"><select className={inputClass(false)} value={form.status} onChange={set('status')}>{BUS_STATUSES.map((s) => <option key={s}>{s}</option>)}</select></Field>
-            <Field label="Assigned route"><select className={inputClass(false)} value={form.routeId} onChange={set('routeId')}><option value="">None</option>{routes.filter((r) => r.status === 'Active' || r.id === form.routeId).map((r) => <option key={r.id} value={r.id}>{r.id} · {r.name}</option>)}</select></Field>
-            <div className="hidden sm:block" />
-            <Field label="Assigned driver"><select className={inputClass(false)} value={form.driverId} onChange={set('driverId')}><option value="">Unassigned</option>{staffOptions('Driver', 'driverId')}</select></Field>
-            <Field label="Assigned conductor"><select className={inputClass(false)} value={form.conductorId} onChange={set('conductorId')}><option value="">Unassigned</option>{staffOptions('Conductor', 'conductorId')}</select></Field>
+          <form id="bus-form" onSubmit={submit} noValidate className="space-y-7 pb-3">
+            <Section title="Bus details">
+              <div className="grid items-start gap-x-4 gap-y-5 sm:grid-cols-2">
+                <Field label="Bus ID / number" required error={errors.id}><input className={inputClass(errors.id)} value={form.id} onChange={set('id')} disabled={isEdit} /></Field>
+                <Field label="Plate number" required error={errors.plate}><input className={inputClass(errors.plate)} value={form.plate} onChange={set('plate')} placeholder="NCB 1234" /></Field>
+                <Field label="Bus model / description" required error={errors.model} className="sm:col-span-2"><input className={inputClass(errors.model)} value={form.model} onChange={set('model')} placeholder="e.g. Higer KLQ6118 City Bus" /></Field>
+              </div>
+            </Section>
+
+            <Section title="Operations">
+              <div className="grid items-start gap-x-4 gap-y-5 sm:grid-cols-2">
+                <Field label="Passenger capacity" required error={errors.capacity}><input type="number" min="10" max="120" className={inputClass(errors.capacity)} value={form.capacity} onChange={set('capacity')} /></Field>
+                <Field label="Operational status"><Select value={form.status} onChange={set('status')}>{BUS_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
+              </div>
+            </Section>
+
+            <Section title="Assignments">
+              <div className="grid items-start gap-x-4 gap-y-5 sm:grid-cols-2">
+                <Field label="Assigned route" className="sm:col-span-2"><Select value={form.routeId} onChange={set('routeId')}><option value="">None</option>{routes.filter((r) => r.status === 'Active' || r.id === form.routeId).map((r) => <option key={r.id} value={r.id} data-desc={r.name}>{r.id}</option>)}</Select></Field>
+                <Field label="Assigned driver"><Select value={form.driverId} onChange={set('driverId')}><option value="">Unassigned</option>{staffOptions('Driver', 'driverId')}</Select></Field>
+                <Field label="Assigned conductor"><Select value={form.conductorId} onChange={set('conductorId')}><option value="">Unassigned</option>{staffOptions('Conductor', 'conductorId')}</Select></Field>
+              </div>
+            </Section>
           </form>
         )}
       </Modal>
 
       <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Bus ${view.id}` : ''} footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (
-          <div className="space-y-5">
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand ring-1 ring-brand/15"><Bus size={26} aria-hidden="true" /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xl font-bold leading-tight text-navy">{view.id}</p>
+                <div className="mt-1.5"><Badge>{view.status}</Badge></div>
+              </div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] text-slate-500 ring-1 ring-inset ring-slate-200">
+                Plate number <span className="font-mono text-xs font-bold text-navy">{view.plate}</span>
+              </span>
+            </div>
             <DetailGrid items={[
-              ['Plate number', <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-navy ring-1 ring-inset ring-slate-300">{view.plate}</span>], ['Status', <Badge>{view.status}</Badge>], ['Model', view.model, true], ['Capacity', `${view.capacity} passengers`],
-              ['Route', view.routeId ? `${view.routeId} · ${routesById[view.routeId]?.name}` : ''], ['Driver', name(view.driverId)], ['Conductor', name(view.conductorId)],
-            ]} />
+              ['Model', view.model], ['Capacity', `${view.capacity} passengers`],
+              ['Route', view.routeId ? `${view.routeId} · ${routesById[view.routeId]?.name}` : '', true],
+              ['Driver', name(view.driverId)], ['Conductor', name(view.conductorId)],
+            ]} muted />
             <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Passenger occupancy</p>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Passenger occupancy</p>
               <OccupancyBar passengers={view.passengers} capacity={view.capacity} />
             </div>
           </div>

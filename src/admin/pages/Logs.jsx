@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Download, Eye } from 'lucide-react'
+import { Clock, Download, Eye, Hash, ScrollText, ShieldCheck, User } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -8,7 +8,7 @@ import Badge from '../components/Badge.jsx'
 import DataTable from '../components/DataTable.jsx'
 import SearchFilterBar, { DateRange } from '../components/SearchFilterBar.jsx'
 import Modal from '../components/Modal.jsx'
-import DetailGrid from '../components/DetailGrid.jsx'
+import { DetailHeader, InfoTile, toneOf } from '../components/FormParts.jsx'
 import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
 import { MODULES, SEVERITIES } from '../data/constants.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
@@ -56,7 +56,7 @@ export default function Logs() {
 
   return (
     <>
-      <PageHeader hideTitle
+      <PageHeader
         title="System Logs"
         description="Administrative and system activity. New entries appear here when you perform actions in this session."
         actions={<Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button>}
@@ -74,12 +74,19 @@ export default function Logs() {
       </SearchFilterBar>
       <DataTable columns={columns} rows={rows} pageSize={10} emptyTitle="No log entries match" />
 
-      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Log ${view.id}` : ''} footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
+      <Modal open={!!view} onClose={() => setViewId(null)} title="Log details" bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (
-          <DetailGrid items={[
-            ['Log ID', view.id], ['Timestamp', fmtDateTime(view.timestamp)], ['Action', view.action], ['User / account', view.user],
-            ['Module', view.module], ['Severity', view.severity], ['Description', view.description, true],
-          ]} />
+          <div className="space-y-3">
+            <DetailHeader icon={ScrollText} tone={toneOf(view.severity)} title={view.action} subtitle={view.description}>
+              <Badge dot>{view.severity}</Badge>
+            </DetailHeader>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoTile icon={Hash} label="Log ID" value={view.id} mono />
+              <InfoTile icon={Clock} label="Timestamp" value={fmtDateTime(view.timestamp)} />
+              <InfoTile icon={User} label="User / account" value={view.user} />
+              <InfoTile icon={ShieldCheck} label="Module" value={view.module} />
+            </div>
+          </div>
         )}
       </Modal>
     </>

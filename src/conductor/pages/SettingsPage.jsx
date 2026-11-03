@@ -1,21 +1,33 @@
 import { Bell, Volume2, Map as MapIcon, Siren, RotateCcw, Play, Info } from 'lucide-react'
 import Card, { PageHeader, Notice } from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
+import Select from '../../shared/components/Select.jsx'
 import Toggle from '../components/Toggle.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { playTone } from '../utils/sound.js'
 
-const selectCls = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-slate-100 disabled:text-slate-500'
-
 function Row({ title, description, htmlFor, children }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
-      <div className="min-w-0 flex-1 basis-40">
-        <label htmlFor={htmlFor} className="block text-sm font-semibold text-navy">{title}</label>
-        {description && <p className="text-xs text-slate-500">{description}</p>}
+    <div className="flex min-h-[4rem] items-center justify-between gap-4 py-3">
+      <div className="min-w-0 flex-1">
+        <label htmlFor={htmlFor} className="block text-sm font-semibold leading-5 text-navy">{title}</label>
+        {description && <p className="text-xs leading-4 text-slate-500">{description}</p>}
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="flex shrink-0 items-center justify-end">{children}</div>
+    </div>
+  )
+}
+
+/** Stacked row for sliders: label + value on top, full-width slider below. */
+function SliderRow({ title, value, htmlFor, children }) {
+  return (
+    <div className="py-3">
+      <div className="mb-2 flex items-center justify-between">
+        <label htmlFor={htmlFor} className="text-sm font-semibold leading-5 text-navy">{title}</label>
+        <span className="text-sm font-semibold text-brand">{value}</span>
+      </div>
+      {children}
     </div>
   )
 }
@@ -29,7 +41,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader
+      <PageHeader hideTitle
         title="Settings"
         description="Changes apply right away. They are kept only while you stay signed in on this page."
         actions={<Button variant="secondary" icon={RotateCcw} onClick={reset}>Restore defaults</Button>}
@@ -53,17 +65,17 @@ export default function SettingsPage() {
             <Toggle id="s-on" checked={sound.enabled} onChange={(v) => updateSetting('sound', 'enabled', v)} label="Play sounds for alerts" />
           </Row>
           <Row title="Alert tone" htmlFor="s-tone">
-            <select id="s-tone" value={sound.tone} disabled={!sound.enabled} onChange={(e) => updateSetting('sound', 'tone', e.target.value)} className={selectCls}>
+            <Select id="s-tone" value={sound.tone} disabled={!sound.enabled} onChange={(e) => updateSetting('sound', 'tone', e.target.value)} wrapperClassName="w-40">
               <option value="chime">Chime</option>
               <option value="beep">Beep</option>
               <option value="alert">Urgent alert</option>
-            </select>
+            </Select>
           </Row>
-          <Row title={`Volume: ${sound.volume}%`} htmlFor="s-vol">
-            <input id="s-vol" type="range" min="0" max="100" step="5" value={sound.volume} disabled={!sound.enabled} onChange={(e) => updateSetting('sound', 'volume', Number(e.target.value))} className="h-6 w-40 max-w-full accent-brand disabled:opacity-50" />
-          </Row>
+          <SliderRow title="Volume" value={`${sound.volume}%`} htmlFor="s-vol">
+            <input id="s-vol" type="range" min="0" max="100" step="5" value={sound.volume} disabled={!sound.enabled} onChange={(e) => updateSetting('sound', 'volume', Number(e.target.value))} className="vol-slider w-full disabled:opacity-50" style={{ '--fill': `${sound.volume}%` }} />
+          </SliderRow>
           <div className="py-3">
-            <Button variant="secondary" size="sm" icon={Play} disabled={!sound.enabled} onClick={() => playTone(sound.tone, sound.volume)}>Play test sound</Button>
+            <Button variant="secondary" icon={Play} disabled={!sound.enabled} onClick={() => playTone(sound.tone, sound.volume)} className="w-full border-brand/40 text-brand">Play test sound</Button>
           </div>
         </Card>
 
@@ -78,11 +90,11 @@ export default function SettingsPage() {
             <Toggle id="m-follow" checked={map.followVehicle} onChange={(v) => updateSetting('map', 'followVehicle', v)} label="Follow my vehicle" />
           </Row>
           <Row title="Default zoom" description="Used when you center on your vehicle." htmlFor="m-zoom">
-            <select id="m-zoom" value={map.defaultZoom} onChange={(e) => updateSetting('map', 'defaultZoom', Number(e.target.value))} className={selectCls}>
+            <Select id="m-zoom" value={map.defaultZoom} onChange={(e) => updateSetting('map', 'defaultZoom', Number(e.target.value))} wrapperClassName="w-40">
               <option value={12}>Wide (12)</option>
               <option value={14}>Standard (14)</option>
               <option value={16}>Close (16)</option>
-            </select>
+            </Select>
           </Row>
         </Card>
 
@@ -91,11 +103,11 @@ export default function SettingsPage() {
             <Toggle id="sos-hold" checked={sos.holdToConfirm} onChange={(v) => updateSetting('sos', 'holdToConfirm', v)} label="Press and hold to send" />
           </Row>
           <Row title="Hold time" htmlFor="sos-secs">
-            <select id="sos-secs" value={sos.holdSeconds} disabled={!sos.holdToConfirm} onChange={(e) => updateSetting('sos', 'holdSeconds', Number(e.target.value))} className={selectCls}>
+            <Select id="sos-secs" value={sos.holdSeconds} disabled={!sos.holdToConfirm} onChange={(e) => updateSetting('sos', 'holdSeconds', Number(e.target.value))} wrapperClassName="w-40">
               <option value={1}>1 second</option>
               <option value={2}>2 seconds</option>
               <option value={3}>3 seconds</option>
-            </select>
+            </Select>
           </Row>
           <div className="py-3">
             <Notice tone="blue" icon={Info}>The review step before sending is always shown and cannot be turned off.</Notice>

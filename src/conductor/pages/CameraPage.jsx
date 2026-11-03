@@ -42,7 +42,7 @@ export default function CameraPage() {
 
   return (
     <div>
-      <PageHeader title="Vehicle cameras" description={`${onlineCount} of ${CAMERAS.length} cameras online.`} />
+      <PageHeader hideTitle title="Vehicle cameras" description={`${onlineCount} of ${CAMERAS.length} cameras online.`} />
       <Notice tone="blue" icon={CameraIcon}>
         This page shows placeholder feeds only. It does not use your device camera and is not connected to a real CCTV system.
       </Notice>

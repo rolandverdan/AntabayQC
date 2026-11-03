@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 
 const WIDTHS = { sm: 'max-w-md', md: 'max-w-2xl', lg: 'max-w-4xl' }
 
-export default function Modal({ open, onClose, title, children, footer, size = 'md' }) {
+export default function Modal({ open, onClose, title, children, footer, size = 'md', bodyClass = '' }) {
   useEffect(() => {
     if (!open) return undefined
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -27,7 +27,7 @@ export default function Modal({ open, onClose, title, children, footer, size = '
             <X size={18} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className={`flex-1 overflow-y-auto px-5 py-5 ${bodyClass}`}>{children}</div>
         {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 rounded-b-xl">{footer}</div>}
       </div>
     </div>

@@ -3,15 +3,16 @@ import L from 'leaflet'
 import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet'
 import { Plus, Minus, LocateFixed, Maximize2, Navigation } from 'lucide-react'
 import { ROUTE, ROUTE_STOPS } from '../data/mock.js'
+import { busImage, bearingDeg } from '../../admin/utils/geo.js'
 
-const vehicleIcon = L.divIcon({
-  className: '',
-  iconSize: [40, 40],
-  iconAnchor: [20, 20],
-  html: `<div style="width:40px;height:40px;border-radius:9999px;background:#244A9B;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
-  </div>`,
-})
+// The conductor's own vehicle: the route's 3D bus image, turned toward the next stop.
+const vehicleIcon = (heading) =>
+  L.divIcon({
+    className: '',
+    iconSize: [42, 84],
+    iconAnchor: [21, 42],
+    html: `<div style="width:42px;height:84px;transform:rotate(${Math.round(heading)}deg);transform-origin:50% 50%;"><img src="${busImage(ROUTE.id)}" alt="" draggable="false" style="width:100%;height:100%;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));"/></div>`,
+  })
 
 function Follow({ position, follow }) {
   const map = useMap()
@@ -40,6 +41,8 @@ function CtrlBtn({ label, onClick, active = false, children }) {
 
 /** Leaflet map with the vehicle marker. Map tiles need an internet connection. */
 export default function ConductorMap({ position, nextStopId, prefs }) {
+  const nextStop = ROUTE_STOPS.find((s) => s.id === nextStopId)
+  const heading = nextStop ? bearingDeg(position, nextStop) : 0
   const [map, setMap] = useState(null)
   const [follow, setFollow] = useState(prefs.followVehicle)
   const points = ROUTE_STOPS.map((s) => [s.lat, s.lng])
@@ -98,12 +101,18 @@ export default function ConductorMap({ position, nextStopId, prefs }) {
           )
         })}
 
-        <Marker position={[position.lat, position.lng]} icon={vehicleIcon} zIndexOffset={1000}>
-          <Tooltip direction="top" offset={[0, -20]}>Your vehicle</Tooltip>
+        <Marker position={[position.lat, position.lng]} icon={vehicleIcon(heading)} zIndexOffset={1000}>
+          <Tooltip direction="top" offset={[0, -42]}>Your vehicle</Tooltip>
         </Marker>
       </MapContainer>
 
-      <div className="absolute right-3 top-3 z-[500] grid grid-cols-1 gap-2 [@media(max-height:480px)]:grid-cols-2">
+      {/* Simulation label sits top-left so it never overlaps the route line or the Leaflet attribution. */}
+      <div className="pointer-events-none absolute left-3 top-3 z-[500] flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
+        <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
+        Simulated · not live GPS
+      </div>
+
+      <div className="absolute right-3 top-3 z-[500] flex flex-col gap-2 [@media(max-height:480px)]:grid [@media(max-height:480px)]:grid-cols-2">
         <CtrlBtn label="Zoom in" onClick={() => map?.zoomIn()}><Plus size={18} /></CtrlBtn>
         <CtrlBtn label="Zoom out" onClick={() => map?.zoomOut()}><Minus size={18} /></CtrlBtn>
         <CtrlBtn label="Center on my vehicle" onClick={recenter}><LocateFixed size={18} /></CtrlBtn>

@@ -5,9 +5,9 @@ import { useToast } from '../context/ToastContext.jsx'
 import Card, { PageHeader } from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import Field from '../components/FormField.jsx'
-import { inputClass } from '../utils/ui.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { EXPORT_CATEGORIES } from '../utils/exportConfig.js'
+import Select from '../../shared/components/Select.jsx'
 
 export default function ExportData() {
   const data = useAdminData()
@@ -29,13 +29,13 @@ export default function ExportData() {
 
   return (
     <>
-      <PageHeader hideTitle title="Export Data" description="Download records currently stored in this admin console as a CSV file." />
+      <PageHeader title="Export Data" description="Download records currently stored in this admin console as a CSV file." />
       <div className="grid gap-5 lg:grid-cols-3">
         <Card title="Export settings" className="lg:col-span-1" bodyClass="space-y-4 p-4">
           <Field label="Data category">
-            <select value={key} onChange={(e) => setKey(e.target.value)} className={inputClass(false)} aria-label="Data category">
+            <Select value={key} onChange={(e) => setKey(e.target.value)} aria-label="Data category">
               {EXPORT_CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-            </select>
+            </Select>
           </Field>
           <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
             <p><b className="text-navy">{rows.length}</b> record{rows.length === 1 ? '' : 's'} available</p>

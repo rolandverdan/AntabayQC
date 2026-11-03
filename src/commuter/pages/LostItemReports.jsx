@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { Link } from 'react-router-dom'
-import { PageHeader } from '../../admin/components/Card.jsx'
+import LostItemHeader from '../components/LostItemHeader.jsx'
 import BackToSupport from '../components/BackToSupport.jsx'
 import {
   BadgeCheck,
@@ -12,8 +12,6 @@ import {
   ArrowDownWideNarrow,
   FileText,
   Search,
-  ShieldCheck,
-  Store,
   X,
 } from 'lucide-react'
 
@@ -47,30 +45,14 @@ const filters = ['All', 'Ready', 'In Review', 'Claimed']
 const STATUS_FOR_COMMUTER = { Pending: 'In Review', 'Under Review': 'In Review', Resolved: 'Ready', Dismissed: 'Claimed' }
 const fmtFiled = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-const isTtmdOpenNow = () => {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Manila', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).formatToParts(new Date())
-  const value = (type) => parts.find((part) => part.type === type)?.value
-  const weekday = value('weekday')
-  const minutes = Number(value('hour')) * 60 + Number(value('minute'))
-  return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(weekday) && minutes >= 8 * 60 && minutes < 17 * 60
-}
-
 export default function LostItemReports() {
   const { reports: adminReports, routesById } = useAdminData()
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
   const [newestFirst, setNewestFirst] = useState(true)
-  const [ttmdOpen, setTtmdOpen] = useState(isTtmdOpenNow)
   const [selectedReport, setSelectedReport] = useState(null)
   const detailTriggerRef = useRef(null)
   const dialogCloseRef = useRef(null)
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setTtmdOpen(isTtmdOpenNow()), 60_000)
-    return () => window.clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     if (!selectedReport) return undefined
@@ -133,37 +115,7 @@ export default function LostItemReports() {
   return (
     <div className="space-y-4">
       <BackToSupport />
-      <PageHeader
-        title="Lost Item"
-        description="Track report progress and manage recovered-item claims."
-        actions={<div className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 shadow-sm sm:w-auto sm:bg-slate-50 sm:py-2 sm:shadow-none">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-brand sm:h-8 sm:w-8 sm:rounded-lg sm:bg-brand/10">
-            <Store size={16} />
-          </div>
-          <div className="min-w-0 text-sm text-slate-600">
-            <p className="font-bold text-slate-800">QC TTMD Lost &amp; Found</p>
-            <p className="flex items-center gap-1.5 text-xs text-slate-500 sm:hidden"><span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${ttmdOpen ? 'bg-green-500' : 'bg-slate-400'}`} />{ttmdOpen ? 'Open now' : 'Closed now'}</p>
-            <p className="text-xs text-slate-500 sm:hidden">Mon–Fri · 8:00 AM–5:00 PM PHT</p>
-            <p className="hidden text-xs text-slate-500 sm:block">{ttmdOpen ? 'Open now' : 'Closed now'} · Mon–Fri · 8:00 AM–5:00 PM PHT</p>
-            <p className="text-[11px] text-slate-400 sm:hidden">2nd Floor, DPOS Building, QC Hall Compound</p>
-          </div>
-        </div>}
-      />
-
-      <nav className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:rounded-2xl sm:bg-white sm:px-3 sm:py-2.5 sm:shadow-sm" aria-label="Lost item pages">
-        <div className="col-span-2 grid grid-cols-2 gap-1 sm:flex sm:items-center sm:gap-3">
-          <Link to="/commuter/lost-item" className="flex min-h-10 items-center justify-center rounded-lg px-2 text-center text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-navy sm:inline-flex sm:rounded-xl sm:px-4 sm:py-2 sm:text-left sm:shadow-sm sm:hover:border-slate-300 sm:hover:bg-slate-100">
-            Report Lost Item
-          </Link>
-          <Link to="/commuter/lost-item-reports" aria-current="page" className="flex min-h-10 items-center justify-center rounded-lg bg-brand px-2 text-center text-sm font-bold text-white shadow-sm ring-2 ring-brand/20 transition hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 sm:inline-flex sm:rounded-xl sm:px-4 sm:py-2 sm:text-left sm:shadow-sm">
-            My Reports / Claims
-          </Link>
-        </div>
-        <div className="col-span-2 hidden items-center gap-2 text-xs font-semibold text-slate-700 sm:flex">
-          <ShieldCheck size={15} className="text-sky-500" />
-          Official QC Bus Commuter Protection Program
-        </div>
-      </nav>
+      <LostItemHeader description="Review report progress and manage recovered-item claims." showProgram />
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Lost item report summary">
         {stats.map(({ label, value, detail }) => (
