@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { UserPlus } from 'lucide-react'
 import { useCommuter } from '../context/CommuterContext.jsx'
 import { bottomNavFor, isNavActive } from './navItems.js'
 
@@ -7,14 +8,15 @@ import { bottomNavFor, isNavActive } from './navItems.js'
 export default function BottomNav() {
   const { pathname } = useLocation()
   const { session } = useCommuter()
-  const items = bottomNavFor(session?.mode === 'guest')
+  const isGuest = session?.mode === 'guest'
+  const items = bottomNavFor(isGuest)
 
   return (
     <nav
       aria-label="Commuter navigation"
       className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white shadow-[0_-4px_16px_rgba(15,23,42,0.08)] lg:hidden"
     >
-      <ul className={`grid ${items.length === 1 ? 'grid-cols-1' : 'grid-cols-5'}`}>
+      <ul className={`grid ${isGuest ? 'grid-cols-2' : 'grid-cols-5'}`}>
         {items.map((item) => {
           const active = isNavActive(pathname, item)
           const Icon = item.icon
@@ -34,6 +36,14 @@ export default function BottomNav() {
             </li>
           )
         })}
+        {isGuest && (
+          <li>
+            <Link to="/signup" className="flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-semibold text-brand">
+              <UserPlus size={22} />
+              <span>Sign up</span>
+            </Link>
+          </li>
+        )}
       </ul>
     </nav>
   )

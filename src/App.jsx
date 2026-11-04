@@ -32,6 +32,7 @@ import ConductorAccount from './conductor/pages/AccountPage.jsx'
 
 // Commuter (mobile-first)
 import CommuterRoute from './commuter/routes/CommuterRoute.jsx'
+import SignUp from './commuter/pages/SignUp.jsx'
 import CommuterLayout from './commuter/layouts/CommuterLayout.jsx'
 import CommuterHome from './commuter/pages/Home.jsx'
 import BusRoutes from './commuter/pages/BusRoutes.jsx'
@@ -64,6 +65,9 @@ export default function App() {
                   <Route path="/admin/login" element={<Navigate to="/" replace />} />
                   <Route path="/conductor/login" element={<Navigate to="/" replace />} />
                   <Route path="/commuter/login" element={<Navigate to="/" replace />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/commuter/signup" element={<Navigate to="/signup" replace />} />
+                  <Route path="/register" element={<Navigate to="/signup" replace />} />
 
                   <Route
                     path="/admin"

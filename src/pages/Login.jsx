@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Info } from 'lucide-react'
 import Button from '../admin/components/Button.jsx'
 import Field from '../admin/components/FormField.jsx'
@@ -11,6 +11,7 @@ import { useCommuter } from '../commuter/context/CommuterContext.jsx'
 import { ADMIN_USERNAMES, ADMIN_PASSWORD } from '../admin/data/credentials.js'
 import { DEMO_USERNAMES as CONDUCTOR_USERNAMES, DEMO_PASSWORD as CONDUCTOR_PASSWORD } from '../conductor/data/mock.js'
 import { COMMUTER_USERNAMES, COMMUTER_PASSWORD } from '../commuter/data/credentials.js'
+import { findCommuterAccount } from '../commuter/data/accounts.js'
 import AuthShell, { FormFeedback } from '../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../shared/hooks/useRoleSwitch.js'
 
@@ -54,7 +55,7 @@ export default function Login() {
     navigate(dest || (from && from.startsWith(`/${role}`) ? from : HOME[role]), { replace: true })
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const next = {}
     if (!identifier.trim()) next.identifier = 'Enter your email or username.'
@@ -65,7 +66,8 @@ export default function Login() {
       setFeedback({ type: 'error', text: 'Please fix the highlighted fields.' })
       return
     }
-    const role = findRole(identifier, password)
+    let role = findRole(identifier, password)
+    if (!role && (await findCommuterAccount(identifier, password))) role = 'commuter'
     if (!role) {
       addLog({ action: 'Failed login attempt', module: 'Authentication', severity: 'Warning', description: 'Invalid credentials entered on the login form.' })
       setFeedback({ type: 'error', text: 'Incorrect email/username or password.' })
@@ -120,6 +122,10 @@ export default function Login() {
           <Button type="submit" className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Login'}</Button>
           <Button type="button" variant="ghost" className="w-full" onClick={guest} disabled={busy}>Continue as guest commuter</Button>
         </div>
+
+        <p className="mt-4 text-center text-sm text-slate-600">
+          New commuter? <Link to="/signup" className="font-semibold text-brand hover:underline">Sign up</Link>
+        </p>
 
         <div className="mt-5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
           <Info size={14} className="mt-0.5 shrink-0" />

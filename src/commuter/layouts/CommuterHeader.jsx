@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChevronDown, LogOut, UserRound } from 'lucide-react'
+import { ChevronDown, LogOut, UserPlus, UserRound } from 'lucide-react'
 import { LogoTile } from '../../shared/components/Logo.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import { pageTitle } from './navItems.js'
@@ -57,6 +57,11 @@ export default function CommuterHeader({ onLogout, meta, isGuest = false }) {
 
       <div className="ml-auto flex items-center gap-1">
         {!isGuest && <NotificationBell />}
+        {isGuest && (
+          <Link to="/signup" className="mr-1 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white px-3.5 text-xs font-bold text-brand shadow-sm transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">
+            <UserPlus size={14} /> Sign up
+          </Link>
+        )}
 
         <div className="relative z-20">
           {menuOpen && <button type="button" aria-label="Close menu" className="fixed inset-0 z-10 cursor-default" onClick={close} />}
@@ -81,6 +86,11 @@ export default function CommuterHeader({ onLogout, meta, isGuest = false }) {
                 <p className="truncate font-semibold text-navy">{profile.name}</p>
                 <p className="truncate text-xs text-slate-500">{profile.email || 'Commuter profile'}</p>
               </div>
+              {isGuest && (
+                <Link to="/signup" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2.5 font-semibold text-brand transition hover:bg-blue-50">
+                  <UserPlus size={16} /> Create an account
+                </Link>
+              )}
               {!isGuest && (
                 <Link to="/commuter/settings" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2.5 transition hover:bg-slate-50">
                   <UserRound size={16} /> Profile &amp; Settings
