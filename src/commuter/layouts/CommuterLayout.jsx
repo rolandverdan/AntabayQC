@@ -8,6 +8,7 @@ import ConfirmDialog from '../../admin/components/ConfirmDialog.jsx'
 import { navItemsFor } from './navItems.js'
 import { NotificationsProvider } from '../context/NotificationsContext.jsx'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { useToast } from '../../admin/context/ToastContext.jsx'
 import { useCommuter } from '../context/CommuterContext.jsx'
 
 const noop = () => {}
@@ -15,6 +16,7 @@ const noop = () => {}
 export default function CommuterLayout() {
   const { settings, buses, routes } = useAdminData()
   const navigate = useNavigate()
+  const { notify } = useToast()
   const { session, leave } = useCommuter()
   const isGuest = session?.mode === 'guest'
   const locked = !!useLocation().state?.locked
@@ -23,10 +25,26 @@ export default function CommuterLayout() {
   const activeBuses = buses.filter((b) => b.status === 'Active').length
   const activeRoutes = routes.filter((r) => r.status === 'Active').length
 
-  const doLogout = () => {
-    setConfirmLogout(false)
-    leave()
-    navigate('/', { replace: true })
+  const doLogout = async () => {
+    try {
+      await leave()
+      setConfirmLogout(false)
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Firebase sign-out failed:', error)
+      notify('Could not sign out. Please try again.', 'error')
+    }
+  }
+
+  const returnToLogin = async (event) => {
+    event.preventDefault()
+    try {
+      await leave()
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Firebase sign-out failed:', error)
+      notify('Could not sign out. Please try again.', 'error')
+    }
   }
 
   return (
@@ -55,7 +73,7 @@ export default function CommuterLayout() {
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <Link to="/signup" className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-dark"><UserPlus size={15} />Sign up</Link>
-                  <Link to="/" onClick={() => leave()} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-navy hover:bg-slate-50">Log in</Link>
+                  <Link to="/" onClick={returnToLogin} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-navy hover:bg-slate-50">Log in</Link>
                 </div>
               </div>
             )}

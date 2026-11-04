@@ -21,14 +21,22 @@ export function ConductorProvider({ children }) {
   const [settings, setSettings] = useState(initialSettings)
   const [sosReport, setSosReport] = useState(null)
 
-  const login = useCallback((identifier) => {
-    const next = { identifier, at: Date.now() }
+  const login = useCallback((identifier, authDetails = {}) => {
+    const next = { identifier, role: 'conductor', ...authDetails, at: Date.now() }
     try {
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(next))
     } catch {
       /* ignore storage errors */
     }
     setSession(next)
+    if (authDetails.firebaseAuthenticated) {
+      setProfile((current) => ({
+        ...current,
+        fullName: authDetails.displayName || identifier,
+        email: authDetails.email || identifier,
+        contact: authDetails.phone || '',
+      }))
+    }
   }, [])
 
   const logout = useCallback(() => {

@@ -8,6 +8,7 @@ import { useConductor } from '../context/ConductorContext.jsx'
 import { DEMO_USERNAMES, DEMO_PASSWORD } from '../data/mock.js'
 import AuthShell, { FormFeedback } from '../../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../../shared/hooks/useRoleSwitch.js'
+import { getAuthErrorMessage } from '../../firebase/auth.js'
 
 export default function Login() {
   const { session, login } = useConductor()
@@ -41,11 +42,16 @@ export default function Login() {
     }
     setBusy(true)
     setFeedback({ type: 'success', text: 'Login successful. Opening your dashboard…' })
-    setTimeout(() => {
-      signOutOthers('conductor')
-      login(identifier.trim())
-      const from = location.state?.from
-      navigate(from && from.startsWith('/conductor') ? from : '/conductor/dashboard', { replace: true })
+    window.setTimeout(async () => {
+      try {
+        await signOutOthers('conductor')
+        login(identifier.trim())
+        const from = location.state?.from
+        navigate(from && from.startsWith('/conductor') ? from : '/conductor/dashboard', { replace: true })
+      } catch (error) {
+        setBusy(false)
+        setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'complete sign in') })
+      }
     }, 600)
   }
 

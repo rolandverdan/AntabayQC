@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronDown, LogOut, UserPlus, UserRound } from 'lucide-react'
 import { LogoTile } from '../../shared/components/Logo.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
 import { pageTitle } from './navItems.js'
+import { useCommuter } from '../context/CommuterContext.jsx'
 
 const COMMUTER_SETTINGS_KEY = 'antabayqc_commuter_settings'
-const COMMUTER_SETTINGS_EVENT = 'antabayqc:commuter-settings-updated'
 const DEFAULT_PROFILE = { name: 'Commuter', email: '' }
 
 function readProfile() {
@@ -23,19 +23,17 @@ function readProfile() {
 // the notification bell sits next to the profile menu, and navigation lives in the bottom bar / sidebar.
 export default function CommuterHeader({ onLogout, meta, isGuest = false }) {
   const { pathname } = useLocation()
-  const [profile, setProfile] = useState(readProfile)
+  const { session, userProfile } = useCommuter()
   const [menuOpen, setMenuOpen] = useState(false)
-
-  useEffect(() => {
-    const syncProfile = (event) => setProfile(event.detail?.profile || readProfile())
-    const syncStored = (event) => { if (event.key === COMMUTER_SETTINGS_KEY) setProfile(readProfile()) }
-    window.addEventListener(COMMUTER_SETTINGS_EVENT, syncProfile)
-    window.addEventListener('storage', syncStored)
-    return () => {
-      window.removeEventListener(COMMUTER_SETTINGS_EVENT, syncProfile)
-      window.removeEventListener('storage', syncStored)
-    }
-  }, [])
+  const cachedProfile = readProfile()
+  const profile = session?.firebaseAuthenticated
+    ? {
+        name: userProfile?.displayName || session.identifier || 'Commuter',
+        email: userProfile?.email || session.identifier || '',
+      }
+    : isGuest
+      ? { name: 'Guest commuter', email: '' }
+      : cachedProfile
 
   const initials = profile.name.trim().split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || 'C'
   const close = () => setMenuOpen(false)

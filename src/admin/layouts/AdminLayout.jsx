@@ -6,10 +6,11 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { signOutFirebaseUser } from '../../firebase/auth.js'
 
 export default function AdminLayout() {
   const { settings, addLog } = useAdminData()
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const { notify } = useToast()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -21,12 +22,18 @@ export default function AdminLayout() {
 
   useEffect(() => setMobileOpen(false), [pathname])
 
-  const doLogout = () => {
-    addLog({ action: 'Admin logged out', module: 'Authentication', description: 'Administrator signed out.' })
-    setConfirmLogout(false)
-    logout()
-    notify('You have been logged out.', 'info')
-    navigate('/', { replace: true })
+  const doLogout = async () => {
+    try {
+      if (user?.firebaseAuthenticated) await signOutFirebaseUser()
+      addLog({ action: 'Admin logged out', module: 'Authentication', description: 'Administrator signed out.' })
+      setConfirmLogout(false)
+      logout()
+      notify('You have been logged out.', 'info')
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Firebase sign-out failed:', error)
+      notify('Could not sign out. Please try again.', 'error')
+    }
   }
 
   return (

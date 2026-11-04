@@ -8,6 +8,7 @@ import { useCommuter } from '../context/CommuterContext.jsx'
 import { COMMUTER_USERNAMES, COMMUTER_PASSWORD } from '../data/credentials.js'
 import AuthShell, { FormFeedback } from '../../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../../shared/hooks/useRoleSwitch.js'
+import { getAuthErrorMessage } from '../../firebase/auth.js'
 
 export default function Access() {
   const { session, enter } = useCommuter()
@@ -23,16 +24,21 @@ export default function Access() {
 
   if (session && !busy) return <Navigate to={session.mode === 'guest' ? '/commuter/live-tracking' : '/commuter/home'} replace />
 
-  const go = (mode, id) => {
+  const go = async (mode, id) => {
     setBusy(true)
-    signOutOthers('commuter')
-    enter(mode, id)
-    const from = location.state?.from
-    const home = mode === 'guest' ? '/commuter/live-tracking' : '/commuter/home'
-    navigate(mode !== 'guest' && from && from.startsWith('/commuter') ? from : home, { replace: true })
+    try {
+      await signOutOthers('commuter')
+      enter(mode, id)
+      const from = location.state?.from
+      const home = mode === 'guest' ? '/commuter/live-tracking' : '/commuter/home'
+      navigate(mode !== 'guest' && from && from.startsWith('/commuter') ? from : home, { replace: true })
+    } catch (error) {
+      setBusy(false)
+      setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'continue') })
+    }
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const next = {}
     if (!identifier.trim()) next.identifier = 'Enter your email or username.'
@@ -49,7 +55,7 @@ export default function Access() {
       return
     }
     setFeedback({ type: 'success', text: 'Signed in. Opening the commuter app…' })
-    go('account', identifier.trim())
+    await go('account', identifier.trim())
   }
 
   return (

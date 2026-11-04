@@ -10,9 +10,10 @@ import ConfirmDialog from '../../admin/components/ConfirmDialog.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import useVehicleSim from '../utils/useVehicleSim.js'
+import { signOutFirebaseUser } from '../../firebase/auth.js'
 
 export default function ConductorLayout() {
-  const { logout, sosReport, setSosReport } = useConductor()
+  const { session, logout, sosReport, setSosReport } = useConductor()
   const { notify } = useToast()
   const navigate = useNavigate()
   const sim = useVehicleSim()
@@ -24,11 +25,17 @@ export default function ConductorLayout() {
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [sosOpen, setSosOpen] = useState(false)
 
-  const doLogout = () => {
-    setConfirmLogout(false)
-    logout()
-    notify('You have been logged out.', 'info')
-    navigate('/', { replace: true })
+  const doLogout = async () => {
+    try {
+      if (session?.firebaseAuthenticated) await signOutFirebaseUser()
+      setConfirmLogout(false)
+      logout()
+      notify('You have been logged out.', 'info')
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Firebase sign-out failed:', error)
+      notify('Could not sign out. Please try again.', 'error')
+    }
   }
 
   // Bottom-nav height is defined on the root so the nav and the page padding always agree

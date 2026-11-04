@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Lock, RotateCcw, Save, Check } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -9,6 +9,10 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import PasswordInput from '../components/PasswordInput.jsx'
 import { PASSWORD_RULES } from '../components/FormParts.jsx'
 import { inputClass } from '../utils/ui.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
+import { updateUserProfile } from '../../firebase/userProfiles.js'
+import { getAuthErrorMessage } from '../../firebase/auth.js'
 
 function Toggle({ label, hint, checked, onChange, className = '' }) {
   return (
@@ -34,7 +38,10 @@ function Rule({ ok, children }) {
 export default function Settings() {
   const { settings, saveSettings, resetData } = useAdminData()
   const { notify } = useToast()
+  const { user } = useAuth()
+  const { userProfile } = useCommuter()
   const [draft, setDraft] = useState(settings)
+  const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
   const [pwErrors, setPwErrors] = useState({})
@@ -47,11 +54,22 @@ export default function Settings() {
   const strength = pw.next ? ruleResults.filter((r) => r.ok).length : 0
   const canUpdate = !!pw.current && rulesOk && matches
 
+  useEffect(() => {
+    if (!user?.firebaseAuthenticated || !userProfile) return
+    setDraft((current) => ({
+      ...current,
+      name: userProfile.displayName || user.displayName || user.identifier,
+      email: userProfile.email || user.email || '',
+      phone: userProfile.phone || '',
+      role: 'Administrator',
+    }))
+  }, [user, userProfile])
+
   const dirty = JSON.stringify(draft) !== JSON.stringify(settings)
   const upd = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.value }))
   const updNotif = (k) => (v) => setDraft((d) => ({ ...d, notifications: { ...d.notifications, [k]: v } }))
 
-  const save = (ev) => {
+  const save = async (ev) => {
     ev.preventDefault()
     const e = {}
     if (!draft.name.trim()) e.name = 'Name is required.'
@@ -59,8 +77,23 @@ export default function Settings() {
     if (draft.phone && !/^(\+63|0)9\d{9}$/.test(draft.phone.replace(/[\s-]/g, ''))) e.phone = 'Use a PH mobile number, e.g. 09171234567.'
     setErrors(e)
     if (Object.keys(e).length) return
-    saveSettings({ ...draft, name: draft.name.trim(), email: draft.email.trim(), pageSize: Number(draft.pageSize) })
-    notify('Settings saved in this browser.')
+    setSaving(true)
+    try {
+      if (user?.firebaseAuthenticated && user.uid) {
+        await updateUserProfile(user.uid, { displayName: draft.name, phone: draft.phone })
+      }
+      saveSettings({
+        ...draft,
+        name: draft.name.trim(),
+        email: user?.firebaseAuthenticated ? userProfile?.email || user.email : draft.email.trim(),
+        pageSize: Number(draft.pageSize),
+      })
+      notify(user?.firebaseAuthenticated ? 'Profile saved to your Firebase account.' : 'Settings saved in this browser.')
+    } catch (error) {
+      notify(getAuthErrorMessage(error, 'save your profile'), 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const changePassword = (ev) => {
@@ -78,14 +111,18 @@ export default function Settings() {
   return (
     <>
       <PageHeader title="Settings" description="Administrator profile and preferences." />
-      <Notice tone="blue">Settings are saved in this browser&apos;s local storage only. There is no server-side storage, and this is not secure storage.</Notice>
+      <Notice tone="blue">
+        {user?.firebaseAuthenticated
+          ? 'Your name and phone number are saved to your Firebase profile. Preferences are saved in this browser.'
+          : 'Settings are saved in this browser&apos;s local storage only. There is no server-side storage, and this is not secure storage.'}
+      </Notice>
 
       <div className="grid items-start gap-4 xl:grid-cols-3">
         <form onSubmit={save} noValidate className="space-y-4 xl:col-span-2">
           <Card title="Administrator profile" bodyClass="p-4">
             <div className="grid gap-x-4 gap-y-3.5 sm:grid-cols-2">
               <Field label="Full name" required error={errors.name}><input className={inputClass(errors.name)} value={draft.name} onChange={upd('name')} /></Field>
-              <Field label="Email" required error={errors.email}><input type="email" className={inputClass(errors.email)} value={draft.email} onChange={upd('email')} /></Field>
+              <Field label="Email" required error={errors.email}><input type="email" className={inputClass(errors.email)} value={draft.email} onChange={upd('email')} readOnly={user?.firebaseAuthenticated} /></Field>
               <Field label="Contact number" error={errors.phone}><input className={inputClass(errors.phone)} value={draft.phone} onChange={upd('phone')} /></Field>
               <Field label="Role"><input className={inputClass(false)} value={draft.role} disabled /></Field>
             </div>
@@ -96,7 +133,7 @@ export default function Settings() {
             bodyClass="p-0"
             footer={<>
               <Button variant="secondary" icon={RotateCcw} onClick={() => { setDraft(settings); setErrors({}) }} disabled={!dirty}>Reset / Cancel</Button>
-              <Button type="submit" icon={Save} disabled={!dirty}>Save Changes</Button>
+              <Button type="submit" icon={Save} disabled={!dirty || saving}>{saving ? 'Saving…' : 'Save Changes'}</Button>
             </>}
           >
             <div className="grid sm:grid-cols-2">

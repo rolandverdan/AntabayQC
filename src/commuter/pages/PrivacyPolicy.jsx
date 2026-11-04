@@ -21,7 +21,7 @@ const privacySections = [
   },
   {
     title: '5. Local browser storage and device data',
-    body: 'This prototype stores selected commuter profile fields and preferences in the browser using local storage and session storage. This may include name, email, route preferences, notification settings, session mode, and UI state. The app does not store passwords in browser storage, and sign-in credentials should be handled through a secure authentication system in production. If a commuter clears browser data, saved local preferences may be removed and the user may need to sign in again.',
+    body: 'Firebase Authentication manages commuter sign-in credentials. Commuter name, email, phone number, and role are stored in the account profile in Firebase Firestore. Route preferences, notification settings, and UI preferences are currently stored in browser local storage; the active sign-in session is maintained by Firebase Authentication and session storage. Clearing browser data may remove local preferences, but profile information remains with the Firebase account.',
   },
   {
     title: '6. Forms, attachments, and submitted content',

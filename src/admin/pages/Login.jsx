@@ -9,6 +9,7 @@ import { useAdminData } from '../context/AdminDataContext.jsx'
 import { ADMIN_USERNAMES, ADMIN_PASSWORD } from '../data/credentials.js'
 import AuthShell, { FormFeedback } from '../../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../../shared/hooks/useRoleSwitch.js'
+import { getAuthErrorMessage } from '../../firebase/auth.js'
 
 export default function Login() {
   const { user, login } = useAuth()
@@ -46,11 +47,16 @@ export default function Login() {
     setBusy(true)
     setFeedback({ type: 'success', text: 'Login successful. Redirecting to the dashboard…' })
     addLog({ action: 'Admin logged in', module: 'Authentication', description: 'Administrator signed in.' })
-    setTimeout(() => {
-      signOutOthers('admin')
-      login(identifier.trim(), remember)
-      const from = location.state?.from
-      navigate(from && from.startsWith('/admin') ? from : '/admin/dashboard', { replace: true })
+    window.setTimeout(async () => {
+      try {
+        await signOutOthers('admin')
+        login(identifier.trim(), remember)
+        const from = location.state?.from
+        navigate(from && from.startsWith('/admin') ? from : '/admin/dashboard', { replace: true })
+      } catch (error) {
+        setBusy(false)
+        setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'complete sign in') })
+      }
     }, 600)
   }
 

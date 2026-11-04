@@ -6,6 +6,7 @@ import TopBrand from '../../shared/components/TopBrand.jsx'
 import { NAV_ITEMS } from './navItems.js'
 import { NOTIFICATIONS, VEHICLE, ROUTE } from '../data/mock.js'
 import { useConductor } from '../context/ConductorContext.jsx'
+import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
 
 const CATEGORY_STYLE = {
   delays: { Icon: TriangleAlert, tone: 'bg-amber-100 text-amber-700' },
@@ -14,14 +15,18 @@ const CATEGORY_STYLE = {
 }
 
 export default function Topbar({ expanded, collapsed, onToggleCollapse, onSos, onLogout }) {
-  const { profile, settings } = useConductor()
+  const { profile, settings, session } = useConductor()
+  const { userProfile } = useCommuter()
   const { pathname } = useLocation()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
   const close = () => setMenu(null)
 
   const title = NAV_ITEMS.find((n) => pathname.startsWith(n.to))?.label || 'Conductor'
   const alerts = NOTIFICATIONS.filter((n) => settings.notifications[n.category])
-  const initials = profile.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  const displayName = session?.firebaseAuthenticated
+    ? userProfile?.displayName || session.displayName || session.identifier
+    : profile.fullName || 'Conductor'
+  const initials = displayName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 
   return (
     <header className="pt-safe sticky top-0 z-20 border-b border-white/10 bg-brand text-white shadow-md">
@@ -103,7 +108,7 @@ export default function Topbar({ expanded, collapsed, onToggleCollapse, onSos, o
           <button type="button" onClick={() => setMenu(menu === 'profile' ? null : 'profile')} aria-label="Account menu" aria-expanded={menu === 'profile'} aria-haspopup="menu" className="flex min-h-11 items-center gap-1 rounded-full py-1 pl-1 pr-1.5 hover:bg-white/10 md:gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">{initials}</span>
             <span className="hidden text-left text-xs leading-tight md:block">
-              <span className="block max-w-32 truncate font-semibold">{profile.fullName}</span>
+              <span className="block max-w-32 truncate font-semibold">{displayName}</span>
               <span className="block text-[10px] text-cyan-100">Conductor</span>
             </span>
             <ChevronDown size={16} className={`shrink-0 transition ${menu === 'profile' ? 'rotate-180' : ''}`} aria-hidden="true" />

@@ -6,7 +6,8 @@ import Field from '../../admin/components/FormField.jsx'
 import { PasswordChecklist, passwordMeetsRules } from '../../admin/components/FormParts.jsx'
 import { inputClass } from '../../admin/utils/ui.js'
 import { useCommuter } from '../context/CommuterContext.jsx'
-import { emailTaken, registerCommuter } from '../data/accounts.js'
+import { saveCommuterProfile } from '../data/accounts.js'
+import { getAuthErrorMessage, registerWithEmail } from '../../firebase/auth.js'
 import AuthShell, { FormFeedback } from '../../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../../shared/hooks/useRoleSwitch.js'
 
@@ -30,7 +31,6 @@ export default function SignUp() {
     const next = {}
     if (!form.name.trim()) next.name = 'Enter your full name.'
     if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) next.email = 'Enter a valid email address.'
-    else if (emailTaken(form.email)) next.email = 'An account with this email already exists. Try logging in.'
     if (form.phone && !/^(\+63|0)9\d{9}$/.test(form.phone.replace(/[\s-]/g, ''))) next.phone = 'Use a PH mobile number, e.g. 09171234567.'
     if (!passwordMeetsRules(form.password)) next.password = 'Password does not meet all the requirements.'
     if (form.confirm !== form.password) next.confirm = 'Passwords do not match.'
@@ -41,13 +41,17 @@ export default function SignUp() {
       return
     }
     setBusy(true)
-    const acct = await registerCommuter(form)
-    setFeedback({ type: 'success', text: 'Account created. Opening the commuter app…' })
-    setTimeout(() => {
-      signOutOthers('commuter')
-      enter('account', acct.email)
+    try {
+      const user = await registerWithEmail(form)
+      saveCommuterProfile({ ...form, email: user.email || form.email })
+      await signOutOthers('commuter', { preserveFirebaseAuth: true })
+      enter('account', user.email || form.email, true)
+      setFeedback({ type: 'success', text: 'Account created. Opening the commuter app…' })
       navigate('/commuter/home', { replace: true })
-    }, 500)
+    } catch (error) {
+      setBusy(false)
+      setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'create your account') })
+    }
   }
 
   return (

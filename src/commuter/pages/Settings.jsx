@@ -15,15 +15,18 @@ import Modal from '../../admin/components/Modal.jsx'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import Select from '../../shared/components/Select.jsx'
+import { useCommuter } from '../context/CommuterContext.jsx'
+import { updateUserProfile } from '../../firebase/userProfiles.js'
+import { getAuthErrorMessage } from '../../firebase/auth.js'
 
 const SETTINGS_KEY = 'antabayqc_commuter_settings'
 const SETTINGS_UPDATED_EVENT = 'antabayqc:commuter-settings-updated'
 
 const defaults = {
   profile: {
-  name: 'Maria Santos',
-  email: 'maria.santos@gmail.com',
-  phone: '+63 912 345 6789',
+    name: '',
+    email: '',
+    phone: '',
     routePreference: 'R-02',
   },
   alerts: { service: true, safety: true, route: true, report: false },
@@ -66,13 +69,27 @@ function ToggleRow({ label, hint, checked, onChange }) {
 export default function Settings() {
   const { routes } = useAdminData()
   const { notify } = useToast()
+  const { userProfile, session } = useCommuter()
   const [savedSettings, setSavedSettings] = useState(readSettings)
-  const [profile, setProfile] = useState(savedSettings.profile)
+  const [profileDraft, setProfileDraft] = useState({ uid: null, values: {} })
   const [alerts, setAlerts] = useState(savedSettings.alerts)
   const [preferences, setPreferences] = useState(savedSettings.preferences)
   const [activeDialog, setActiveDialog] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
   const [passwordDraft, setPasswordDraft] = useState({ current: '', next: '', confirm: '' })
   const [passwordErrors, setPasswordErrors] = useState({})
+
+  const identityProfile = {
+    name: userProfile?.displayName || (session?.firebaseAuthenticated ? session.identifier : ''),
+    email: userProfile?.email || (session?.firebaseAuthenticated ? session.identifier : ''),
+    phone: userProfile?.phone || '',
+  }
+  const profileEdits = profileDraft.uid === userProfile?.uid ? profileDraft.values : {}
+  const profile = {
+    ...savedSettings.profile,
+    ...identityProfile,
+    ...profileEdits,
+  }
 
   const persistSettings = (nextSettings, successMessage) => {
     try {
@@ -99,14 +116,38 @@ export default function Settings() {
     persistSettings(nextSettings, 'Notification preference saved in this browser.')
   }
 
-  const saveProfile = (event) => {
+  const editProfile = (key, value) => {
+    const uid = userProfile?.uid || null
+    setProfileDraft((current) => ({
+      uid,
+      values: { ...(current.uid === uid ? current.values : {}), [key]: value },
+    }))
+  }
+
+  const saveProfile = async (event) => {
     event.preventDefault()
-    const nextSettings = { ...savedSettings, profile }
-    persistSettings(nextSettings, 'Commuter profile saved in this browser.')
+    setSavingProfile(true)
+    try {
+      if (userProfile?.uid) {
+        await updateUserProfile(userProfile.uid, { displayName: profile.name, phone: profile.phone })
+      }
+      const nextSettings = { ...savedSettings, profile }
+      const saved = persistSettings(
+        nextSettings,
+        userProfile?.uid ? 'Profile saved to your Firebase account.' : 'Profile saved in this browser.',
+      )
+      if (saved) {
+        setProfileDraft({ uid: userProfile?.uid || null, values: {} })
+      }
+    } catch (error) {
+      notify(getAuthErrorMessage(error, 'save your profile'), 'error')
+    } finally {
+      setSavingProfile(false)
+    }
   }
 
   const cancelProfile = () => {
-    setProfile(savedSettings.profile)
+    setProfileDraft({ uid: userProfile?.uid || null, values: {} })
     notify('Profile changes discarded.', 'info')
   }
 
@@ -154,7 +195,7 @@ export default function Settings() {
                 <input
                   required
                   value={profile.name}
-                  onChange={(e) => setProfile((current) => ({ ...current, name: e.target.value }))}
+                  onChange={(e) => editProfile('name', e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand"
                 />
               </label>
@@ -162,21 +203,19 @@ export default function Settings() {
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-700">Email</span>
                 <input
-                  required
                   type="email"
                   value={profile.email}
-                  onChange={(e) => setProfile((current) => ({ ...current, email: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand"
+                  readOnly
+                  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-500 outline-none"
                 />
               </label>
 
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-700">Phone number</span>
                 <input
-                  required
                   type="tel"
                   value={profile.phone}
-                  onChange={(e) => setProfile((current) => ({ ...current, phone: e.target.value }))}
+                  onChange={(e) => editProfile('phone', e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand"
                 />
               </label>
@@ -185,7 +224,7 @@ export default function Settings() {
                 <span className="mb-2 block text-sm font-semibold text-slate-700">Default route</span>
                 <Select
                   value={profile.routePreference}
-                  onChange={(e) => setProfile((current) => ({ ...current, routePreference: e.target.value }))}
+                  onChange={(e) => editProfile('routePreference', e.target.value)}
                   className="rounded-xl border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-white"
                 >
                   <option value="">No default route</option>
@@ -198,7 +237,7 @@ export default function Settings() {
 
             <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={cancelProfile}>Cancel</Button>
-              <Button type="submit">Save profile</Button>
+              <Button type="submit" disabled={savingProfile}>{savingProfile ? 'Saving…' : 'Save profile'}</Button>
             </div>
             </form>
           </div>

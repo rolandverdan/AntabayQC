@@ -16,8 +16,8 @@ function readSession() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readSession)
 
-  const login = (identifier, remember) => {
-    const session = { identifier, at: Date.now() }
+  const login = (identifier, remember, authDetails = {}) => {
+    const session = { identifier, role: 'admin', ...authDetails, at: Date.now() }
     try {
       ;(remember ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session))
     } catch {

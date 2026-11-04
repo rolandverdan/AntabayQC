@@ -5,6 +5,8 @@ import { NAV_ITEMS } from './navItems.js'
 import TopBrand from '../../shared/components/TopBrand.jsx'
 import { LogoTile } from '../../shared/components/Logo.jsx'
 import { useAdminData } from '../context/AdminDataContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
 
 const COMMUTER_SETTINGS_KEY = 'antabayqc_commuter_settings'
 const COMMUTER_SETTINGS_EVENT = 'antabayqc:commuter-settings-updated'
@@ -30,6 +32,8 @@ export default function Header({
   commuterMeta,
 }) {
   const { settings, emergencies, reports } = useAdminData()
+  const { user } = useAuth()
+  const { userProfile } = useCommuter()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [menu, setMenu] = useState(null) // 'bell' | 'profile' | null
@@ -55,6 +59,10 @@ export default function Header({
   const navItem = NAV_ITEMS.find((n) => pathname.startsWith(n.to))
   const defaultTitle = navItem ? navItem.title || navItem.label : pathname.startsWith('/admin/export') ? 'Export Data' : 'Admin'
   const headerTitle = title || defaultTitle
+  const adminName = user?.firebaseAuthenticated
+    ? userProfile?.displayName || user.displayName || user.identifier
+    : settings.name
+  const adminEmail = user?.firebaseAuthenticated ? userProfile?.email || user.email : settings.email
   const SEV_RANK = { Critical: 0, High: 1, Medium: 2, Low: 3 }
   const activeList = emergencies.filter((e) => e.status !== 'Resolved').sort((a, b) => (SEV_RANK[a.severity] ?? 9) - (SEV_RANK[b.severity] ?? 9))
   const pendingList = reports.filter((r) => r.status === 'Pending')
@@ -63,7 +71,7 @@ export default function Header({
   const alertCount = settings.notifications.emergency || settings.notifications.reports
     ? (settings.notifications.emergency ? activeEmergencies : 0) + (settings.notifications.reports ? pendingReports : 0)
     : 0
-  const initials = settings.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  const initials = adminName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
   const commuterInitials = commuterProfile.name.trim().split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || 'C'
   const close = () => { setMenu(null); setOpenList(null) }
 
@@ -178,7 +186,7 @@ export default function Header({
             <button type="button" onClick={() => setMenu(menu === 'profile' ? null : 'profile')} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-white/10" aria-label="Profile menu">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-brand">{initials}</span>
               <span className="hidden text-left text-xs leading-tight sm:block">
-                <span className="block max-w-32 truncate font-semibold">{settings.name}</span>
+                <span className="block max-w-32 truncate font-semibold">{adminName}</span>
                 <span className="block text-[10px] text-cyan-100">Administrator</span>
               </span>
               <ChevronDown size={14} />
@@ -186,8 +194,8 @@ export default function Header({
             {menu === 'profile' && (
               <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
                 <div className="border-b border-slate-100 px-2 pb-2">
-                  <p className="truncate font-semibold text-navy">{settings.name}</p>
-                  <p className="truncate text-xs text-slate-500">{settings.email}</p>
+                  <p className="truncate font-semibold text-navy">{adminName}</p>
+                  <p className="truncate text-xs text-slate-500">{adminEmail}</p>
                 </div>
                 <Link to="/admin/settings" onClick={close} className="mt-1 flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-slate-50">
                   <Settings size={16} /> Settings

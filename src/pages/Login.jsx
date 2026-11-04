@@ -11,7 +11,7 @@ import { useCommuter } from '../commuter/context/CommuterContext.jsx'
 import { ADMIN_USERNAMES, ADMIN_PASSWORD } from '../admin/data/credentials.js'
 import { DEMO_USERNAMES as CONDUCTOR_USERNAMES, DEMO_PASSWORD as CONDUCTOR_PASSWORD } from '../conductor/data/mock.js'
 import { COMMUTER_USERNAMES, COMMUTER_PASSWORD } from '../commuter/data/credentials.js'
-import { findCommuterAccount } from '../commuter/data/accounts.js'
+import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from '../firebase/auth.js'
 import AuthShell, { FormFeedback } from '../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../shared/hooks/useRoleSwitch.js'
 
@@ -48,11 +48,31 @@ export default function Login() {
     if (commuter.session) return <Navigate to={commuter.session.mode === 'guest' ? '/commuter/live-tracking' : HOME.commuter} replace />
   }
 
-  const finish = (role, signIn, dest) => {
-    signOutOthers(role)
+  const finish = async (role, signIn, dest, preserveFirebaseAuth = false) => {
+    await signOutOthers(role, { preserveFirebaseAuth })
     signIn()
     const from = location.state?.from
     navigate(dest || (from && from.startsWith(`/${role}`) ? from : HOME[role]), { replace: true })
+  }
+
+  const finishFirebaseLogin = async (user, profile, role) => {
+    const identifier = user.email || user.uid
+    const authDetails = {
+      uid: user.uid,
+      role,
+      firebaseAuthenticated: true,
+      displayName: profile.displayName || user.displayName || '',
+      email: profile.email || user.email || '',
+      phone: profile.phone || '',
+    }
+    if (role === 'admin') {
+      addLog({ action: 'Admin logged in', module: 'Authentication', description: 'Administrator signed in with Firebase Authentication.' })
+      await finish('admin', () => admin.login(identifier, remember, authDetails), undefined, true)
+    } else if (role === 'conductor') {
+      await finish('conductor', () => conductor.login(identifier, authDetails), undefined, true)
+    } else {
+      await finish('commuter', () => commuter.enter('account', identifier, true), undefined, true)
+    }
   }
 
   const submit = async (e) => {
@@ -66,28 +86,59 @@ export default function Login() {
       setFeedback({ type: 'error', text: 'Please fix the highlighted fields.' })
       return
     }
-    let role = findRole(identifier, password)
-    if (!role && (await findCommuterAccount(identifier, password))) role = 'commuter'
-    if (!role) {
-      addLog({ action: 'Failed login attempt', module: 'Authentication', severity: 'Warning', description: 'Invalid credentials entered on the login form.' })
-      setFeedback({ type: 'error', text: 'Incorrect email/username or password.' })
+    const role = findRole(identifier, password)
+    if (role) {
+      setBusy(true)
+      setFeedback({ type: 'success', text: 'Login successful. Redirecting…' })
+      const id = identifier.trim()
+      window.setTimeout(async () => {
+        try {
+          if (role === 'admin') {
+            addLog({ action: 'Admin logged in', module: 'Authentication', description: 'Administrator signed in.' })
+            await finish(role, () => admin.login(id, remember))
+          } else if (role === 'conductor') {
+            await finish(role, () => conductor.login(id))
+          } else {
+            await finish(role, () => commuter.enter('account', id))
+          }
+        } catch (error) {
+          setBusy(false)
+          setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'complete sign in') })
+        }
+      }, 600)
       return
     }
+
     setBusy(true)
-    setFeedback({ type: 'success', text: 'Login successful. Redirecting…' })
-    const id = identifier.trim()
-    setTimeout(() => {
-      if (role === 'admin') {
-        addLog({ action: 'Admin logged in', module: 'Authentication', description: 'Administrator signed in.' })
-        finish(role, () => admin.login(id, remember))
-      } else if (role === 'conductor') finish(role, () => conductor.login(id))
-      else finish(role, () => commuter.enter('account', id))
-    }, 600)
+    try {
+      const { user, profile, role } = await signInWithEmail(identifier, password)
+      await finishFirebaseLogin(user, profile, role)
+    } catch (error) {
+      addLog({ action: 'Failed login attempt', module: 'Authentication', severity: 'Warning', description: 'Invalid credentials entered on the login form.' })
+      setBusy(false)
+      setFeedback({ type: 'error', text: getAuthErrorMessage(error) })
+    }
   }
 
-  const guest = () => {
+  const googleLogin = async () => {
     setBusy(true)
-    finish('commuter', () => commuter.enter('guest'), '/commuter/live-tracking')
+    try {
+      const { user, profile, role } = await signInWithGoogle()
+      await finishFirebaseLogin(user, profile, role)
+    } catch (error) {
+      setBusy(false)
+      setFeedback({ type: 'error', text: getAuthErrorMessage(error) })
+    }
+  }
+
+  const guest = async () => {
+    setBusy(true)
+    try {
+      await finish('commuter', () => commuter.enter('guest'), '/commuter/live-tracking')
+    } catch (error) {
+      setBusy(false)
+      setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'continue as a guest') })
+    }
   }
 
   return (
@@ -120,6 +171,13 @@ export default function Login() {
             Remember me on this browser
           </label>
           <Button type="submit" className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Login'}</Button>
+          <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400" aria-hidden="true">
+            <span className="h-px flex-1 bg-slate-200" />or<span className="h-px flex-1 bg-slate-200" />
+          </div>
+          <Button type="button" variant="secondary" className="w-full" onClick={googleLogin} disabled={busy}>
+            <span aria-hidden="true" className="text-base font-bold text-blue-600">G</span>
+            Continue with Google
+          </Button>
           <Button type="button" variant="ghost" className="w-full" onClick={guest} disabled={busy}>Continue as guest commuter</Button>
         </div>
 
@@ -130,7 +188,7 @@ export default function Login() {
         <div className="mt-5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
           <Info size={14} className="mt-0.5 shrink-0" />
           <div className="space-y-0.5">
-            <p className="font-semibold">Demo accounts (no real authentication)</p>
+            <p className="font-semibold">Demo accounts (not Firebase-authenticated)</p>
             <p>Admin: <span className="font-semibold">admin</span> / {ADMIN_PASSWORD}</p>
             <p>Conductor: <span className="font-semibold">lourdes.garcia</span> / {CONDUCTOR_PASSWORD}</p>
             <p>Commuter: <span className="font-semibold">commuter</span> / {COMMUTER_PASSWORD}</p>

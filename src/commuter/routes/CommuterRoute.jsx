@@ -6,7 +6,9 @@ import { GUEST_HOME, isGuestAllowed } from '../layouts/navItems.js'
 export default function CommuterRoute({ children }) {
   const { session } = useCommuter()
   const location = useLocation()
-  if (!session) return <Navigate to="/" replace state={{ from: location.pathname }} />
+  if (!session || (session.role && session.role !== 'commuter')) {
+    return <Navigate to="/" replace state={{ from: location.pathname }} />
+  }
   // Guests can only open the live map; send every other commuter URL there.
   if (session.mode === 'guest' && !isGuestAllowed(location.pathname)) return <Navigate to={GUEST_HOME} replace state={{ locked: true }} />
   return children

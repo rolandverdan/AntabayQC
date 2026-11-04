@@ -5,6 +5,8 @@ import { useConductor } from '../context/ConductorContext.jsx'
 export default function ConductorRoute({ children }) {
   const { session } = useConductor()
   const location = useLocation()
-  if (!session) return <Navigate to="/" replace state={{ from: location.pathname }} />
+  if (!session || (session.role && session.role !== 'conductor')) {
+    return <Navigate to="/" replace state={{ from: location.pathname }} />
+  }
   return children
 }
