@@ -1,5 +1,5 @@
 import { useOutletContext } from 'react-router-dom'
-import { Pause, Play, Gauge, MapPin, Clock, Users, Route as RouteIcon, Info } from 'lucide-react'
+import { Gauge, MapPin, Clock, Users, Route as RouteIcon, Info, LocateFixed, CircleStop } from 'lucide-react'
 import Card, { Notice } from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
 import ConductorMap from '../components/ConductorMap.jsx'
@@ -40,41 +40,58 @@ function Progress({ pct, label, tone = 'bg-brand' }) {
 }
 
 export default function MapPage() {
-  const sim = useOutletContext()
-  const { settings } = useConductor()
-  const { position, nextStop, speed, etaMin, running, setRunning, progress } = sim
-  const passengers = VEHICLE.passengers
-  const pct = Math.round((passengers / VEHICLE.capacity) * 100)
-  const stopsPassed = ROUTE_STOPS.findIndex((s) => s.id === nextStop.id)
-  const tripPct = Math.round(progress * 100)
+  const locationState = useOutletContext()
+  const { settings, passengerCount, passengerEntries, passengerExits } = useConductor()
+  const { position, nextStop, speed, etaMin, progress, gpsStatus, gpsMessage, gpsAccuracy, gpsUpdatedAt, usePhoneGps, stopPhoneGps } = locationState
+  const stopsPassed = nextStop ? ROUTE_STOPS.findIndex((s) => s.id === nextStop.id) : -1
+  const tripPct = progress === null ? null : Math.round(progress * 100)
+  const etaLabel = etaMin ? `About ${etaMin} min` : 'Unavailable'
+  const vehicleStatus = gpsStatus === 'requesting'
+    ? 'Connecting'
+    : gpsStatus === 'error'
+      ? 'GPS unavailable'
+      : gpsStatus === 'active'
+        ? 'GPS active'
+        : 'Location required'
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_20rem] xl:grid-cols-[1fr_22rem]">
       <div className="h-[50dvh] min-h-[320px] lg:h-[calc(100vh-8.5rem)]">
-        <ConductorMap position={position} nextStopId={nextStop.id} prefs={settings.map} />
+        <ConductorMap position={position} nextStopId={nextStop?.id} prefs={settings.map} gpsStatus={gpsStatus} gpsAccuracy={gpsAccuracy} />
       </div>
 
       <div className="space-y-4 lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto">
         <Card
           title="Vehicle status"
-          action={<StatusBadge status={running ? 'Online' : 'Offline'} />}
+          action={<StatusBadge status={vehicleStatus} />}
         >
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <Tile icon={Gauge} label="Speed" value={`${speed} km/h`} />
-              <Tile icon={Users} label="Passengers" value={`${passengers} / ${VEHICLE.capacity}`} />
+              <Tile icon={Gauge} label="Speed" value={speed === null ? 'Unavailable' : `${Math.round(speed)} km/h`} />
+              <Tile icon={Users} label="Passengers onboard" value={String(passengerCount)} />
             </div>
-            <div>
-              <div className="mb-1.5 flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-600">Seat occupancy</span>
-                <span className="font-semibold text-navy">{pct}%</span>
-              </div>
-              <Progress pct={pct} label="Seat occupancy" tone={pct > 85 ? 'bg-red-500' : pct > 60 ? 'bg-amber-500' : 'bg-green-500'} />
-              <p className="mt-1.5 text-xs text-slate-500">{passengers} of {VEHICLE.capacity} seats occupied · {VEHICLE.capacity - passengers} available</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Tile icon={Users} label="Entries counted" value={String(passengerEntries)} />
+              <Tile icon={Users} label="Exits counted" value={String(passengerExits)} />
             </div>
-            <Button variant="secondary" size="sm" icon={running ? Pause : Play} onClick={() => setRunning(!running)} className="w-full">
-              {running ? 'Pause simulation' : 'Resume simulation'}
-            </Button>
+            <p className="text-xs text-slate-500">Counts update from browser camera doorway detections and are saved only in this browser. Set a starting onboard count on the Camera page.</p>
+            {gpsStatus === 'active' ? (
+              <Button variant="secondary" size="sm" icon={CircleStop} onClick={stopPhoneGps} className="w-full">
+                Stop phone GPS
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={LocateFixed}
+                onClick={usePhoneGps}
+                disabled={gpsStatus === 'requesting'}
+                className="w-full"
+              >
+                {gpsStatus === 'requesting' ? 'Waiting for phone GPS…' : gpsStatus === 'error' ? 'Retry phone GPS' : 'Enable phone GPS'}
+              </Button>
+            )}
+            {gpsMessage && <p role="status" className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{gpsMessage}</p>}
           </div>
         </Card>
 
@@ -82,27 +99,41 @@ export default function MapPage() {
           <div className="space-y-4">
             <div className="divide-y divide-slate-100">
               <Row icon={RouteIcon} label={ROUTE.id} value={ROUTE.name} />
-              <Row icon={MapPin} label="Next stop" value={nextStop.name} />
+              <Row icon={MapPin} label="Next stop" value={nextStop?.name || 'Unavailable until GPS connects'} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Tile icon={Clock} label="Estimated arrival" value={etaMin ? `About ${etaMin} min` : 'Paused'} />
-              <Tile icon={RouteIcon} label="Trip progress" value={`${tripPct}%`} />
+              <Tile icon={Clock} label="Estimated arrival" value={etaLabel} />
+              <Tile icon={RouteIcon} label="Trip progress" value={tripPct === null ? 'Unavailable' : `${tripPct}%`} />
             </div>
-            <div>
-              <Progress pct={tripPct} label="Trip progress" />
-              <p className="mt-1.5 text-xs text-slate-500">Stop {Math.max(stopsPassed + 1, 1)} of {ROUTE_STOPS.length}</p>
-            </div>
+            {tripPct !== null ? (
+              <div>
+                <Progress pct={tripPct} label="Trip progress" />
+                <p className="mt-1.5 text-xs text-slate-500">Stop {Math.max(stopsPassed + 1, 1)} of {ROUTE_STOPS.length}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500">Enable phone GPS to estimate progress against the assigned route.</p>
+            )}
           </div>
         </Card>
 
         <Card title="Location details">
           <dl className="divide-y divide-slate-100 text-sm">
-            <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0"><dt className="text-slate-500">Latitude</dt><dd className="font-mono font-semibold text-navy">{position.lat.toFixed(5)}</dd></div>
-            <div className="flex items-center justify-between gap-3 py-2.5"><dt className="text-slate-500">Longitude</dt><dd className="font-mono font-semibold text-navy">{position.lng.toFixed(5)}</dd></div>
+            <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0"><dt className="text-slate-500">Latitude</dt><dd className="font-mono font-semibold text-navy">{position ? position.lat.toFixed(5) : 'Unavailable'}</dd></div>
+            <div className="flex items-center justify-between gap-3 py-2.5"><dt className="text-slate-500">Longitude</dt><dd className="font-mono font-semibold text-navy">{position ? position.lng.toFixed(5) : 'Unavailable'}</dd></div>
             <div className="flex items-center justify-between gap-3 py-2.5 last:pb-0"><dt className="text-slate-500">Vehicle</dt><dd className="font-semibold text-navy">{VEHICLE.plate}</dd></div>
+            <div className="flex items-center justify-between gap-3 py-2.5"><dt className="text-slate-500">Source</dt><dd className="font-semibold text-navy">{position ? 'Phone GPS' : 'Unavailable'}</dd></div>
+            {position && (
+              <>
+                <div className="flex items-center justify-between gap-3 py-2.5"><dt className="text-slate-500">Accuracy</dt><dd className="font-semibold text-navy">±{Math.round(gpsAccuracy)} m</dd></div>
+                <div className="flex items-center justify-between gap-3 py-2.5 last:pb-0"><dt className="text-slate-500">Last update</dt><dd className="font-semibold text-navy">{new Date(gpsUpdatedAt).toLocaleTimeString()}</dd></div>
+              </>
+            )}
           </dl>
           <p className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-            <Info size={14} className="mt-0.5 shrink-0" /> Position is simulated along the route. It is not a live GPS reading.
+            <Info size={14} className="mt-0.5 shrink-0" />
+            {position
+              ? 'Phone GPS is the location source. Route progress and next stop are estimates against the assigned route, not road-snapped navigation.'
+              : 'Vehicle location is not available until you enable phone GPS. No fallback position is shown.'}
           </p>
         </Card>
 

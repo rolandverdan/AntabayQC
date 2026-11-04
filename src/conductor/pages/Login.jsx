@@ -5,10 +5,9 @@ import Button from '../../admin/components/Button.jsx'
 import Field from '../../admin/components/FormField.jsx'
 import { inputClass } from '../../admin/utils/ui.js'
 import { useConductor } from '../context/ConductorContext.jsx'
-import { DEMO_USERNAMES, DEMO_PASSWORD } from '../data/mock.js'
 import AuthShell, { FormFeedback } from '../../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../../shared/hooks/useRoleSwitch.js'
-import { getAuthErrorMessage } from '../../firebase/auth.js'
+import { getAuthErrorMessage, signInWithEmail, signOutFirebaseUser } from '../../firebase/auth.js'
 
 export default function Login() {
   const { session, login } = useConductor()
@@ -24,7 +23,7 @@ export default function Login() {
 
   if (session && !busy) return <Navigate to="/conductor/dashboard" replace />
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const next = {}
     if (!identifier.trim()) next.identifier = 'Enter your email or username.'
@@ -35,24 +34,30 @@ export default function Login() {
       setFeedback({ type: 'error', text: 'Please fix the highlighted fields.' })
       return
     }
-    const ok = DEMO_USERNAMES.includes(identifier.trim().toLowerCase()) && password === DEMO_PASSWORD
-    if (!ok) {
-      setFeedback({ type: 'error', text: 'Incorrect email/username or password.' })
-      return
-    }
     setBusy(true)
-    setFeedback({ type: 'success', text: 'Login successful. Opening your dashboard…' })
-    window.setTimeout(async () => {
-      try {
-        await signOutOthers('conductor')
-        login(identifier.trim())
-        const from = location.state?.from
-        navigate(from && from.startsWith('/conductor') ? from : '/conductor/dashboard', { replace: true })
-      } catch (error) {
+    try {
+      const { user, profile, role } = await signInWithEmail(identifier, password)
+      if (role !== 'conductor') {
+        await signOutFirebaseUser()
         setBusy(false)
-        setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'complete sign in') })
+        setFeedback({ type: 'error', text: 'This account does not have the conductor role.' })
+        return
       }
-    }, 600)
+      await signOutOthers('conductor', { preserveFirebaseAuth: true })
+      login(user.email || user.uid, {
+        uid: user.uid,
+        role,
+        firebaseAuthenticated: true,
+        displayName: profile.displayName || user.displayName || '',
+        email: profile.email || user.email || '',
+        phone: profile.phone || '',
+      })
+      const from = location.state?.from
+      navigate(from && from.startsWith('/conductor') ? from : '/conductor/dashboard', { replace: true })
+    } catch (error) {
+      setBusy(false)
+      setFeedback({ type: 'error', text: getAuthErrorMessage(error) })
+    }
   }
 
   return (
@@ -60,7 +65,7 @@ export default function Login() {
       role="Conductor portal"
       heading="Conductor Console"
       blurb="Follow your route on the map, check the on-board cameras, and report an emergency from one screen."
-      footer="Conductor portal · frontend demo"
+      footer="ANTABAY QC · Conductor portal"
     >
       <form onSubmit={submit} noValidate>
         <h1 className="text-2xl font-bold text-navy">Conductor Login</h1>
@@ -70,7 +75,7 @@ export default function Login() {
 
         <div className="space-y-4">
           <Field label="Email or username" required error={errors.identifier}>
-            <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" placeholder="lourdes.garcia" className={inputClass(errors.identifier)} />
+            <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" placeholder="Email address" className={inputClass(errors.identifier)} />
           </Field>
           <Field label="Password" required error={errors.password}>
             <div className="relative">
@@ -85,9 +90,7 @@ export default function Login() {
 
         <div className="mt-5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
           <Info size={14} className="mt-0.5 shrink-0" />
-          <p>
-            Demo login only. Use <span className="font-semibold">lourdes.garcia</span> and password <span className="font-semibold">{DEMO_PASSWORD}</span>. No real authentication is used.
-          </p>
+          <p>Sign in with a Firebase Authentication account assigned the conductor role.</p>
         </div>
       </form>
     </AuthShell>

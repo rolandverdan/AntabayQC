@@ -4,9 +4,6 @@ import { seedData } from '../../admin/data/mockData.js'
 
 const db = seedData()
 
-export const DEMO_USERNAMES = ['lourdes.garcia', 'lourdes.garcia@antabayqc.com', 'conductor']
-export const DEMO_PASSWORD = 'Conductor123!'
-
 const account = db.accounts.find((a) => a.id === 'ACC-007')
 export const VEHICLE = db.buses.find((b) => b.conductorId === 'ACC-007')
 export const ROUTE = db.routes.find((r) => r.id === VEHICLE.routeId)
@@ -37,13 +34,6 @@ export const EMERGENCY_TYPES = [
   { id: 'security', label: 'Security Threat', hint: 'Weapon, theft, or another threat on board.', icon: 'ShieldAlert' },
   { id: 'fire', label: 'Fire or Smoke', hint: 'Fire or smoke in or around the vehicle.', icon: 'Flame' },
   { id: 'other', label: 'Other Emergency', hint: 'Anything else that needs urgent attention.', icon: 'CircleAlert' },
-]
-
-export const CAMERAS = [
-  { id: 'CAM-1', name: 'Front door', location: 'Boarding area', startsOnline: true, reachable: true },
-  { id: 'CAM-2', name: 'Aisle (interior)', location: 'Mid-cabin', startsOnline: true, reachable: true },
-  { id: 'CAM-3', name: 'Rear door', location: 'Exit area', startsOnline: false, reachable: true },
-  { id: 'CAM-4', name: 'Driver cabin', location: 'Front, facing driver', startsOnline: false, reachable: false },
 ]
 
 export const NOTIFICATIONS = [

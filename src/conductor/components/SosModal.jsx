@@ -158,7 +158,10 @@ export default function SosModal({ open, onClose, location }) {
           <dl className="divide-y divide-slate-100 rounded-lg border border-slate-200 text-sm">
             <Row label="Emergency type" value={type.label} strong />
             <Row label="Details" value={description.trim() || 'No details added'} />
-            <Row label="Current location" value={`${location.label} (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`} />
+            <Row
+              label="Current location"
+              value={location ? `${location.label} (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})` : 'Unavailable; enable phone GPS to include location'}
+            />
             <Row label="Vehicle" value={`${VEHICLE.id} · ${VEHICLE.plate}`} />
           </dl>
           {settings.sos.holdToConfirm && (
@@ -194,7 +197,9 @@ export default function SosModal({ open, onClose, location }) {
             <Row label="Details" value={report.description || 'No details added'} />
             <Row
               label="Location"
-              value={<span className="inline-flex items-center gap-1"><MapPin size={14} />{report.location.label} ({report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)})</span>}
+              value={report.location
+                ? <span className="inline-flex items-center gap-1"><MapPin size={14} />{report.location.label} ({report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)})</span>
+                : 'Unavailable'}
             />
             <Row label="Vehicle / route" value={`${report.vehicle} · ${report.route}`} />
             <Row label="Time" value={<span className="inline-flex items-center gap-1"><Clock size={14} />{fmtTime(report.at)}</span>} />

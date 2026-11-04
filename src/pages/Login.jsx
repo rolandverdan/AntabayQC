@@ -9,7 +9,6 @@ import { useAdminData } from '../admin/context/AdminDataContext.jsx'
 import { useConductor } from '../conductor/context/ConductorContext.jsx'
 import { useCommuter } from '../commuter/context/CommuterContext.jsx'
 import { ADMIN_USERNAMES, ADMIN_PASSWORD } from '../admin/data/credentials.js'
-import { DEMO_USERNAMES as CONDUCTOR_USERNAMES, DEMO_PASSWORD as CONDUCTOR_PASSWORD } from '../conductor/data/mock.js'
 import { COMMUTER_USERNAMES, COMMUTER_PASSWORD } from '../commuter/data/credentials.js'
 import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from '../firebase/auth.js'
 import AuthShell, { FormFeedback } from '../shared/components/AuthShell.jsx'
@@ -21,7 +20,6 @@ const HOME = { admin: '/admin/dashboard', conductor: '/conductor/dashboard', com
 function findRole(id, pw) {
   const name = id.trim().toLowerCase()
   if (ADMIN_USERNAMES.includes(name) && pw === ADMIN_PASSWORD) return 'admin'
-  if (CONDUCTOR_USERNAMES.includes(name) && pw === CONDUCTOR_PASSWORD) return 'conductor'
   if (COMMUTER_USERNAMES.includes(name) && pw === COMMUTER_PASSWORD) return 'commuter'
   return null
 }
@@ -96,8 +94,6 @@ export default function Login() {
           if (role === 'admin') {
             addLog({ action: 'Admin logged in', module: 'Authentication', description: 'Administrator signed in.' })
             await finish(role, () => admin.login(id, remember))
-          } else if (role === 'conductor') {
-            await finish(role, () => conductor.login(id))
           } else {
             await finish(role, () => commuter.enter('account', id))
           }
@@ -188,9 +184,8 @@ export default function Login() {
         <div className="mt-5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
           <Info size={14} className="mt-0.5 shrink-0" />
           <div className="space-y-0.5">
-            <p className="font-semibold">Demo accounts (not Firebase-authenticated)</p>
+            <p className="font-semibold">Admin and commuter demo accounts (not Firebase-authenticated)</p>
             <p>Admin: <span className="font-semibold">admin</span> / {ADMIN_PASSWORD}</p>
-            <p>Conductor: <span className="font-semibold">lourdes.garcia</span> / {CONDUCTOR_PASSWORD}</p>
             <p>Commuter: <span className="font-semibold">commuter</span> / {COMMUTER_PASSWORD}</p>
           </div>
         </div>

@@ -1,6 +1,9 @@
 const STYLES = {
   Online: { dot: 'bg-green-500', cls: 'bg-green-100 text-green-700 ring-green-600/20' },
   Offline: { dot: 'bg-slate-400', cls: 'bg-slate-100 text-slate-600 ring-slate-500/20' },
+  'GPS active': { dot: 'bg-green-500', cls: 'bg-green-100 text-green-700 ring-green-600/20' },
+  'GPS unavailable': { dot: 'bg-red-500', cls: 'bg-red-100 text-red-700 ring-red-600/20' },
+  'Location required': { dot: 'bg-slate-400', cls: 'bg-slate-100 text-slate-600 ring-slate-500/20' },
   Connecting: { dot: 'bg-amber-500 animate-pulse', cls: 'bg-amber-100 text-amber-800 ring-amber-600/20' },
   Error: { dot: 'bg-red-500', cls: 'bg-red-100 text-red-700 ring-red-600/20' },
 }

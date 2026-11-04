@@ -9,14 +9,14 @@ import SosModal from '../components/SosModal.jsx'
 import ConfirmDialog from '../../admin/components/ConfirmDialog.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
-import useVehicleSim from '../utils/useVehicleSim.js'
+import useVehicleLocation from '../utils/useVehicleLocation.js'
 import { signOutFirebaseUser } from '../../firebase/auth.js'
 
 export default function ConductorLayout() {
   const { session, logout, sosReport, setSosReport } = useConductor()
   const { notify } = useToast()
   const navigate = useNavigate()
-  const sim = useVehicleSim()
+  const location = useVehicleLocation()
 
   // Same behaviour as Admin: icon-only by default, expands while hovered/focused, pin button in the header.
   const [collapsed, setCollapsed] = useState(true)
@@ -73,13 +73,13 @@ export default function ConductorLayout() {
         )}
         {/* Bottom padding = bottom-nav height + breathing room, so the fixed nav never covers content. */}
         <main id="main" className="px-4 pt-4 pb-[calc(var(--bottom-nav-h)+1rem)] md:px-6 md:pt-6 lg:pb-6">
-          <Outlet context={{ ...sim, requestLogout: () => setConfirmLogout(true) }} />
+          <Outlet context={{ ...location, requestLogout: () => setConfirmLogout(true) }} />
         </main>
       </div>
 
       <BottomNav />
 
-      <SosModal open={sosOpen} onClose={() => setSosOpen(false)} location={sim.location} />
+      <SosModal open={sosOpen} onClose={() => setSosOpen(false)} location={location.location} />
       <ConfirmDialog
         open={confirmLogout}
         title="Log out?"
