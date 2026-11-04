@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Camera as CameraIcon, CircleAlert, Loader2, Play, RotateCw, Square, Users, VideoOff } from 'lucide-react'
-import Card, { PageHeader, Notice } from '../../admin/components/Card.jsx'
+import { CircleAlert, Loader2, Play, RotateCw, Square, Users, VideoOff } from 'lucide-react'
+import Card, { PageHeader } from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
@@ -368,10 +368,6 @@ export default function CameraPage() {
         actions={<Button variant="secondary" icon={RotateCw} onClick={refreshDevices}>Refresh cameras</Button>}
       />
 
-      <Notice tone="blue" icon={CameraIcon}>
-        This prototype uses cameras directly available to this browser. It cannot access the V720 app feed unless the camera is independently exposed to the browser. The AI model downloads the first time it is started, so an internet connection is needed for initial setup. Video and counts are processed/stored locally on this device; no feed is uploaded. Counts can miss or double-count people, so verify them manually.
-      </Notice>
-
       <Card title="Onboard passenger count" action={<span className="text-2xl font-bold text-navy">{passengerCount}</span>}>
         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
           <div className="grid grid-cols-2 gap-3">
@@ -405,11 +401,6 @@ export default function CameraPage() {
 
       {deviceError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{deviceError}</p>}
       {modelError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{modelError}</p>}
-      {!devices.length && (
-        <Notice tone="blue" icon={VideoOff}>
-          No browser camera source is currently listed. Grant camera permission by starting a camera, then refresh the list. V720-only app access does not make a camera selectable here.
-        </Notice>
-      )}
       {modelStatus === 'loading' && (
         <p role="status" className="flex items-center gap-2 text-sm text-slate-600"><Loader2 size={16} className="animate-spin" /> Loading the person-detection model…</p>
       )}
