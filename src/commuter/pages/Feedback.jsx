@@ -29,11 +29,7 @@ export default function Feedback() {
   const { routes, buses, addReport } = useAdminData()
   const { notify } = useToast()
   const [form, setForm] = useState(createInitialForm)
-  const [recentFeedback, setRecentFeedback] = useState([
-    { title: 'Driver courtesy improved', meta: 'QC Hall ↔ Cubao', value: '4.8/5' },
-    { title: 'Schedule reliability', meta: 'Batasan ↔ Katipunan', value: '4.2/5' },
-    { title: 'Cleanliness on board', meta: 'Commonwealth route', value: '4.5/5' },
-  ])
+  const [recentFeedback, setRecentFeedback] = useState([])
   const availableBuses = buses.filter((bus) => bus.status === 'Active' && (!form.routeId || bus.routeId === form.routeId))
 
   const updateForm = (field) => (event) => {
@@ -45,7 +41,7 @@ export default function Feedback() {
     notify('Feedback form cleared.', 'info')
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const category = form.category === 'Other' ? form.otherCategory.trim() : form.category
     if (!category) {
@@ -66,16 +62,21 @@ export default function Feedback() {
       bus: bus ? `${bus.id} · ${bus.plate}` : form.otherBus,
     }
     // Send to the admin side (Report Logs, type "Feedback").
-    addReport({
-      type: 'Feedback',
-      priority: form.rating <= 2 ? 'Medium' : 'Low',
-      busId: bus?.id || '',
-      otherBus: bus ? '' : form.otherBus,
-      routeId: route?.id || '',
-      reportedBy: 'Passenger',
-      rating: form.rating,
-      description: `${category} · rated ${form.rating}/5. ${form.details}`,
-    })
+    try {
+      await addReport({
+        type: 'Feedback',
+        priority: form.rating <= 2 ? 'Medium' : 'Low',
+        busId: bus?.id || '',
+        otherBus: bus ? '' : form.otherBus,
+        routeId: route?.id || '',
+        reportedBy: 'Passenger',
+        rating: form.rating,
+        description: `${category} · rated ${form.rating}/5. ${form.details}`,
+      })
+    } catch (error) {
+      notify(error.message || 'Could not submit feedback.', 'error')
+      return
+    }
 
     setRecentFeedback((items) => [feedback, ...items])
     setForm(createInitialForm())

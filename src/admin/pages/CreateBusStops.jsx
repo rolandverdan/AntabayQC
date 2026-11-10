@@ -35,6 +35,7 @@ export default function CreateBusStops() {
   const [errors, setErrors] = useState({})
   const [viewId, setViewId] = useState(null)
   const [confirm, setConfirm] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   const routesOf = (stopId) => routes.filter((r) => r.stopIds.includes(stopId))
 
@@ -61,11 +62,12 @@ export default function CreateBusStops() {
   const picked = form && form.lat !== '' && form.lng !== '' && Number.isFinite(+form.lat) && Number.isFinite(+form.lng) ? { lat: +form.lat, lng: +form.lng } : null
   const outsideQC = picked && (picked.lat < 14.55 || picked.lat > 14.78 || picked.lng < 120.97 || picked.lng > 121.15)
 
-  const submit = (ev) => {
+  const submit = async (ev) => {
     ev.preventDefault()
     const e = {}
     const id = form.id.trim().toUpperCase()
     if (!id) e.id = 'Stop ID is required.'
+    else if (id.includes('/')) e.id = 'Stop ID cannot contain a slash.'
     else if (!isEdit && stops.some((s) => s.id === id)) e.id = 'Stop ID already exists.'
     if (!form.name.trim()) e.name = 'Stop name is required.'
     if (!form.address.trim()) e.address = 'Address / location description is required.'
@@ -74,9 +76,16 @@ export default function CreateBusStops() {
     if (form.lng === '' || !Number.isFinite(lng) || lng < -180 || lng > 180) e.lng = 'Valid longitude required.'
     setErrors(e)
     if (Object.keys(e).length) return
-    saveStop({ id, name: form.name.trim(), address: form.address.trim(), lat, lng, status: form.status }, form.routeIds)
-    notify(`Bus stop ${id} ${isEdit ? 'updated' : 'added'} successfully.`)
-    setForm(null)
+    setSaving(true)
+    try {
+      await saveStop({ id, name: form.name.trim(), address: form.address.trim(), lat, lng, status: form.status }, form.routeIds)
+      notify(`Bus stop ${id} ${isEdit ? 'updated' : 'added'} successfully.`)
+      setForm(null)
+    } catch (error) {
+      notify(error.message || 'Could not save the bus stop.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const tryDelete = (s) => {
@@ -130,7 +139,7 @@ export default function CreateBusStops() {
 
       <Modal
         size="lg" open={!!form} onClose={() => setForm(null)} title={isEdit ? `Edit ${form?.id}` : 'Add bus stop'}
-        footer={<><Button variant="secondary" onClick={() => setForm(null)}>Cancel</Button><Button type="submit" form="stop-form">{isEdit ? 'Save changes' : 'Add bus stop'}</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setForm(null)} disabled={saving}>Cancel</Button><Button type="submit" form="stop-form" disabled={saving}>{saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add bus stop'}</Button></>}
       >
         {form && (
           <form id="stop-form" onSubmit={submit} noValidate className="grid gap-6 md:grid-cols-2">
@@ -186,7 +195,15 @@ export default function CreateBusStops() {
         open={!!confirm} title="Delete bus stop?" confirmLabel="Delete"
         message={confirm ? `${confirm.id} · ${confirm.name} will be permanently removed.` : ''}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => { deleteStop(confirm.id); notify(`${confirm.name} deleted.`); setConfirm(null) }}
+        onConfirm={async () => {
+          try {
+            await deleteStop(confirm.id)
+            notify(`${confirm.name} deleted.`)
+            setConfirm(null)
+          } catch (error) {
+            notify(error.message || 'Could not delete the bus stop.', 'error')
+          }
+        }}
       />
     </>
   )

@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react'
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth'
 import { Lock, RotateCcw, Save, Check } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import Card, { PageHeader, Notice } from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import Field from '../components/FormField.jsx'
-import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import PasswordInput from '../components/PasswordInput.jsx'
 import { PASSWORD_RULES } from '../components/FormParts.jsx'
 import { inputClass } from '../utils/ui.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
 import { updateUserProfile } from '../../firebase/userProfiles.js'
 import { getAuthErrorMessage } from '../../firebase/auth.js'
+import { auth } from '../../firebase/firebase.js'
+import Select from '../../shared/components/Select.jsx'
 
 function Toggle({ label, hint, checked, onChange, className = '' }) {
   return (
@@ -36,16 +37,14 @@ function Rule({ ok, children }) {
 }
 
 export default function Settings() {
-  const { settings, saveSettings, resetData } = useAdminData()
+  const { settings, saveSettings } = useAdminData()
   const { notify } = useToast()
-  const { user } = useAuth()
-  const { userProfile } = useCommuter()
+  const { user, updateProfile: updateAdminProfile } = useAuth()
   const [draft, setDraft] = useState(settings)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
   const [pwErrors, setPwErrors] = useState({})
-  const [confirmReset, setConfirmReset] = useState(false)
 
   const ruleResults = PASSWORD_RULES.map((r) => ({ ...r, ok: r.test(pw.next) }))
   const differs = !!pw.next && pw.next !== pw.current
@@ -55,19 +54,45 @@ export default function Settings() {
   const canUpdate = !!pw.current && rulesOk && matches
 
   useEffect(() => {
-    if (!user?.firebaseAuthenticated || !userProfile) return
+    if (!user?.firebaseAuthenticated) return
     setDraft((current) => ({
       ...current,
-      name: userProfile.displayName || user.displayName || user.identifier,
-      email: userProfile.email || user.email || '',
-      phone: userProfile.phone || '',
+      name: user.displayName || user.identifier,
+      email: user.email || '',
+      phone: user.phone || '',
       role: 'Administrator',
     }))
-  }, [user, userProfile])
+  }, [user])
 
-  const dirty = JSON.stringify(draft) !== JSON.stringify(settings)
+  const preferenceDraft = {
+    notifications: draft.notifications,
+    showMapPreview: draft.showMapPreview,
+    showRecentActivity: draft.showRecentActivity,
+    pageSize: draft.pageSize,
+    density: draft.density,
+  }
+  const preferenceState = {
+    notifications: settings.notifications,
+    showMapPreview: settings.showMapPreview,
+    showRecentActivity: settings.showRecentActivity,
+    pageSize: settings.pageSize,
+    density: settings.density,
+  }
+  const dirty = JSON.stringify(preferenceDraft) !== JSON.stringify(preferenceState)
+    || draft.name !== (user?.displayName || user?.identifier || '')
+    || draft.phone !== (user?.phone || '')
   const upd = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.value }))
   const updNotif = (k) => (v) => setDraft((d) => ({ ...d, notifications: { ...d.notifications, [k]: v } }))
+  const discardChanges = () => {
+    setDraft({
+      ...settings,
+      name: user?.displayName || user?.identifier || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      role: 'Administrator',
+    })
+    setErrors({})
+  }
 
   const save = async (ev) => {
     ev.preventDefault()
@@ -79,16 +104,15 @@ export default function Settings() {
     if (Object.keys(e).length) return
     setSaving(true)
     try {
-      if (user?.firebaseAuthenticated && user.uid) {
-        await updateUserProfile(user.uid, { displayName: draft.name, phone: draft.phone })
-      }
-      saveSettings({
+      await updateUserProfile(user.uid, { displayName: draft.name, phone: draft.phone })
+      updateAdminProfile({ displayName: draft.name.trim(), phone: draft.phone.trim() })
+      await saveSettings({
         ...draft,
         name: draft.name.trim(),
-        email: user?.firebaseAuthenticated ? userProfile?.email || user.email : draft.email.trim(),
+        email: user.email,
         pageSize: Number(draft.pageSize),
       })
-      notify(user?.firebaseAuthenticated ? 'Profile saved to your Firebase account.' : 'Settings saved in this browser.')
+      notify('Profile and preferences saved to Firebase.')
     } catch (error) {
       notify(getAuthErrorMessage(error, 'save your profile'), 'error')
     } finally {
@@ -96,7 +120,7 @@ export default function Settings() {
     }
   }
 
-  const changePassword = (ev) => {
+  const changePassword = async (ev) => {
     ev.preventDefault()
     const e = {}
     if (!pw.current) e.current = 'Enter your current password.'
@@ -104,17 +128,23 @@ export default function Settings() {
     if (pw.confirm !== pw.next) e.confirm = 'Passwords do not match.'
     setPwErrors(e)
     if (Object.keys(e).length) return
-    setPw({ current: '', next: '', confirm: '' })
-    notify('Password updated.', 'info')
+    try {
+      if (!auth.currentUser?.email) throw new Error('This account does not have an email/password sign-in.')
+      const credential = EmailAuthProvider.credential(auth.currentUser.email, pw.current)
+      await reauthenticateWithCredential(auth.currentUser, credential)
+      await updatePassword(auth.currentUser, pw.next)
+      setPw({ current: '', next: '', confirm: '' })
+      notify('Password updated.')
+    } catch (error) {
+      setPwErrors({ current: getAuthErrorMessage(error, 'verify your current password') })
+    }
   }
 
   return (
     <>
       <PageHeader title="Settings" description="Administrator profile and preferences." />
       <Notice tone="blue">
-        {user?.firebaseAuthenticated
-          ? 'Your name and phone number are saved to your Firebase profile. Preferences are saved in this browser.'
-          : 'Settings are saved in this browser&apos;s local storage only. There is no server-side storage, and this is not secure storage.'}
+        Your profile is saved to Firebase Authentication and Firestore. Administrator preferences are saved in Firestore.
       </Notice>
 
       <div className="grid items-start gap-4 xl:grid-cols-3">
@@ -122,17 +152,17 @@ export default function Settings() {
           <Card title="Administrator profile" bodyClass="p-4">
             <div className="grid gap-x-4 gap-y-3.5 sm:grid-cols-2">
               <Field label="Full name" required error={errors.name}><input className={inputClass(errors.name)} value={draft.name} onChange={upd('name')} /></Field>
-              <Field label="Email" required error={errors.email}><input type="email" className={inputClass(errors.email)} value={draft.email} onChange={upd('email')} readOnly={user?.firebaseAuthenticated} /></Field>
+              <Field label="Email" required error={errors.email}><input type="email" className={inputClass(errors.email)} value={draft.email} readOnly /></Field>
               <Field label="Contact number" error={errors.phone}><input className={inputClass(errors.phone)} value={draft.phone} onChange={upd('phone')} /></Field>
               <Field label="Role"><input className={inputClass(false)} value={draft.role} disabled /></Field>
             </div>
           </Card>
 
           <Card
-            title="Notification preferences"
+            title="Dashboard and notification preferences"
             bodyClass="p-0"
             footer={<>
-              <Button variant="secondary" icon={RotateCcw} onClick={() => { setDraft(settings); setErrors({}) }} disabled={!dirty}>Reset / Cancel</Button>
+              <Button variant="secondary" icon={RotateCcw} onClick={discardChanges} disabled={!dirty}>Reset / Cancel</Button>
               <Button type="submit" icon={Save} disabled={!dirty || saving}>{saving ? 'Saving…' : 'Save Changes'}</Button>
             </>}
           >
@@ -140,7 +170,21 @@ export default function Settings() {
               <Toggle className="border-b border-slate-100 sm:border-r" label="Emergency alerts" hint="Show active emergencies in the header bell." checked={draft.notifications.emergency} onChange={updNotif('emergency')} />
               <Toggle className="border-b border-slate-100" label="Pending report alerts" hint="Show pending reports in the header bell." checked={draft.notifications.reports} onChange={updNotif('reports')} />
               <Toggle className="border-b border-slate-100 sm:border-b-0 sm:border-r" label="System log notices" hint="Show new system log entries in the header bell." checked={draft.notifications.logs} onChange={updNotif('logs')} />
-              <Toggle label="Email digest" hint="No emails are actually sent." checked={draft.notifications.emailDigest} onChange={updNotif('emailDigest')} />
+              <Toggle className="border-b border-slate-100" label="Dashboard map preview" hint="Show the map preview on the dashboard." checked={draft.showMapPreview} onChange={(value) => setDraft((current) => ({ ...current, showMapPreview: value }))} />
+              <Toggle className="sm:border-r" label="Recent activity" hint="Show recent database activity on the dashboard." checked={draft.showRecentActivity} onChange={(value) => setDraft((current) => ({ ...current, showRecentActivity: value }))} />
+            </div>
+            <div className="grid gap-4 border-t border-slate-100 p-4 sm:grid-cols-2">
+              <Field label="Rows per table">
+                <Select value={draft.pageSize} onChange={(event) => setDraft((current) => ({ ...current, pageSize: Number(event.target.value) }))}>
+                  {[5, 8, 10, 20].map((size) => <option key={size} value={size}>{size}</option>)}
+                </Select>
+              </Field>
+              <Field label="Table density">
+                <Select value={draft.density} onChange={(event) => setDraft((current) => ({ ...current, density: event.target.value }))}>
+                  <option value="comfortable">Comfortable</option>
+                  <option value="compact">Compact</option>
+                </Select>
+              </Field>
             </div>
           </Card>
         </form>
@@ -171,18 +215,6 @@ export default function Settings() {
         </Card>
       </div>
 
-      {/* Danger zone: full width, at the bottom, and visually quieter than the primary actions above. */}
-      <Card title="Reset data" titleClass="text-red-600" className="mt-4 border-red-300" bodyClass="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-3xl text-sm text-slate-600">Restore all buses, accounts, stops, routes, logs, reports, emergencies and settings to their original values. This can&apos;t be undone.</p>
-        <Button variant="secondary" icon={RotateCcw} onClick={() => setConfirmReset(true)} className="shrink-0 border-red-500! text-red-600! hover:bg-red-50!">Reset data</Button>
-      </Card>
-
-      <ConfirmDialog
-        open={confirmReset} title="Reset all data?" confirmLabel="Reset data"
-        message="Every record you added or changed in this browser will be replaced with the original values."
-        onCancel={() => setConfirmReset(false)}
-        onConfirm={() => { resetData(); setConfirmReset(false); notify('Data restored.', 'info'); setTimeout(() => window.location.reload(), 600) }}
-      />
     </>
   )
 }

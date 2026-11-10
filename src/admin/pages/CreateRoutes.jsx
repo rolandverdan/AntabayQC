@@ -34,6 +34,7 @@ export default function CreateRoutes() {
   const [addStop, setAddStop] = useState('')
   const [viewId, setViewId] = useState(null)
   const [confirm, setConfirm] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   const busesOf = (routeId) => buses.filter((b) => b.routeId === routeId)
   const stopName = (id) => stopsById[id]?.name || id
@@ -63,7 +64,7 @@ export default function CreateRoutes() {
   const addSelectedStop = () => { if (addStop) { setForm((f) => ({ ...f, stopIds: [...f.stopIds, addStop] })); setAddStop('') } }
   const toggleBus = (id) => setForm((f) => ({ ...f, busIds: f.busIds.includes(id) ? f.busIds.filter((b) => b !== id) : [...f.busIds, id] }))
 
-  const submit = (ev) => {
+  const submit = async (ev) => {
     ev.preventDefault()
     const e = {}
     if (!form.name.trim()) e.name = 'Route name is required.'
@@ -71,9 +72,16 @@ export default function CreateRoutes() {
     if (form.stopIds.length < 2) e.stops = 'Add at least two stops (origin and destination).'
     setErrors(e)
     if (Object.keys(e).length) return
-    saveRoute({ id: form.id, name: form.name.trim(), status: form.status, stopIds: form.stopIds }, form.busIds)
-    notify(`Route ${form.id} ${isEdit ? 'updated' : 'created'} successfully.`)
-    setForm(null)
+    setSaving(true)
+    try {
+      await saveRoute({ id: form.id, name: form.name.trim(), status: form.status, stopIds: form.stopIds }, form.busIds)
+      notify(`Route ${form.id} ${isEdit ? 'updated' : 'created'} successfully.`)
+      setForm(null)
+    } catch (error) {
+      notify(error.message || 'Could not save the route.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const mapRoute = (r) => ({ id: r.id, name: r.name, color: routeColor(r.id, r), points: r.stopIds.map((id) => stopsById[id]).filter(Boolean) })
@@ -105,7 +113,14 @@ export default function CreateRoutes() {
           <IconButton icon={Pencil} title="Edit" onClick={() => openEdit(r)} />
           {r.status === 'Active'
             ? <IconButton icon={Ban} tone="danger" title="Deactivate" onClick={() => setConfirm(r)} />
-            : <IconButton icon={CircleCheck} tone="success" title="Reactivate" onClick={() => { setRouteStatus(r.id, 'Active'); notify(`${r.name} reactivated.`) }} />}
+            : <IconButton icon={CircleCheck} tone="success" title="Reactivate" onClick={async () => {
+                try {
+                  await setRouteStatus(r.id, 'Active')
+                  notify(`${r.name} reactivated.`)
+                } catch (error) {
+                  notify(error.message || 'Could not reactivate the route.', 'error')
+                }
+              }} />}
         </div>
       ),
     },
@@ -123,7 +138,7 @@ export default function CreateRoutes() {
 
       <Modal
         size="lg" open={!!form} onClose={() => setForm(null)} title={isEdit ? `Edit ${form?.id}` : 'Add route'}
-        footer={<><Button variant="secondary" onClick={() => setForm(null)}>Cancel</Button><Button type="submit" form="route-form">{isEdit ? 'Save changes' : 'Create route'}</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setForm(null)} disabled={saving}>Cancel</Button><Button type="submit" form="route-form" disabled={saving}>{saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create route'}</Button></>}
       >
         {form && (
           <form id="route-form" onSubmit={submit} noValidate className="grid gap-6 md:grid-cols-2">
@@ -238,7 +253,15 @@ export default function CreateRoutes() {
         open={!!confirm} title="Deactivate route?" confirmLabel="Deactivate"
         message={confirm ? `${confirm.id} · ${confirm.name} will be set to Inactive and hidden from the live map.${busesOf(confirm.id).length ? ` ${busesOf(confirm.id).length} bus(es) are still assigned to it.` : ''}` : ''}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => { setRouteStatus(confirm.id, 'Inactive'); notify(`${confirm.name} deactivated.`); setConfirm(null) }}
+        onConfirm={async () => {
+          try {
+            await setRouteStatus(confirm.id, 'Inactive')
+            notify(`${confirm.name} deactivated.`)
+            setConfirm(null)
+          } catch (error) {
+            notify(error.message || 'Could not deactivate the route.', 'error')
+          }
+        }}
       />
     </>
   )

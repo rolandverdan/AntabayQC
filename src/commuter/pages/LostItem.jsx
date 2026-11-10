@@ -60,16 +60,7 @@ export default function LostItem() {
   const [form, setForm] = useState(makeInitialForm)
   const [photo, setPhoto] = useState(null)
   const [copiedCaseRef, setCopiedCaseRef] = useState('')
-  const [recentInquiries, setRecentInquiries] = useState([
-    {
-      id: 'QC-LR-2026-1008',
-      title: 'Backpack',
-      status: 'Pending',
-      bus: 'Bus #1234',
-      date: 'Oct 8, 2026',
-      details: 'Black backpack left on the bus. Your report is being reviewed.',
-    },
-  ])
+  const [recentInquiries, setRecentInquiries] = useState([])
   const [selectedInquiry, setSelectedInquiry] = useState(null)
 
   useEffect(() => {
@@ -129,7 +120,7 @@ export default function LostItem() {
     notify('Lost-item form cleared.', 'info')
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const route = routes.find((item) => item.id === form.routeId)
     const bus = buses.find((item) => item.id === form.busId)
@@ -155,19 +146,24 @@ export default function LostItem() {
 
     // Send to the admin side (Report Logs).
     const where = form.location === 'other' ? form.otherLocation : form.location
-    addReport({
-      type: 'Lost Item',
-      priority: 'Medium',
-      busId: bus?.id || '',
-      otherBus: bus ? '' : form.otherBus,
-      routeId: route?.id || '',
-      reportedBy: 'Passenger',
-      caseRef: caseId,
-      location: where,
-      contactPhone: form.phone ? `+63 ${form.phone.replace(/^\+?63/, '').trim()}` : '',
-      evidence: photo?.name ? [photo.name] : [],
-      description: `${form.category}: ${form.description}${form.identifyingDetails ? ` Identifying details: ${form.identifyingDetails}.` : ''} Travelled ${form.date} at ${form.time}${where ? `, ${where}` : ''}.`,
-    })
+    try {
+      await addReport({
+        type: 'Lost Item',
+        priority: 'Medium',
+        busId: bus?.id || '',
+        otherBus: bus ? '' : form.otherBus,
+        routeId: route?.id || '',
+        reportedBy: 'Passenger',
+        caseRef: caseId,
+        location: where,
+        contactPhone: form.phone ? `+63 ${form.phone.replace(/^\+?63/, '').trim()}` : '',
+        evidence: photo?.name ? [photo.name] : [],
+        description: `${form.category}: ${form.description}${form.identifyingDetails ? ` Identifying details: ${form.identifyingDetails}.` : ''} Travelled ${form.date} at ${form.time}${where ? `, ${where}` : ''}.`,
+      })
+    } catch (error) {
+      notify(error.message || 'Could not submit the lost-item report.', 'error')
+      return
+    }
 
     setRecentInquiries((items) => [inquiry, ...items])
     setForm(makeInitialForm())

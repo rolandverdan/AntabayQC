@@ -6,9 +6,9 @@ import Field from '../admin/components/FormField.jsx'
 import { inputClass } from '../admin/utils/ui.js'
 import { useAuth } from '../admin/context/AuthContext.jsx'
 import { useAdminData } from '../admin/context/AdminDataContext.jsx'
+import { useToast } from '../admin/context/ToastContext.jsx'
 import { useConductor } from '../conductor/context/ConductorContext.jsx'
 import { useCommuter } from '../commuter/context/CommuterContext.jsx'
-import { ADMIN_USERNAMES, ADMIN_PASSWORD } from '../admin/data/credentials.js'
 import { COMMUTER_USERNAMES, COMMUTER_PASSWORD } from '../commuter/data/credentials.js'
 import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from '../firebase/auth.js'
 import AuthShell, { FormFeedback } from '../shared/components/AuthShell.jsx'
@@ -19,7 +19,6 @@ const HOME = { admin: '/admin/dashboard', conductor: '/conductor/dashboard', com
 
 function findRole(id, pw) {
   const name = id.trim().toLowerCase()
-  if (ADMIN_USERNAMES.includes(name) && pw === ADMIN_PASSWORD) return 'admin'
   if (COMMUTER_USERNAMES.includes(name) && pw === COMMUTER_PASSWORD) return 'commuter'
   return null
 }
@@ -29,6 +28,7 @@ export default function Login() {
   const conductor = useConductor()
   const commuter = useCommuter()
   const { addLog } = useAdminData()
+  const { notify } = useToast()
   const signOutOthers = useRoleSwitch()
   const navigate = useNavigate()
   const location = useLocation()
@@ -48,7 +48,7 @@ export default function Login() {
 
   const finish = async (role, signIn, dest, preserveFirebaseAuth = false) => {
     await signOutOthers(role, { preserveFirebaseAuth })
-    signIn()
+    await signIn()
     const from = location.state?.from
     navigate(dest || (from && from.startsWith(`/${role}`) ? from : HOME[role]), { replace: true })
   }
@@ -64,8 +64,18 @@ export default function Login() {
       phone: profile.phone || '',
     }
     if (role === 'admin') {
-      addLog({ action: 'Admin logged in', module: 'Authentication', description: 'Administrator signed in with Firebase Authentication.' })
       await finish('admin', () => admin.login(identifier, remember, authDetails), undefined, true)
+      try {
+        await addLog({
+          action: 'Admin logged in',
+          module: 'Authentication',
+          description: 'Administrator signed in with Firebase Authentication.',
+          user: authDetails.displayName || identifier,
+        })
+      } catch (error) {
+        console.error('Could not write the login audit log:', error)
+        notify('You signed in, but the login activity could not be recorded.', 'error')
+      }
     } else if (role === 'conductor') {
       await finish('conductor', () => conductor.login(identifier, authDetails), undefined, true)
     } else {
@@ -91,12 +101,7 @@ export default function Login() {
       const id = identifier.trim()
       window.setTimeout(async () => {
         try {
-          if (role === 'admin') {
-            addLog({ action: 'Admin logged in', module: 'Authentication', description: 'Administrator signed in.' })
-            await finish(role, () => admin.login(id, remember))
-          } else {
-            await finish(role, () => commuter.enter('account', id))
-          }
+          await finish(role, () => commuter.enter('account', id))
         } catch (error) {
           setBusy(false)
           setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'complete sign in') })
@@ -110,7 +115,6 @@ export default function Login() {
       const { user, profile, role } = await signInWithEmail(identifier, password)
       await finishFirebaseLogin(user, profile, role)
     } catch (error) {
-      addLog({ action: 'Failed login attempt', module: 'Authentication', severity: 'Warning', description: 'Invalid credentials entered on the login form.' })
       setBusy(false)
       setFeedback({ type: 'error', text: getAuthErrorMessage(error) })
     }
@@ -184,8 +188,7 @@ export default function Login() {
         <div className="mt-5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
           <Info size={14} className="mt-0.5 shrink-0" />
           <div className="space-y-0.5">
-            <p className="font-semibold">Admin and commuter demo accounts (not Firebase-authenticated)</p>
-            <p>Admin: <span className="font-semibold">admin</span> / {ADMIN_PASSWORD}</p>
+            <p className="font-semibold">Commuter demo account (not Firebase-authenticated)</p>
             <p>Commuter: <span className="font-semibold">commuter</span> / {COMMUTER_PASSWORD}</p>
           </div>
         </div>

@@ -29,11 +29,6 @@ const categoryGuide = [
   { label: 'General Concern', desc: 'General complaints, service quality, observations.' },
 ]
 
-const demoReports = [
-  { title: 'AC Malfunction on Route 2 (Bus #5678)', status: 'Under Inspection', tone: 'blue' },
-  { title: 'Skipped Stop at Quezon City University', status: 'Resolved', tone: 'green' },
-]
-
 const localDate = () => {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
@@ -60,7 +55,7 @@ export default function Report() {
   const fileInputRef = useRef(null)
   const [form, setForm] = useState(createInitialForm)
   const [evidence, setEvidence] = useState([])
-  const [activeReports, setActiveReports] = useState(demoReports)
+  const [activeReports, setActiveReports] = useState([])
   const [selectedReport, setSelectedReport] = useState(null)
   const selectedRoute = routes.find((route) => route.id === form.routeId)
   const availableStops = selectedRoute
@@ -92,7 +87,7 @@ export default function Report() {
     event.target.value = ''
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const category = categoryGuide.find((item) => item.label === form.category)?.label
     const bus = buses.find((item) => item.id === form.busId)
@@ -108,18 +103,23 @@ export default function Report() {
     const TYPE_MAP = { Driver: 'Driver Conduct', Conductor: 'Conductor Conduct', Passenger: 'Passenger Conduct' }
     const adminType = TYPE_MAP[form.category] || form.category || 'General Concern'
     const priority = form.severity === 'High' ? 'High' : form.severity === 'Low' ? 'Low' : 'Medium'
-    addReport({
-      type: adminType,
-      priority,
-      busId: bus?.id || '',
-      otherBus: bus ? '' : form.otherBus,
-      routeId: selectedRoute?.id || '',
-      reportedBy: form.anonymous ? 'Anonymous' : 'Passenger',
-      location,
-      contactPhone: !form.anonymous && form.phone ? form.phone : '',
-      evidence: evidence.map((file) => file.name),
-      description: `${form.details} (Incident on ${form.date} ${form.time}${location ? `, ${location}` : ''}.)`,
-    })
+    try {
+      await addReport({
+        type: adminType,
+        priority,
+        busId: bus?.id || '',
+        otherBus: bus ? '' : form.otherBus,
+        routeId: selectedRoute?.id || '',
+        reportedBy: form.anonymous ? 'Anonymous' : 'Passenger',
+        location,
+        contactPhone: !form.anonymous && form.phone ? form.phone : '',
+        evidence: evidence.map((file) => file.name),
+        description: `${form.details} (Incident on ${form.date} ${form.time}${location ? `, ${location}` : ''}.)`,
+      })
+    } catch (error) {
+      notify(error.message || 'Could not submit the incident report.', 'error')
+      return
+    }
 
     setActiveReports((current) => [newReport, ...current])
     setSelectedReport(newReport)

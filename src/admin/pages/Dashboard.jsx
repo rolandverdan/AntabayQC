@@ -10,10 +10,10 @@ import RecentActivity from '../components/RecentActivity.jsx'
 import PassengerTrend from '../components/PassengerTrend.jsx'
 import { OCCUPANCY, occupancyLevel } from '../utils/occupancy.js'
 import { BUS_STATUSES } from '../data/constants.js'
-import { busMarkerStyle, computeBusLive, routeColor } from '../utils/geo.js'
+import { busImage, routeColor } from '../utils/geo.js'
 
 export default function Dashboard() {
-  const { buses, accounts, stops, routes, logs, reports, emergencies, settings, stopsById, routesById } = useAdminData()
+  const { buses, accounts, stops, routes, logs, reports, emergencies, settings, stopsById, busLocations, busLocationsById } = useAdminData()
   const navigate = useNavigate()
 
   const activeBuses = buses.filter((b) => b.status === 'Active').length
@@ -24,18 +24,32 @@ export default function Dashboard() {
   const resolvedReports = reports.filter((r) => r.status === 'Resolved').length
 
   const statusCounts = BUS_STATUSES.map((s) => ({ s, n: buses.filter((b) => b.status === s).length }))
+  const passengerLocations = busLocations.filter((location) => typeof location.passengers === 'number' && Number.isFinite(location.passengers))
   const occ = { green: 0, yellow: 0, red: 0 }
-  buses.filter((b) => b.status === 'Active').forEach((b) => { occ[occupancyLevel(b.passengers, b.capacity)] += 1 })
+  passengerLocations.forEach((location) => {
+    const bus = buses.find((item) => item.id === (location.busId || location.id))
+    if (bus) occ[occupancyLevel(location.passengers, bus.capacity)] += 1
+  })
 
   const mapBuses = useMemo(
     () =>
-      buses.flatMap((b) => {
-        const live = computeBusLive(b, routesById[b.routeId], stopsById)
-        if (!live) return []
-        const style = busMarkerStyle(b, live)
-        return [{ id: b.id, lat: live.lat, lng: live.lng, ...style, tooltip: `${b.id} · ${b.status}` }]
+      buses.flatMap((bus) => {
+        const location = busLocationsById[bus.id]
+        if (!location || !Number.isFinite(Number(location.lat)) || !Number.isFinite(Number(location.lng))) return []
+        return [{
+          id: bus.id,
+          lat: Number(location.lat),
+          lng: Number(location.lng),
+          img: busImage(bus.routeId),
+          heading: Number(location.heading) || 0,
+          color: bus.status === 'Emergency' ? '#dc2626' : bus.status === 'Active' ? '#2563eb' : '#64748b',
+          dim: bus.status !== 'Active' && bus.status !== 'Emergency',
+          pulse: bus.status === 'Emergency',
+          label: bus.id.replace(/^BUS-?/i, ''),
+          tooltip: `${bus.id} · ${bus.status}`,
+        }]
       }),
-    [buses, routesById, stopsById],
+    [buses, busLocationsById],
   )
   const mapRoutes = routes
     .filter((r) => r.status === 'Active')
@@ -79,7 +93,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card title="Passenger occupancy (active buses)">
+        <Card title="Passenger occupancy">
           <div className="space-y-3.5">
             {Object.entries(OCCUPANCY).map(([k, o]) => (
               <div key={k} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
@@ -88,13 +102,13 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xs text-slate-500">Passenger counts shown per active bus.</p>
+          <p className="mt-4 text-xs text-slate-500">{passengerLocations.length ? `Counts received from ${passengerLocations.length} bus(es).` : 'No passenger-counter feed is connected.'}</p>
         </Card>
 
         {settings.showMapPreview ? (
           <Card title="Map preview" action={<Link to="/admin/map" className="text-xs font-semibold text-brand hover:underline">Open map</Link>} bodyClass="p-2">
             <MapView stops={stops.filter((s) => s.status === 'Active')} routes={mapRoutes} buses={mapBuses} className="h-56" scrollWheelZoom={false} />
-            <p className="px-2 pb-1 pt-2 text-[11px] text-slate-500">Bus positions are shown along route lines.</p>
+            <p className="px-2 pb-1 pt-2 text-[11px] text-slate-500">{mapBuses.length ? 'Showing reported GPS positions only.' : 'No buses are reporting GPS positions.'}</p>
           </Card>
         ) : (
           <Card title="Map preview"><p className="text-sm text-slate-500">Hidden in Settings → Dashboard preferences.</p></Card>
@@ -102,8 +116,8 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2"><PassengerTrend buses={buses} /></div>
-        <RecentActivity emergencies={emergencies} reports={reports} logs={logs} />
+        <div className={settings.showRecentActivity ? 'xl:col-span-2' : 'xl:col-span-3'}><PassengerTrend locations={busLocations} /></div>
+        {settings.showRecentActivity && <RecentActivity emergencies={emergencies} reports={reports} logs={logs} />}
       </div>
     </>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlignLeft, ArrowLeft, Bus, Clock, Download, Eye, Hash, MapPin, ShieldAlert, Siren, TriangleAlert, CircleCheck, Activity, User } from 'lucide-react'
+import { AlignLeft, ArrowLeft, Bus, Clock, Download, Eye, Hash, MapPin, ShieldAlert, Siren, TriangleAlert, CircleCheck, Activity, User, Plus } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { StatCard, PageHeader } from '../components/Card.jsx'
@@ -9,10 +9,12 @@ import Badge from '../components/Badge.jsx'
 import DataTable from '../components/DataTable.jsx'
 import useHighlight from '../hooks/useHighlight.js'
 import SearchFilterBar, { DateRange } from '../components/SearchFilterBar.jsx'
-import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import Modal from '../components/Modal.jsx'
+import Field from '../components/FormField.jsx'
 import { DetailHeader, InfoTile, SmallLabel, toneOf } from '../components/FormParts.jsx'
 import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
+import { inputClass } from '../utils/ui.js'
 import { EMERGENCY_SEVERITIES, EMERGENCY_STATUSES, INCIDENT_TYPES } from '../data/constants.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { exportCategory } from '../utils/exportConfig.js'
@@ -22,7 +24,7 @@ const SEV_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 }
 const unresolved = (e) => e.status !== 'Resolved'
 
 export default function EmergencyLogs() {
-  const { emergencies, updateEmergencyStatus } = useAdminData()
+  const { emergencies, buses, routes, createEmergency, updateEmergencyStatus } = useAdminData()
   const { notify } = useToast()
   const [q, setQ] = useState('')
   const [sev, setSev] = useState('')
@@ -33,6 +35,10 @@ export default function EmergencyLogs() {
   const [viewId, setViewId] = useState(null)
   const [newStatus, setNewStatus] = useState('')
   const [confirm, setConfirm] = useState(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [form, setForm] = useState({ type: '', busId: '', routeId: '', location: '', description: '', severity: 'Medium', reportedBy: 'Administrator', status: 'New' })
+  const [formError, setFormError] = useState('')
+  const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
   const highlight = useHighlight()
   // Arriving from a notification: clear filters so the picked incidents are definitely visible.
@@ -82,9 +88,35 @@ export default function EmergencyLogs() {
     if (view && newStatus && newStatus !== view.status) setConfirm({ id: view.id, from: view.status, status: newStatus })
   }
 
+  const submitIncident = async (event) => {
+    event.preventDefault()
+    if (!form.type || !form.location.trim() || !form.description.trim()) {
+      setFormError('Choose an incident type and enter its location and description.')
+      return
+    }
+    setSaving(true)
+    setFormError('')
+    try {
+      await createEmergency({
+        ...form,
+        busId: form.busId,
+        routeId: form.routeId || buses.find((bus) => bus.id === form.busId)?.routeId || '',
+        location: form.location.trim(),
+        description: form.description.trim(),
+      })
+      notify('Incident recorded.')
+      setForm({ type: '', busId: '', routeId: '', location: '', description: '', severity: 'Medium', reportedBy: 'Administrator', status: 'New' })
+      setFormOpen(false)
+    } catch (error) {
+      setFormError(error.message || 'Could not record the incident.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <>
-      <PageHeader title="Emergency Logs" description="Incident monitoring. Critical and High unresolved incidents are highlighted and listed first." actions={<><Button icon={ArrowLeft} variant="secondary" onClick={() => navigate('/admin/dashboard')}>Back to Dashboard</Button><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button></>} />
+      <PageHeader title="Emergency Logs" description="Manually recorded incidents. No emergency dispatch service is connected." actions={<><Button icon={ArrowLeft} variant="secondary" onClick={() => navigate('/admin/dashboard')}>Back to Dashboard</Button><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Plus} onClick={() => setFormOpen(true)}>Record incident</Button></>} />
       <div className="mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard icon={Siren} label="Total emergencies" value={emergencies.length} />
         <StatCard icon={Activity} label="Active incidents" value={emergencies.filter(unresolved).length} tone="amber" sub="Not yet resolved" />
@@ -102,7 +134,49 @@ export default function EmergencyLogs() {
       >
         <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </SearchFilterBar>
-      <DataTable columns={columns} rows={rows} rowClassName={rowClass} highlightKeys={highlight} emptyTitle="No incidents match" />
+      <DataTable columns={columns} rows={rows} rowClassName={rowClass} highlightKeys={highlight} emptyTitle="No incidents match" emptyHint="Record an incident here or connect an incident feed." />
+
+      <Modal
+        open={formOpen}
+        onClose={() => { if (!saving) setFormOpen(false) }}
+        title="Record incident"
+        footer={<><Button variant="secondary" onClick={() => setFormOpen(false)} disabled={saving}>Cancel</Button><Button type="submit" form="incident-form" disabled={saving}>{saving ? 'Saving…' : 'Record incident'}</Button></>}
+      >
+        <form id="incident-form" onSubmit={submitIncident} noValidate className="space-y-4">
+          {formError && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Incident type" required>
+              <Select value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))}>
+                <option value="">Select type</option>
+                {INCIDENT_TYPES.map((item) => <option key={item}>{item}</option>)}
+              </Select>
+            </Field>
+            <Field label="Severity" required>
+              <Select value={form.severity} onChange={(event) => setForm((current) => ({ ...current, severity: event.target.value }))}>
+                {EMERGENCY_SEVERITIES.map((item) => <option key={item}>{item}</option>)}
+              </Select>
+            </Field>
+            <Field label="Bus">
+              <Select value={form.busId} onChange={(event) => setForm((current) => ({ ...current, busId: event.target.value, routeId: '' }))}>
+                <option value="">No bus specified</option>
+                {buses.map((bus) => <option key={bus.id} value={bus.id}>{bus.id} · {bus.plate}</option>)}
+              </Select>
+            </Field>
+            <Field label="Route">
+              <Select value={form.routeId} onChange={(event) => setForm((current) => ({ ...current, routeId: event.target.value }))}>
+                <option value="">Use bus route / none</option>
+                {routes.map((route) => <option key={route.id} value={route.id}>{route.id} · {route.name}</option>)}
+              </Select>
+            </Field>
+          </div>
+          <Field label="Location" required>
+            <input className={inputClass(false)} value={form.location} onChange={(event) => setForm((current) => ({ ...current, location: event.target.value }))} />
+          </Field>
+          <Field label="Description" required>
+            <textarea className={`${inputClass(false)} min-h-24`} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
+          </Field>
+        </form>
+      </Modal>
 
       <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Incident ${view.id}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (
@@ -149,7 +223,15 @@ export default function EmergencyLogs() {
         confirmLabel={confirm?.status === 'Resolved' ? 'Mark resolved' : 'Update status'}
         message={confirm ? `${confirm.id} will change from “${confirm.from}” to “${confirm.status}”. This is recorded in the system logs.` : ''}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => { updateEmergencyStatus(confirm.id, confirm.status); notify(`${confirm.id} updated to ${confirm.status}.`); setConfirm(null) }}
+        onConfirm={async () => {
+          try {
+            await updateEmergencyStatus(confirm.id, confirm.status)
+            notify(`${confirm.id} updated to ${confirm.status}.`)
+            setConfirm(null)
+          } catch (error) {
+            notify(error.message || 'Could not update the incident.', 'error')
+          }
+        }}
       />
     </>
   )

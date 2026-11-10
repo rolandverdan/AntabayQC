@@ -1,6 +1,6 @@
 # ANTABAY QC: unified Admin, Conductor and Commuter app
 
-One React + Vite + Tailwind CSS 4 app. Admin is desktop-first; Conductor and Commuter are mobile-first. Email/password and Google sign-in use Firebase Authentication; most of the other app data is still demonstration data.
+One React + Vite + Tailwind CSS 4 app. Admin is desktop-first; Conductor and Commuter are mobile-first. Admin records and sign-in use Firebase; the Conductor and Commuter experiences still contain demo data outside the report-submission flow.
 
 ## Run it
 
@@ -18,23 +18,44 @@ Commuters can create Firebase accounts at `/signup` or sign in with Google from 
 
 | Account | Username | Password | Opens |
 |---|---|---|---|
-| Admin | `admin` or `admin@antabayqc.com` | `Admin123!` | `/admin/dashboard` |
-| Conductor | Firebase Authentication account with Firestore role `conductor` | Set in Firebase Authentication | `/conductor/map` |
+| Firebase Admin | Administrator account created in Firebase Authentication with Firestore role `admin` | Set in Firebase Authentication | `/admin/dashboard` |
+| Conductor | Created from Admin → Accounts | Set when the account is created | `/conductor/map` |
+| Driver | Admin-managed staff record; no sign-in account | — | — |
 | Commuter | `commuter` | `Commuter123!` | `/commuter/home` |
 
 All three sides share the Admin sidebar (icon-only, expands on hover, pin button in the header, drawer on phones) and the Admin header.
 
+## Admin database setup
+
+The Admin console uses Firestore as its source of truth. It starts with **empty** buses, routes, stops, accounts, reports, emergencies, and logs; no sample records are copied from browser storage. Firestore collections are created automatically when the first record is saved (Firestore has collections/documents, not SQL tables).
+
+1. In the `antabayqc` Firebase project, enable Email/Password sign-in and create a Firestore database.
+2. Create the first administrator in Firebase Authentication. In Firestore, create `users/{that-auth-user-uid}` with `displayName`, `email`, `phone`, and `role: "admin"` (plus `createdAt` and `updatedAt` timestamps). Admin roles must be assigned by a trusted administrator; users cannot grant themselves admin access.
+3. From the repository root, install/use the Firebase CLI, sign in, and deploy the rules and account-provisioning functions:
+
+   ```bash
+   npx firebase-tools login
+   npx firebase-tools deploy --only firestore:rules,functions
+   ```
+
+   Cloud Functions deployment requires a Firebase plan that supports Functions and the project selected in `.firebaserc`. Functions run on Node.js 22.
+4. Sign in with the administrator account. Add stops and routes, then buses and staff. Driver entries are directory-only. Creating a Conductor also creates a Firebase Authentication account through a callable Cloud Function.
+
+Collections used by the Admin console: `buses`, `routes`, `stops`, `accounts`, `reports`, `emergencies`, `logs`, `adminSettings`, and `busLocations`. Bus, route, and stop records are readable by the public commuter pages; administrative records are restricted by `firestore.rules`. Commuter report submissions are written to `reports`; only signed-in commuters can submit them.
+
+The Live Bus Map does not simulate vehicle movement. It reads `busLocations` documents only; no GPS/device integration is configured, and client writes to that collection are denied. A trusted GPS service must be connected before live locations, speed, ETA, or passenger counts appear. Emergency records can be entered manually in Admin → Emergency Logs; no dispatch service is connected.
+
 ## Security note
 
-Firebase Authentication verifies email/password and Google sign-ins. Each signed-in Firebase account is routed according to its Firestore `users/{uid}.role` (`commuter`, `conductor`, or `admin`); admin and commuter demo credentials remain available for frontend testing, but conductor demo credentials are disabled. The UI route guards are client-side only and are not a security boundary. Protect any real admin/conductor data with trusted server-side authorization (for example, Firebase custom claims and corresponding security rules). Only one role can be active in the UI at a time.
+Firebase Authentication verifies email/password and Google sign-ins. Each signed-in Firebase account is routed according to its Firestore `users/{uid}.role` (`commuter`, `conductor`, or `admin`). The Admin UI route guard is not a security boundary; Firestore rules and callable functions enforce administrator access. The first admin profile must be assigned in the Firebase console by a trusted project owner.
 
-Before testing Firebase sign-in, enable **Email/Password** and **Google** under Firebase Console → Authentication → Sign-in method, add the app's local/deployed host to Authorized domains, and create a Firestore database. Publish the included `firestore.rules` in Firestore's Rules tab. Each Firebase user gets a `users/{uid}` document with `role: "commuter"` by default. To change it manually, open Firestore Data → `users` → the user's document and edit `role` to `commuter`, `conductor`, or `admin`. A Firestore document alone does not create login credentials: the account must also exist in Firebase Authentication → Users. Changing the role controls which frontend area opens, but production authorization requires trusted server-side authorization (such as custom claims and matching security rules).
+Before testing sign-in, add the app's local/deployed host to Firebase Authentication → Authorized domains. New commuter accounts get a `users/{uid}` document with `role: "commuter"` by default. Staff sign-ins are created by the deployed callable functions; a Firestore user document alone does not create login credentials.
 
 Firebase client configuration is in `src/firebase/firebase.js`; auth operations and user-profile helpers are grouped in `src/firebase/`. The phone number is saved to the user's Firestore profile and mirrored in this browser's commuter settings.
 
 ## Structure
 
-- `src/admin/` Admin side (unchanged apart from login, guard redirect and logout destination)
+- `src/admin/` Admin pages, Firebase-backed data context, account management and role-protected routes
 - `src/conductor/` Conductor side merged from the separate project (uses the shared Admin sidebar and header)
 - `src/commuter/` Commuter side (Admin sidebar and header, `CommuterContext`)
 - `src/shared/` Shared `AuthShell` (login layout), `BrandBackdrop` (the Quezon Memorial Circle image treatment), `Logo`

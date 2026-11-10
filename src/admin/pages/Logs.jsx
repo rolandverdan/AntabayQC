@@ -58,7 +58,7 @@ export default function Logs() {
     <>
       <PageHeader
         title="System Logs"
-        description="Administrative and system activity. New entries appear here when you perform actions in this session."
+        description="Persisted administrative activity, updated from Firestore."
         actions={<Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button>}
       />
       <SearchFilterBar

@@ -45,7 +45,14 @@ export default function ReportLogs() {
   )
   const view = reports.find((r) => r.id === viewId)
 
-  const applyStatus = (id, s) => { updateReportStatus(id, s); notify(`Report ${id} marked ${s}.`) }
+  const applyStatus = async (id, s) => {
+    try {
+      await updateReportStatus(id, s)
+      notify(`Report ${id} marked ${s}.`)
+    } catch (error) {
+      notify(error.message || 'Could not update the report.', 'error')
+    }
+  }
   const requestUpdate = () => {
     if (!view || !newStatus || newStatus === view.status) return
     if (newStatus === 'Resolved' || newStatus === 'Dismissed') setConfirm({ id: view.id, status: newStatus })
@@ -137,7 +144,10 @@ export default function ReportLogs() {
         open={!!confirm} title={`Mark report as ${confirm?.status}?`} tone={confirm?.status === 'Resolved' ? 'success' : 'primary'} confirmLabel={`Mark ${confirm?.status}`}
         message={confirm ? `Report ${confirm.id} will be marked ${confirm.status}.` : ''}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => { applyStatus(confirm.id, confirm.status); setConfirm(null) }}
+        onConfirm={async () => {
+          await applyStatus(confirm.id, confirm.status)
+          setConfirm(null)
+        }}
       />
     </>
   )

@@ -12,7 +12,6 @@ import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import Field from '../components/FormField.jsx'
 import DetailGrid from '../components/DetailGrid.jsx'
-import OccupancyBar from '../components/OccupancyBar.jsx'
 import { inputClass } from '../utils/ui.js'
 import { includesText, nextId } from '../utils/format.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
@@ -34,6 +33,7 @@ export default function CreateBuses() {
   const [errors, setErrors] = useState({})
   const [viewId, setViewId] = useState(null)
   const [confirm, setConfirm] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   const blank = () => ({ id: nextId('BUS', buses), plate: '', model: '', capacity: 50, routeId: '', driverId: '', conductorId: '', status: 'Active' })
   const openCreate = () => { setErrors({}); setIsEdit(false); setForm(blank()) }
@@ -57,12 +57,13 @@ export default function CreateBuses() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  const submit = (ev) => {
+  const submit = async (ev) => {
     ev.preventDefault()
     const e = {}
     const id = form.id.trim().toUpperCase()
     const plate = form.plate.trim().toUpperCase()
     if (!id) e.id = 'Bus ID is required.'
+    else if (id.includes('/')) e.id = 'Bus ID cannot contain a slash.'
     else if (!isEdit && buses.some((b) => b.id === id)) e.id = 'Bus ID already exists.'
     if (!/^[A-Z0-9][A-Z0-9 -]{4,9}$/.test(plate)) e.plate = 'Enter a valid plate number, e.g. NCB 1234.'
     else if (buses.some((b) => b.id !== id && b.plate.toUpperCase() === plate)) e.plate = 'Plate number already registered.'
@@ -71,9 +72,20 @@ export default function CreateBuses() {
     if (!Number.isInteger(cap) || cap < 10 || cap > 120) e.capacity = 'Capacity must be a whole number from 10 to 120.'
     setErrors(e)
     if (Object.keys(e).length) return
-    saveBus({ ...form, id, plate, model: form.model.trim(), capacity: cap, passengers: Math.min(form.passengers || 0, cap) })
-    notify(`Bus ${id} ${isEdit ? 'updated' : 'added'} successfully.`)
-    setForm(null)
+    const busDetails = { ...form }
+    delete busDetails.passengers
+    delete busDetails.speed
+    delete busDetails.progress
+    setSaving(true)
+    try {
+      await saveBus({ ...busDetails, id, plate, model: form.model.trim(), capacity: cap })
+      notify(`Bus ${id} ${isEdit ? 'updated' : 'added'} successfully.`)
+      setForm(null)
+    } catch (error) {
+      notify(error.message || 'Could not save the bus.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const staffOptions = (type, field) =>
@@ -109,7 +121,14 @@ export default function CreateBuses() {
           <IconButton icon={Eye} title="View details" onClick={() => setViewId(b.id)} />
           <IconButton icon={Pencil} title="Edit" onClick={() => openEdit(b)} />
           {b.status === 'Inactive'
-            ? <IconButton icon={CircleCheck} tone="success" title="Reactivate" onClick={() => { setBusStatus(b.id, 'Active'); notify(`${b.id} reactivated.`) }} />
+            ? <IconButton icon={CircleCheck} tone="success" title="Reactivate" onClick={async () => {
+                try {
+                  await setBusStatus(b.id, 'Active')
+                  notify(`${b.id} reactivated.`)
+                } catch (error) {
+                  notify(error.message || 'Could not reactivate the bus.', 'error')
+                }
+              }} />
             : <IconButton icon={Ban} tone="danger" title="Deactivate" onClick={() => setConfirm(b)} />}
         </div>
       ),
@@ -131,7 +150,7 @@ export default function CreateBuses() {
 
       <Modal
         open={!!form} onClose={() => setForm(null)} title={isEdit ? `Edit ${form?.id}` : 'Add bus'}
-        footer={<><Button variant="secondary" onClick={() => setForm(null)}>Cancel</Button><Button type="submit" form="bus-form">{isEdit ? 'Save changes' : 'Add bus'}</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setForm(null)} disabled={saving}>Cancel</Button><Button type="submit" form="bus-form" disabled={saving}>{saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add bus'}</Button></>}
       >
         {form && (
           <form id="bus-form" onSubmit={submit} noValidate className="space-y-7 pb-3">
@@ -181,7 +200,7 @@ export default function CreateBuses() {
             ]} muted />
             <div>
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Passenger occupancy</p>
-              <OccupancyBar passengers={view.passengers} capacity={view.capacity} />
+              <p className="text-xs text-slate-500">Live passenger count is unavailable until a passenger-counter feed is connected.</p>
             </div>
           </div>
         )}
@@ -191,7 +210,15 @@ export default function CreateBuses() {
         open={!!confirm} title="Deactivate bus?" confirmLabel="Deactivate"
         message={confirm ? `${confirm.id} (${confirm.plate}) will be set to Inactive and will stop moving on the live map. You can reactivate it later.` : ''}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => { setBusStatus(confirm.id, 'Inactive'); notify(`${confirm.id} deactivated.`); setConfirm(null) }}
+        onConfirm={async () => {
+          try {
+            await setBusStatus(confirm.id, 'Inactive')
+            notify(`${confirm.id} deactivated.`)
+            setConfirm(null)
+          } catch (error) {
+            notify(error.message || 'Could not deactivate the bus.', 'error')
+          }
+        }}
       />
     </>
   )

@@ -53,8 +53,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <AdminDataProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <AdminDataProvider>
             <ConductorProvider>
               <CommuterProvider>
                 <Routes>
@@ -137,8 +137,8 @@ export default function App() {
                 </Routes>
               </CommuterProvider>
             </ConductorProvider>
-          </AuthProvider>
-        </AdminDataProvider>
+          </AdminDataProvider>
+        </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
   )

@@ -17,7 +17,7 @@ import Avatar from '../components/Avatar.jsx'
 import AvatarPicker from '../components/AvatarPicker.jsx'
 import { Section, LockedChip, PasswordChecklist, passwordMeetsRules } from '../components/FormParts.jsx'
 import { inputClass } from '../utils/ui.js'
-import { fmtDate, includesText } from '../utils/format.js'
+import { fmtDate, includesText, nextId } from '../utils/format.js'
 import { ACCOUNT_STATUSES, ROLES } from '../data/constants.js'
 import Select from '../../shared/components/Select.jsx'
 
@@ -40,7 +40,7 @@ function nextEmployeeId(accounts, type) {
 const EMPTY = { id: '', type: 'Driver', firstName: '', lastName: '', avatar: '', employeeId: '', username: '', contact: '', busId: '', status: 'Active', password: '', confirm: '' }
 
 export default function CreateAccount() {
-  const { accounts, buses, saveAccount, setAccountStatus, addLog } = useAdminData()
+  const { accounts, buses, saveAccount, setAccountStatus, resetConductorPassword } = useAdminData()
   const { notify } = useToast()
   const [params, setParams] = useSearchParams()
 
@@ -53,6 +53,7 @@ export default function CreateAccount() {
   const [confirm, setConfirm] = useState(null)
   const [reset, setReset] = useState(null) // { account, password, confirm }
   const [resetErrors, setResetErrors] = useState({})
+  const [saving, setSaving] = useState(false)
 
   const busOf = (id) => buses.find((b) => b.driverId === id || b.conductorId === id)
   const openCreate = (type) => { setErrors({}); setForm({ ...EMPTY, type, employeeId: nextEmployeeId(accounts, type) }) }
@@ -85,42 +86,47 @@ export default function CreateAccount() {
     const e = {}
     if (!form.firstName.trim()) e.firstName = 'First name is required.'
     if (!form.lastName.trim()) e.lastName = 'Last name is required.'
-    if (!form.username.trim()) e.username = 'Email or username is required.'
-    else if (form.username.trim().length < 4) e.username = 'Must be at least 4 characters.'
-    else if (accounts.some((a) => a.id !== form.id && a.username.toLowerCase() === form.username.trim().toLowerCase())) e.username = 'Already in use.'
+    if (!form.username.trim()) e.username = 'Email is required.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.username.trim())) e.username = 'Enter a valid email address.'
+    else if (accounts.some((a) => a.id !== form.id && a.username?.toLowerCase() === form.username.trim().toLowerCase())) e.username = 'Already in use.'
     if (!/^(\+63|0)9\d{9}$/.test(form.contact.replace(/[\s-]/g, ''))) e.contact = 'Use a PH mobile number, e.g. 09171234567.'
-    if (!isEdit) {
+    if (!isEdit && form.type === 'Conductor') {
       if (!passwordMeetsRules(form.password)) e.password = 'Password does not meet all the requirements.'
       if (form.confirm !== form.password) e.confirm = 'Passwords do not match.'
     }
     return e
   }
 
-  const submit = (ev) => {
+  const submit = async (ev) => {
     ev.preventDefault()
     const e = validate()
     setErrors(e)
     if (Object.keys(e).length) return
-    const existing = accounts.find((a) => a.id === form.id)
-    // The password is validated here but intentionally never stored.
-    saveAccount(
-      {
-        id: form.id,
+    const accountId = form.id || nextId('ACC', accounts, 3)
+    const existing = accounts.find((a) => a.id === accountId)
+    setSaving(true)
+    try {
+      await saveAccount({
+        id: accountId,
         type: form.type,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         fullName: `${form.firstName.trim()} ${form.lastName.trim()}`,
         avatar: form.avatar || '',
         employeeId: form.employeeId,
-        username: form.username.trim(),
+        username: form.username.trim().toLowerCase(),
         contact: form.contact.replace(/[\s-]/g, ''),
         status: form.status,
+        uid: existing?.uid || '',
         createdAt: existing?.createdAt,
-      },
-      form.busId,
-    )
-    notify(`${form.type} account ${isEdit ? 'updated' : 'created'} successfully.`)
-    setForm(null)
+      }, form.busId, form.type === 'Conductor' && !isEdit ? form.password : undefined)
+      notify(`${form.type} account ${isEdit ? 'updated' : 'created'} successfully.`)
+      setForm(null)
+    } catch (error) {
+      notify(error.message || 'Could not save the staff account.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const openEdit = (a) => {
@@ -128,17 +134,23 @@ export default function CreateAccount() {
     setForm({ ...EMPTY, ...splitName(a.fullName), ...a, busId: busOf(a.id)?.id || '', password: '', confirm: '' })
   }
   const openReset = (a) => { setResetErrors({}); setReset({ account: a, password: '', confirm: '' }) }
-  const submitReset = (ev) => {
+  const submitReset = async (ev) => {
     ev.preventDefault()
     const e = {}
     if (!passwordMeetsRules(reset.password)) e.password = 'Password does not meet all the requirements.'
     if (reset.confirm !== reset.password) e.confirm = 'Passwords do not match.'
     setResetErrors(e)
     if (Object.keys(e).length) return
-    // The password is validated here but intentionally never stored (frontend demo).
-    addLog({ action: 'Password reset', module: 'Accounts', description: `Password reset for ${reset.account.fullName} (${reset.account.employeeId}).` })
-    notify(`Password reset for ${reset.account.fullName}.`)
-    setReset(null)
+    setSaving(true)
+    try {
+      await resetConductorPassword(reset.account.uid, reset.password)
+      notify(`Password reset for ${reset.account.fullName}.`)
+      setReset(null)
+    } catch (error) {
+      notify(error.message || 'Could not reset the password.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
   const view = accounts.find((a) => a.id === viewId)
 
@@ -157,10 +169,17 @@ export default function CreateAccount() {
         <div className="flex gap-0.5">
           <IconButton icon={Eye} title="View details" onClick={() => setViewId(a.id)} />
           <IconButton icon={Pencil} title="Edit" onClick={() => openEdit(a)} />
-          <IconButton icon={KeyRound} title="Reset password" onClick={() => openReset(a)} />
+          {a.type === 'Conductor' && <IconButton icon={KeyRound} title="Reset password" onClick={() => openReset(a)} />}
           {a.status === 'Active'
             ? <IconButton icon={UserX} tone="danger" title="Deactivate" onClick={() => setConfirm(a)} />
-            : <IconButton icon={UserCheck} tone="success" title="Reactivate" onClick={() => { setAccountStatus(a.id, 'Active'); notify(`${a.fullName} reactivated.`) }} />}
+            : <IconButton icon={UserCheck} tone="success" title="Reactivate" onClick={async () => {
+                try {
+                  await setAccountStatus(a.id, 'Active')
+                  notify(`${a.fullName} reactivated.`)
+                } catch (error) {
+                  notify(error.message || 'Could not reactivate the account.', 'error')
+                }
+              }} />}
         </div>
       ),
     },
@@ -185,7 +204,7 @@ export default function CreateAccount() {
 
       <Modal
         open={!!form} onClose={() => setForm(null)} title={form ? `${isEdit ? 'Edit' : 'Add'} ${form.type}` : ''}
-        footer={<><Button variant="secondary" onClick={() => setForm(null)}>Cancel</Button><Button type="submit" form="account-form">{isEdit ? 'Save changes' : 'Create account'}</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setForm(null)} disabled={saving}>Cancel</Button><Button type="submit" form="account-form" disabled={saving}>{saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create account'}</Button></>}
       >
         {form && (
           <form id="account-form" onSubmit={submit} noValidate className="space-y-7">
@@ -199,7 +218,7 @@ export default function CreateAccount() {
                 <Field label="First name" required error={errors.firstName}><input className={inputClass(errors.firstName)} value={form.firstName} onChange={set('firstName')} autoComplete="given-name" /></Field>
                 <Field label="Last name" required error={errors.lastName}><input className={inputClass(errors.lastName)} value={form.lastName} onChange={set('lastName')} autoComplete="family-name" /></Field>
                 <Field label="Contact number" required error={errors.contact}><input className={inputClass(errors.contact)} value={form.contact} onChange={set('contact')} placeholder="09171234567" inputMode="tel" /></Field>
-                <Field label="Email or username" required error={errors.username}><input className={inputClass(errors.username)} value={form.username} onChange={set('username')} /></Field>
+                <Field label="Email" required error={errors.username}><input type="email" autoComplete="email" className={inputClass(errors.username)} value={form.username} onChange={set('username')} /></Field>
               </div>
             </Section>
 
@@ -218,7 +237,11 @@ export default function CreateAccount() {
               </div>
             </Section>
 
-            {!isEdit && (
+            {form.type === 'Driver' && !isEdit && (
+              <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">Driver entries are stored in the staff directory only and do not receive a sign-in account.</p>
+            )}
+
+            {!isEdit && form.type === 'Conductor' && (
               <Section title="Security">
                 <div className="grid items-start gap-x-4 gap-y-5 sm:grid-cols-2">
                   <div className="space-y-5">
@@ -239,7 +262,7 @@ export default function CreateAccount() {
           <>
             <span className="mr-auto self-center text-xs text-slate-500">Created {fmtDate(view.createdAt)}</span>
             <Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>
-            <Button variant="secondary" icon={KeyRound} className="gap-1.5" onClick={() => { const a = view; setViewId(null); openReset(a) }}>Reset password</Button>
+            {view.type === 'Conductor' && <Button variant="secondary" icon={KeyRound} className="gap-1.5" onClick={() => { const a = view; setViewId(null); openReset(a) }}>Reset password</Button>}
             <Button icon={Pencil} className="gap-1.5" onClick={() => { const a = view; setViewId(null); openEdit(a) }}>Edit</Button>
           </>
         )}
@@ -264,7 +287,7 @@ export default function CreateAccount() {
 
       <Modal
         open={!!reset} onClose={() => setReset(null)} title="Reset password" size="sm"
-        footer={<><Button variant="secondary" onClick={() => setReset(null)}>Cancel</Button><Button type="submit" form="reset-form">Reset password</Button></>}
+        footer={<><Button variant="secondary" onClick={() => setReset(null)} disabled={saving}>Cancel</Button><Button type="submit" form="reset-form" disabled={saving}>{saving ? 'Resetting…' : 'Reset password'}</Button></>}
       >
         {reset && (
           <form id="reset-form" onSubmit={submitReset} noValidate className="space-y-6">
@@ -289,7 +312,15 @@ export default function CreateAccount() {
         open={!!confirm} title="Deactivate account?" confirmLabel="Deactivate"
         message={confirm ? `${confirm.fullName} (${confirm.employeeId}) will be set to Inactive and removed from any assigned bus. You can reactivate the account later.` : ''}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => { setAccountStatus(confirm.id, 'Inactive'); notify(`${confirm.fullName} deactivated.`); setConfirm(null) }}
+        onConfirm={async () => {
+          try {
+            await setAccountStatus(confirm.id, 'Inactive')
+            notify(`${confirm.fullName} deactivated.`)
+            setConfirm(null)
+          } catch (error) {
+            notify(error.message || 'Could not deactivate the account.', 'error')
+          }
+        }}
       />
     </>
   )

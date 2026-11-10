@@ -9,7 +9,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import { signOutFirebaseUser } from '../../firebase/auth.js'
 
 export default function AdminLayout() {
-  const { settings, addLog } = useAdminData()
+  const { settings, addLog, dataStatus, dataError, retryData } = useAdminData()
   const { user, logout } = useAuth()
   const { notify } = useToast()
   const navigate = useNavigate()
@@ -24,16 +24,40 @@ export default function AdminLayout() {
 
   const doLogout = async () => {
     try {
-      if (user?.firebaseAuthenticated) await signOutFirebaseUser()
-      addLog({ action: 'Admin logged out', module: 'Authentication', description: 'Administrator signed out.' })
+      if (user?.firebaseAuthenticated) {
+        try {
+          await addLog({ action: 'Admin logged out', module: 'Authentication', description: 'Administrator signed out.' })
+        } catch (error) {
+          console.error('Could not write the logout audit log:', error)
+          notify('You were signed out, but the logout could not be recorded.', 'error')
+        }
+        await signOutFirebaseUser()
+      }
       setConfirmLogout(false)
       logout()
-      notify('You have been logged out.', 'info')
+      if (!user?.firebaseAuthenticated) notify('You have been logged out.', 'info')
       navigate('/', { replace: true })
     } catch (error) {
       console.error('Firebase sign-out failed:', error)
       notify('Could not sign out. Please try again.', 'error')
     }
+  }
+
+  if (dataStatus === 'loading') {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Loading administrator data…</div>
+  }
+
+  if (dataStatus === 'error') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-lg rounded-xl border border-red-200 bg-white p-6 shadow-sm">
+          <h1 className="text-lg font-bold text-navy">Could not load administrator data</h1>
+          <p className="mt-2 text-sm text-slate-600">{dataError}</p>
+          <p className="mt-2 text-xs text-slate-500">Check your connection, Firebase setup, and published Firestore rules.</p>
+          <button type="button" onClick={retryData} className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">Retry</button>
+        </div>
+      </div>
+    )
   }
 
   return (
