@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { computeBusLive, haversineKm } from '../../admin/utils/geo.js'
 import { VEHICLE, ROUTE, STOPS_BY_ID } from '../data/mock.js'
 
-function routeProgressForPosition(position) {
-  const points = ROUTE.stopIds.map((id) => STOPS_BY_ID[id]).filter(Boolean)
+// Fraction (0..1) of the way along a route's stops that is closest to a GPS position.
+// `points` defaults to the demo route; the live feed passes the bus's real route stops.
+export function routeProgressForPosition(position, points = ROUTE.stopIds.map((id) => STOPS_BY_ID[id]).filter(Boolean)) {
+  if (points.length < 2) return null
   const lengths = points.slice(1).map((point, index) => haversineKm(points[index], point))
   const totalLength = lengths.reduce((total, length) => total + length, 0)
   if (!totalLength) return null

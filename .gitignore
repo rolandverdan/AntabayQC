@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ESP32-CAM Wi-Fi credentials (never commit)
+firmware/**/secrets.h
+# ESP32-CAM compiled files (they contain the Wi-Fi password)
+firmware/**/build/

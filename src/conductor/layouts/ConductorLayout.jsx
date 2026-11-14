@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { TriangleAlert, X } from 'lucide-react'
 import Sidebar from '../../admin/layouts/Sidebar.jsx'
 import { NAV_ITEMS } from './navItems.js'
@@ -10,13 +10,26 @@ import ConfirmDialog from '../../admin/components/ConfirmDialog.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import useVehicleLocation from '../utils/useVehicleLocation.js'
+import useBusFeed from '../utils/useBusFeed.js'
+import { CameraPanel } from '../pages/CameraPage.jsx'
 import { signOutFirebaseUser } from '../../firebase/auth.js'
 
 export default function ConductorLayout() {
-  const { session, logout, sosReport, setSosReport } = useConductor()
+  const { session, logout, sosReport, setSosReport, passengerCount, passengerEntries, passengerExits } = useConductor()
   const { notify } = useToast()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const location = useVehicleLocation()
+  // Runs for the whole conductor session (not just one page) so the admin side keeps getting updates.
+  const feed = useBusFeed({
+    uid: session?.uid || '',
+    position: location.position,
+    speed: location.speed,
+    gpsAccuracy: location.gpsAccuracy,
+    passengers: passengerCount,
+    entries: passengerEntries,
+    exits: passengerExits,
+  })
 
   // Same behaviour as Admin: icon-only by default, expands while hovered/focused, pin button in the header.
   const [collapsed, setCollapsed] = useState(true)
@@ -73,7 +86,9 @@ export default function ConductorLayout() {
         )}
         {/* Bottom padding = bottom-nav height + breathing room, so the fixed nav never covers content. */}
         <main id="main" className="px-4 pt-4 pb-[calc(var(--bottom-nav-h)+1rem)] md:px-6 md:pt-6 lg:pb-6">
-          <Outlet context={{ ...location, requestLogout: () => setConfirmLogout(true) }} />
+          <Outlet context={{ ...location, feed, requestLogout: () => setConfirmLogout(true) }} />
+          {/* Always mounted so door cameras keep counting while other conductor pages are open. */}
+          <CameraPanel feed={feed} visible={pathname.replace(/\/+$/, '') === '/conductor/camera'} />
         </main>
       </div>
 

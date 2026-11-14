@@ -50,6 +50,12 @@ export function ConductorProvider({ children }) {
     }))
   }, [])
 
+  // Manual correction by the conductor (+1 / −1). Changes the onboard total only; the
+  // entry/exit totals stay as the camera counted them.
+  const adjustPassengerCount = useCallback((delta) => {
+    setPassengerTotals((current) => ({ ...current, count: Math.max(0, current.count + delta) }))
+  }, [])
+
   const setPassengerCount = useCallback((count) => {
     if (!Number.isSafeInteger(count) || count < 0) return false
     setPassengerTotals((current) => ({ ...current, count }))
@@ -112,6 +118,7 @@ export function ConductorProvider({ children }) {
     passengerExits: passengerTotals.exits,
     recordPassengerCrossing,
     setPassengerCount,
+    adjustPassengerCount,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
