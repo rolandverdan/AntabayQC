@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../../firebase/firebase.js'
+import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { auth, db } from '../../firebase/firebase.js'
 import { signOutFirebaseUser } from '../../firebase/auth.js'
 import { ensureUserProfile, getUserRole, watchUserProfile } from '../../firebase/userProfiles.js'
 import { saveCommuterProfile } from '../data/accounts.js'
@@ -21,6 +22,7 @@ function readSession() {
 export function CommuterProvider({ children }) {
   const [session, setSession] = useState(readSession)
   const [userProfile, setUserProfile] = useState(null)
+  const [reportsState, setReportsState] = useState({ uid: '', reports: [], status: 'ready', error: '' })
 
   useEffect(() => {
     let stopProfile = null
@@ -102,6 +104,33 @@ export function CommuterProvider({ children }) {
     }
   }, [])
 
+  useEffect(() => {
+    const uid = userProfile?.role === 'commuter' ? userProfile.uid : ''
+    if (!uid) return undefined
+    return onSnapshot(
+      query(collection(db, 'reports'), where('createdBy', '==', uid)),
+      (snapshot) => {
+        const reports = snapshot.docs.map((item) => {
+          const report = item.data()
+          return {
+            ...report,
+            id: report.id || item.id,
+            datetime: report.datetime || report.createdAt?.toDate?.().toISOString() || '',
+          }
+        })
+        setReportsState({ uid, reports, status: 'ready', error: '' })
+      },
+      (error) => {
+        console.error('Could not load commuter reports from Firestore:', error)
+        setReportsState({ uid, reports: [], status: 'error', error: error.message || 'Your reports could not be loaded.' })
+      },
+    )
+  }, [userProfile?.role, userProfile?.uid])
+
+  const activeReportState = reportsState.uid === (userProfile?.role === 'commuter' ? userProfile.uid : '')
+    ? reportsState
+    : { reports: [], status: userProfile?.role === 'commuter' ? 'loading' : 'ready', error: '' }
+
   // mode: 'guest' | 'account'
   const enter = useCallback((mode, identifier = '', firebaseAuthenticated = false, role = 'commuter') => {
     const next = { mode, identifier, role, firebaseAuthenticated, at: Date.now() }
@@ -132,7 +161,7 @@ export function CommuterProvider({ children }) {
     setSession(null)
   }, [])
 
-  return <Ctx.Provider value={{ session, userProfile, enter, leave, clearSession }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ session, userProfile, myReports: activeReportState.reports, myReportsStatus: activeReportState.status, myReportsError: activeReportState.error, enter, leave, clearSession }}>{children}</Ctx.Provider>
 }
 
 export function useCommuter() {

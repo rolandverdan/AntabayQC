@@ -1,17 +1,16 @@
-# Backend request: conductor live feed
+# Conductor live feed backend contract
 
-**For:** whoever owns `firestore.rules`
-**Why:** the conductor app sends each bus's live location and passenger count to `busLocations/{busId}`, which the admin Dashboard and Live Map already read. The current rules block it.
+The conductor app sends each bus's live location and passenger count to `busLocations/{busId}`. The Admin and commuter maps read these records. Deploy the repository Firestore rules to enable the feed:
 
-## What to do
+```bash
+npx firebase-tools deploy --only firestore:rules
+```
 
-1. Add the rules below to `firestore.rules`.
-2. Publish: `firebase deploy --only firestore:rules`
-3. In the admin pages, assign a bus (with a capacity) to a conductor account.
+Assign an active bus to a conductor account in Admin before testing.
 
 ## Rules
 
-**Replace** the `accounts` match. A conductor can read only their own record, which the app uses to find their bus.
+The `accounts` rule lets a conductor read only their own record, which the app uses to find their bus.
 
 ```
 match /accounts/{accountId} {
@@ -20,7 +19,7 @@ match /accounts/{accountId} {
 }
 ```
 
-**Add** these functions next to `isAdmin()`:
+These functions validate the assigned conductor and the live-feed schema:
 
 ```
 function isConductor() {
@@ -31,7 +30,7 @@ function isConductor() {
 // The signed-in conductor is the Active account assigned to this bus.
 function isAssignedConductor(busId) {
   let bus = get(/databases/$(database)/documents/buses/$(busId)).data;
-  let account = get(/databases/$(database)/documents/accounts/$(bus.conductorId)).data;
+  let account = get(/databases/$(database)/documents/accounts/$(bus.get('conductorId', ''))).data;
   return isConductor()
     && bus.get('conductorId', '') != ''
     && account.uid == request.auth.uid
@@ -49,14 +48,15 @@ function optionalCount(data, key) {
 function validBusLocation(busId) {
   let data = request.resource.data;
   return data.keys().hasOnly([
-      'busId', 'conductorUid', 'source', 'updatedAt',
+      'busId', 'source', 'updatedAt',
       'lat', 'lng', 'speed', 'heading', 'accuracy',
       'passengers', 'entries', 'exits', 'nextStopId', 'nextStopName'
     ])
+    && data.keys().hasAll(['busId', 'source', 'updatedAt', 'passengers', 'entries', 'exits'])
     && data.busId == busId
-    && data.conductorUid == request.auth.uid
     && data.source == 'conductor-phone'
     && data.updatedAt == request.time
+    && (('lat' in data) == ('lng' in data))
     && optionalNumber(data, 'lat', -90, 90)
     && optionalNumber(data, 'lng', -180, 180)
     && optionalNumber(data, 'speed', 0, 200)
@@ -68,13 +68,24 @@ function validBusLocation(busId) {
     && (!('nextStopId' in data) || (data.nextStopId is string && data.nextStopId.size() <= 100))
     && (!('nextStopName' in data) || (data.nextStopName is string && data.nextStopName.size() <= 200));
 }
+
+function isPublicBusLocation(busId) {
+  let data = resource.data;
+  return data.keys().hasOnly([
+      'busId', 'source', 'updatedAt',
+      'lat', 'lng', 'speed', 'heading', 'accuracy',
+      'passengers', 'entries', 'exits', 'nextStopId', 'nextStopName'
+    ])
+    && data.keys().hasAll(['busId', 'source', 'updatedAt'])
+    && data.busId == busId;
+}
 ```
 
 **Replace** the `busLocations` match:
 
 ```
 match /busLocations/{busId} {
-  allow read: if isAdmin() || isAssignedConductor(busId);
+  allow read: if isAdmin() || isPublicBusLocation(busId);
   allow create, update: if isAssignedConductor(busId) && validBusLocation(busId);
   allow delete: if false;
 }
@@ -85,7 +96,6 @@ match /busLocations/{busId} {
 | Field | Type | Notes |
 |---|---|---|
 | busId | string | same as the document id |
-| conductorUid | string | sender's Firebase Auth uid |
 | source | string | always `conductor-phone` |
 | updatedAt | timestamp | server time |
 | lat, lng | number | only while phone GPS is on |
@@ -96,7 +106,7 @@ match /busLocations/{busId} {
 | entries, exits | int | door-camera totals |
 | nextStopId, nextStopName | string | from the bus's route |
 
-The app sends right away when the passenger count changes, and otherwise every 15 seconds, never more often than once every 5 seconds. That's about 4 writes a minute per bus.
+The rules verify the authenticated conductor against the assigned account and bus before accepting writes. Only records in the public field allowlist are visible to commuter pages; the caller's UID is not stored in the publicly readable location document. The app sends right away when the passenger count changes, and otherwise every 15 seconds, never more often than once every 5 seconds. That's about 4 writes a minute per bus.
 
 ## How to check it works
 

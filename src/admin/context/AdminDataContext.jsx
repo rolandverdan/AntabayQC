@@ -19,7 +19,7 @@ import { useAuth } from './AuthContext.jsx'
 
 const Ctx = createContext(null)
 const COLLECTIONS = ['buses', 'routes', 'stops', 'accounts', 'logs', 'reports', 'emergencies', 'busLocations']
-const PUBLIC_COLLECTIONS = new Set(['buses', 'routes', 'stops'])
+const PUBLIC_COLLECTIONS = new Set(['buses', 'routes', 'stops', 'busLocations'])
 const EMPTY_SETTINGS = {
   name: '',
   email: '',

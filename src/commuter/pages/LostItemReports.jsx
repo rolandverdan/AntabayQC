@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
+import { useCommuter } from '../context/CommuterContext.jsx'
 import { Link } from 'react-router-dom'
 import LostItemHeader from '../components/LostItemHeader.jsx'
 import BackToSupport from '../components/BackToSupport.jsx'
@@ -15,38 +16,16 @@ import {
   X,
 } from 'lucide-react'
 
-const sampleReports = [
-  {
-    id: 'QC-LR-2026-0891',
-    title: 'Wallet & QC Resident Card',
-    status: 'Ready',
-    filed: 'Sep 30, 2026',
-    description: 'Brown leather bifold wallet with stamped initials “JDC”. Confirmed contents: Quezon City Citizen Q-ID, personalized Blue Beacon Bee Card, and minor cash envelope.',
-    route: 'Route 1 (QC Hall ↔ Cubao)',
-    bus: 'Bus #1042',
-    priority: true,
-  },
-  {
-    id: 'QC-LR-2026-1008',
-    title: 'Backpack',
-    status: 'In Review',
-    filed: 'Oct 8, 2026',
-    description: 'Navy backpack reported missing after a trip on Route 1.',
-    route: 'Route 1 (QC Hall ↔ Cubao)',
-    bus: 'Bus #1234',
-    priority: false,
-  },
-]
-
-const filters = ['All', 'Ready', 'In Review', 'Claimed']
+const filters = ['All', 'Ready', 'In Review', 'Closed']
 
 
 // Admin statuses -> what the commuter sees.
-const STATUS_FOR_COMMUTER = { Pending: 'In Review', 'Under Review': 'In Review', Resolved: 'Ready', Dismissed: 'Claimed' }
+const STATUS_FOR_COMMUTER = { Pending: 'In Review', 'Under Review': 'In Review', Resolved: 'Ready', Dismissed: 'Closed' }
 const fmtFiled = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
 export default function LostItemReports() {
-  const { reports: adminReports, routesById } = useAdminData()
+  const { routesById } = useAdminData()
+  const { myReports, myReportsStatus, myReportsError } = useCommuter()
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
   const [newestFirst, setNewestFirst] = useState(true)
@@ -72,13 +51,12 @@ export default function LostItemReports() {
     }
   }, [selectedReport])
 
-  // Reports this commuter filed (they arrive in the admin Report Logs) plus the demo samples.
   const reports = useMemo(() => {
-    const submitted = adminReports
-      .filter((r) => r.source === 'Commuter' && r.type === 'Lost Item')
+    return myReports
+      .filter((report) => report.type === 'Lost Item')
       .map((r) => ({
         id: r.caseRef || r.id,
-        title: r.description.split(':')[0] || 'Lost item',
+        title: String(r.description || '').split(':')[0] || 'Lost item',
         status: STATUS_FOR_COMMUTER[r.status] || 'In Review',
         filed: fmtFiled(r.datetime),
         description: r.description,
@@ -86,8 +64,7 @@ export default function LostItemReports() {
         bus: r.busId || r.otherBus || 'Bus not specified',
         priority: false,
       }))
-    return [...submitted, ...sampleReports]
-  }, [adminReports, routesById])
+  }, [myReports, routesById])
 
   const stats = useMemo(() => {
     const countBy = (status) => reports.filter((report) => report.status === status).length
@@ -95,7 +72,7 @@ export default function LostItemReports() {
       { label: 'Total Reports', value: reports.length, detail: 'Filed by you' },
       { label: 'Ready for Pickup', value: countBy('Ready'), detail: 'Bring a valid ID' },
       { label: 'In Review', value: countBy('In Review'), detail: 'Being checked by the depot' },
-      { label: 'Claimed', value: countBy('Claimed'), detail: 'Already returned to you' },
+      { label: 'Closed', value: countBy('Closed'), detail: 'The case is closed' },
     ]
   }, [reports])
 
@@ -169,7 +146,11 @@ export default function LostItemReports() {
 
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-4" aria-label="Lost item reports">
-          {filteredReports.length ? filteredReports.map((report) => (
+          {myReportsStatus === 'loading' ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500">Loading your lost-item reports…</div>
+          ) : myReportsStatus === 'error' ? (
+            <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-center text-sm text-red-700">{myReportsError}</div>
+          ) : filteredReports.length ? filteredReports.map((report) => (
             <article key={report.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
                 <div className="flex items-center gap-2 text-slate-600">
@@ -179,7 +160,7 @@ export default function LostItemReports() {
                 </div>
                 <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
                   report.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                  report.status === 'Claimed' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
+                  report.status === 'Closed' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
                 }`}>
                   {report.status === 'Ready' ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
                   {report.status === 'Ready' ? 'Ready for Pickup' : report.status}
@@ -210,7 +191,7 @@ export default function LostItemReports() {
             </article>
           )) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500">
-              No lost-item reports match your search.
+              {reports.length ? 'No lost-item reports match your search.' : 'You have not filed any lost-item reports yet.'}
             </div>
           )}
         </section>
@@ -258,7 +239,7 @@ export default function LostItemReports() {
               <span className="text-sm font-semibold text-slate-600">Claim status</span>
               <span className={`rounded-full px-3 py-1 text-sm font-bold ${
                 selectedReport.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                selectedReport.status === 'Claimed' ? 'bg-slate-200 text-slate-700' : 'bg-blue-100 text-blue-700'
+                selectedReport.status === 'Closed' ? 'bg-slate-200 text-slate-700' : 'bg-blue-100 text-blue-700'
               }`}>
                 {selectedReport.status === 'Ready' ? 'Ready for Pickup' : selectedReport.status}
               </span>

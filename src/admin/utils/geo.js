@@ -2,6 +2,17 @@ import { occupancyLevel, OCCUPANCY } from './occupancy.js'
 
 // Colours match the 3D bus images in /images/buses (bus-1 … bus-8): Route 1 red, 2 magenta, 3 yellow, 4 purple, 5 orange, 6 green, 7 blue, 8 light blue.
 export const ROUTE_COLORS = ['#244A9B', '#E3262C', '#EC0D8F', '#F9C80F', '#792D8B', '#F69627', '#06A553', '#4D73B5', '#3BB4FB']
+export const BUS_LOCATION_MAX_AGE_MS = 60_000
+
+export function isFreshBusLocation(location, now) {
+  const updatedAt = Date.parse(location?.updatedAt || '')
+  return Number.isFinite(location?.lat)
+    && Number.isFinite(location?.lng)
+    && Number.isFinite(updatedAt)
+    && now - updatedAt >= 0
+    && now - updatedAt <= BUS_LOCATION_MAX_AGE_MS
+}
+
 export const routeColor = (routeId = '', route) => {
   if (route?.color) return route.color
   const n = parseInt(/(\d+)$/.exec(routeId)?.[1] || '0', 10)

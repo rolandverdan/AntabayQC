@@ -16,6 +16,63 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'commuter';
     }
 
+    function isConductor() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'conductor';
+    }
+
+    function isAssignedConductor(busId) {
+      let bus = get(/databases/$(database)/documents/buses/$(busId)).data;
+      let account = get(/databases/$(database)/documents/accounts/$(bus.get('conductorId', ''))).data;
+      return isConductor()
+        && bus.get('conductorId', '') != ''
+        && account.uid == request.auth.uid
+        && account.status == 'Active';
+    }
+
+    function optionalNumber(data, key, low, high) {
+      return !(key in data) || (data[key] is number && data[key] >= low && data[key] <= high);
+    }
+
+    function optionalCount(data, key) {
+      return !(key in data) || (data[key] is int && data[key] >= 0 && data[key] <= 100000);
+    }
+
+    function validBusLocation(busId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'busId', 'source', 'updatedAt',
+          'lat', 'lng', 'speed', 'heading', 'accuracy',
+          'passengers', 'entries', 'exits', 'nextStopId', 'nextStopName'
+        ])
+        && data.keys().hasAll(['busId', 'source', 'updatedAt', 'passengers', 'entries', 'exits'])
+        && data.busId == busId
+        && data.source == 'conductor-phone'
+        && data.updatedAt == request.time
+        && (('lat' in data) == ('lng' in data))
+        && optionalNumber(data, 'lat', -90, 90)
+        && optionalNumber(data, 'lng', -180, 180)
+        && optionalNumber(data, 'speed', 0, 200)
+        && optionalNumber(data, 'heading', 0, 360)
+        && optionalNumber(data, 'accuracy', 0, 100000)
+        && optionalCount(data, 'passengers')
+        && optionalCount(data, 'entries')
+        && optionalCount(data, 'exits')
+        && (!('nextStopId' in data) || (data.nextStopId is string && data.nextStopId.size() <= 100))
+        && (!('nextStopName' in data) || (data.nextStopName is string && data.nextStopName.size() <= 200));
+    }
+
+    function isPublicBusLocation(busId) {
+      let data = resource.data;
+      return data.keys().hasOnly([
+          'busId', 'source', 'updatedAt',
+          'lat', 'lng', 'speed', 'heading', 'accuracy',
+          'passengers', 'entries', 'exits', 'nextStopId', 'nextStopName'
+        ])
+        && data.keys().hasAll(['busId', 'source', 'updatedAt'])
+        && data.busId == busId;
+    }
+
     match /users/{userId} {
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
       allow create: if signedIn()
@@ -58,7 +115,8 @@ service cloud.firestore {
     }
 
     match /accounts/{accountId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if isAdmin();
     }
 
     match /logs/{logId} {
@@ -67,7 +125,8 @@ service cloud.firestore {
     }
 
     match /reports/{reportId} {
-      allow read, update, delete: if isAdmin();
+      allow read: if isAdmin() || (isCommuter() && resource.data.createdBy == request.auth.uid);
+      allow update, delete: if isAdmin();
       allow create: if isCommuter()
         && request.resource.data.id == reportId
         && request.resource.data.createdBy == request.auth.uid
@@ -99,8 +158,9 @@ service cloud.firestore {
     }
 
     match /busLocations/{busId} {
-      allow read: if isAdmin();
-      allow write: if false;
+      allow read: if isAdmin() || isPublicBusLocation(busId);
+      allow create, update: if isAssignedConductor(busId) && validBusLocation(busId);
+      allow delete: if false;
     }
 
     match /adminSettings/{settingId} {

@@ -105,7 +105,7 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
       latest.current = null
       return
     }
-    const record = { busId, conductorUid: uid, source: 'conductor-phone', passengers, entries, exits }
+    const record = { busId, source: 'conductor-phone', passengers, entries, exits }
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       const here = { lat, lng }
       const tracker = headingRef.current

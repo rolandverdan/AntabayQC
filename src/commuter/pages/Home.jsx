@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -13,24 +13,30 @@ import {
   UserRound,
 } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
-import { routeColor } from '../../admin/utils/geo.js'
+import { isFreshBusLocation, routeColor } from '../../admin/utils/geo.js'
 import { useNotifications } from '../context/NotificationsContext.jsx'
 import { TONE_CLASSES } from '../data/notifications.js'
 
 const FAQS = [
-  { q: 'How do I know when my bus is arriving?', a: 'Open Live Tracking, pick your route, then tap a bus to see its next stop and estimated arrival.' },
+  { q: 'How do I know when my bus is arriving?', a: 'Open Live Tracking to see recent bus locations and next stops when a conductor GPS feed is available. Arrival-time estimates are not available yet.' },
   { q: 'What are the service hours?', a: 'QC Bus runs daily from 6:00 AM to 9:00 PM, except on holidays. Check Timetable for each route.' },
   { q: 'I left something on the bus. What do I do?', a: 'Go to Support, then Lost Item, and send a report. You can check its status there too.' },
 ]
 
 export default function CommuterHome() {
-  const { routes, buses } = useAdminData()
+  const { routes, buses, busLocationsById } = useAdminData()
   const { notifications, unreadCount } = useNotifications()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
+  const [now, setNow] = useState(Date.now)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 10_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const activeRoutes = routes.filter((r) => r.status === 'Active')
-  const activeBuses = buses.filter((b) => b.status === 'Active').length
+  const activeBuses = buses.filter((bus) => bus.status === 'Active' && isFreshBusLocation(busLocationsById[bus.id], now)).length
   const allOperational = routes.length > 0 && activeRoutes.length === routes.length
 
   const search = (event) => {
@@ -65,7 +71,7 @@ export default function CommuterHome() {
       to: '/commuter/live-tracking',
       icon: MapPinned,
       tile: 'bg-green-100 text-green-700',
-      summary: `${activeBuses} bus${activeBuses === 1 ? '' : 'es'} on the road right now`,
+      summary: `${activeBuses} bus${activeBuses === 1 ? '' : 'es'} reporting a live location`,
     },
     {
       title: 'Support',
@@ -102,7 +108,7 @@ export default function CommuterHome() {
           <p className="mt-1.5 text-lg font-bold leading-snug md:text-xl">
             {allOperational ? `All ${routes.length} Routes Operational` : `${activeRoutes.length} of ${routes.length} Routes Operational`}
             <span className="mx-2 font-normal text-white/40">|</span>
-            {activeBuses} Active Bus{activeBuses === 1 ? '' : 'es'}
+            {activeBuses} Live Bus{activeBuses === 1 ? '' : 'es'}
           </p>
           <p className="mt-0.5 text-xs text-blue-100">Service hours: 6:00 AM – 9:00 PM, Monday – Sunday</p>
 
