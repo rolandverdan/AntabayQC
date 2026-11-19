@@ -1,17 +1,13 @@
 import { useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
-import Sidebar from '../../admin/layouts/Sidebar.jsx'
 import CommuterHeader from './CommuterHeader.jsx'
 import BottomNav from './BottomNav.jsx'
 import ConfirmDialog from '../../admin/components/ConfirmDialog.jsx'
-import { navItemsFor } from './navItems.js'
 import { NotificationsProvider } from '../context/NotificationsContext.jsx'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import { useCommuter } from '../context/CommuterContext.jsx'
-
-const noop = () => {}
 
 export default function CommuterLayout() {
   const { settings } = useAdminData()
@@ -19,7 +15,8 @@ export default function CommuterLayout() {
   const { notify } = useToast()
   const { session, leave } = useCommuter()
   const isGuest = session?.mode === 'guest'
-  const locked = !!useLocation().state?.locked
+  const location = useLocation()
+  const locked = !!location.state?.locked
   const [confirmLogout, setConfirmLogout] = useState(false)
 
   const doLogout = async () => {
@@ -47,19 +44,9 @@ export default function CommuterLayout() {
   return (
     <NotificationsProvider>
       <div className="commuter-layout mobile-ui min-h-screen bg-[#eef3f7]" data-density={settings.density}>
-        {/* Desktop: sidebar always open with labels (easier to read). Phones: bottom bar instead. */}
-        <Sidebar
-          expanded
-          onHoverChange={noop}
-          mobileOpen={false}
-          onCloseMobile={noop}
-          onLogout={() => setConfirmLogout(true)}
-          commuterMode
-          items={navItemsFor(isGuest)}
-        />
-
-        <div className="pt-[var(--topbar-h)] lg:pl-64">
-          <CommuterHeader isGuest={isGuest} />
+        {/* Desktop navigation is in the header; phones use the bottom bar. */}
+        <div className="pt-[var(--topbar-h)]">
+          <CommuterHeader isGuest={isGuest} onLogout={() => setConfirmLogout(true)} />
 
           <main className="px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-3 md:px-6 lg:pb-6">
             {isGuest && (
@@ -74,7 +61,9 @@ export default function CommuterLayout() {
                 </div>
               </div>
             )}
-            <Outlet />
+            <div key={location.pathname} className="commuter-page-enter">
+              <Outlet />
+            </div>
           </main>
         </div>
 

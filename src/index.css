@@ -107,3 +107,16 @@ html, body { overflow-x: hidden; }
 
 /* Commuter: a slimmer top bar (3.5rem) so more of the page shows on phones. */
 .commuter-layout { --topbar-h: calc(3.5rem + env(safe-area-inset-top, 0px)); }
+
+@keyframes commuter-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes commuter-page-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.commuter-page-enter { animation: commuter-page-enter 220ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .commuter-page-enter { animation: commuter-page-fade 180ms ease-out !important; }
+}
