@@ -43,7 +43,6 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader hideTitle
         title="Settings"
-        description="Changes apply right away. They are kept only while you stay signed in on this page."
         actions={<Button variant="secondary" icon={RotateCcw} onClick={reset}>Restore defaults</Button>}
       />
 

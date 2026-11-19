@@ -15,6 +15,7 @@ export default function Sidebar({
   navLabel,
   profileName,
   profileEmail,
+  profileRole = 'Administrator',
   profileOpen = false,
   onProfileToggle,
 }) {
@@ -30,7 +31,13 @@ export default function Sidebar({
   const alsoActive = (also) => !!also?.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
   const renderLink = ({ to, label, icon: Icon, also }) => (
-    <NavLink key={to} to={to} title={label} className={({ isActive }) => navClass({ isActive: isActive || alsoActive(also) })}>
+    <NavLink
+      key={to}
+      to={to}
+      title={label}
+      onClick={() => { if (profileOpen) onProfileToggle(false) }}
+      className={({ isActive }) => navClass({ isActive: isActive || alsoActive(also) })}
+    >
       {({ isActive }) => (
         <>
           <Icon size={19} className={`shrink-0 ${isActive || alsoActive(also) ? 'text-brand' : ''}`} />
@@ -78,14 +85,14 @@ export default function Sidebar({
                 type="button"
                 onClick={() => onProfileToggle(!profileOpen)}
                 title={profileName}
-                aria-label="Administrator profile"
+                aria-label={`${profileRole} profile`}
                 aria-expanded={profileOpen}
                 className={`${itemBase} w-full text-blue-100 hover:bg-white/10 hover:text-white`}
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-brand">{profileInitials}</span>
                 <span className={`${labelCls} min-w-0 flex-1 text-left`}>
                   <span className="block truncate font-semibold">{profileName}</span>
-                  <span className="block text-[10px] text-cyan-100">Administrator</span>
+                  <span className="block text-[10px] text-cyan-100">{profileRole}</span>
                 </span>
                 {expanded && (profileOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />)}
               </button>

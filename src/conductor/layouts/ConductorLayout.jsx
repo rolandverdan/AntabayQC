@@ -13,9 +13,11 @@ import useVehicleLocation from '../utils/useVehicleLocation.js'
 import useBusFeed from '../utils/useBusFeed.js'
 import { CameraPanel } from '../pages/CameraPage.jsx'
 import { signOutFirebaseUser } from '../../firebase/auth.js'
+import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
 
 export default function ConductorLayout() {
-  const { session, logout, sosReport, setSosReport, passengerCount, passengerEntries, passengerExits } = useConductor()
+  const { profile, session, logout, sosReport, setSosReport, passengerCount, passengerEntries, passengerExits } = useConductor()
+  const { userProfile } = useCommuter()
   const { notify } = useToast()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -31,12 +33,18 @@ export default function ConductorLayout() {
     exits: passengerExits,
   })
 
-  // Same behaviour as Admin: icon-only by default, expands while hovered/focused, pin button in the header.
-  const [collapsed, setCollapsed] = useState(true)
+  // Like Admin, the sidebar expands on hover/focus and while its profile menu is open.
   const [hovered, setHovered] = useState(false)
-  const expanded = !collapsed || hovered
+  const [profileOpen, setProfileOpen] = useState(false)
+  const expanded = hovered || profileOpen
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [sosOpen, setSosOpen] = useState(false)
+  const profileName = session?.firebaseAuthenticated
+    ? userProfile?.displayName || session.displayName || session.identifier
+    : profile.fullName || 'Conductor'
+  const profileEmail = session?.firebaseAuthenticated
+    ? userProfile?.email || session.email || session.identifier
+    : profile.email || ''
 
   const doLogout = async () => {
     try {
@@ -69,10 +77,15 @@ export default function ConductorLayout() {
           onLogout={() => setConfirmLogout(true)}
           items={NAV_ITEMS}
           navLabel="Conductor navigation"
+          profileName={profileName}
+          profileEmail={profileEmail}
+          profileRole="Conductor"
+          profileOpen={profileOpen}
+          onProfileToggle={setProfileOpen}
         />
       </div>
-      <div className={`transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
-        <Topbar expanded={expanded} collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} onSos={() => setSosOpen(true)} onLogout={() => setConfirmLogout(true)} />
+      <div className={`pt-[var(--topbar-h)] transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
+        <Topbar expanded={expanded} onSos={() => setSosOpen(true)} />
         {sosReport && (
           <div role="status" className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
             <TriangleAlert size={16} className="shrink-0" />

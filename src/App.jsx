@@ -29,6 +29,7 @@ import ConductorMap from './conductor/pages/MapPage.jsx'
 import ConductorCamera from './conductor/pages/CameraPage.jsx'
 import ConductorSettings from './conductor/pages/SettingsPage.jsx'
 import ConductorAccount from './conductor/pages/AccountPage.jsx'
+import ConductorNotifications from './conductor/pages/NotificationsPage.jsx'
 
 // Commuter (mobile-first)
 import CommuterRoute from './commuter/routes/CommuterRoute.jsx'
@@ -105,6 +106,7 @@ export default function App() {
                     <Route path="map" element={<ConductorMap />} />
                     <Route path="camera" element={<ConductorCamera />} />
                     <Route path="settings" element={<ConductorSettings />} />
+                    <Route path="notifications" element={<ConductorNotifications />} />
                     <Route path="account" element={<ConductorAccount />} />
                   </Route>
 

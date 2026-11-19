@@ -100,6 +100,7 @@ export default function BusRoutes() {
                   stopMarks={routeStopMarks(selectedRoute)}
                   scrollWheelZoom={false}
                   terminalLabels
+                  roadSnap
                   className="h-full"
                 />
               </div>

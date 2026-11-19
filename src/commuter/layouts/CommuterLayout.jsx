@@ -14,16 +14,13 @@ import { useCommuter } from '../context/CommuterContext.jsx'
 const noop = () => {}
 
 export default function CommuterLayout() {
-  const { settings, buses, routes } = useAdminData()
+  const { settings } = useAdminData()
   const navigate = useNavigate()
   const { notify } = useToast()
   const { session, leave } = useCommuter()
   const isGuest = session?.mode === 'guest'
   const locked = !!useLocation().state?.locked
   const [confirmLogout, setConfirmLogout] = useState(false)
-
-  const activeBuses = buses.filter((b) => b.status === 'Active').length
-  const activeRoutes = routes.filter((r) => r.status === 'Active').length
 
   const doLogout = async () => {
     try {
@@ -62,7 +59,7 @@ export default function CommuterLayout() {
         />
 
         <div className="pt-[var(--topbar-h)] lg:pl-64">
-          <CommuterHeader isGuest={isGuest} onLogout={() => setConfirmLogout(true)} meta={`${activeBuses} buses · ${activeRoutes} routes`} />
+          <CommuterHeader isGuest={isGuest} />
 
           <main className="px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-3 md:px-6 lg:pb-6">
             {isGuest && (

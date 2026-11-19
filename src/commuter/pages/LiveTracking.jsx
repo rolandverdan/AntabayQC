@@ -147,7 +147,7 @@ export default function LiveTracking() {
           </p>
         </div>
         <div className="h-[46dvh] min-h-[300px] md:h-[460px]">
-          <MapView routes={shownRoutes} stops={selected && !focusRoute ? markStops : routeStops} stopMarks={stopMarks} buses={markers} onBusClick={setSelectedBusId} focus={focus} className="h-full" />
+          <MapView routes={shownRoutes} stops={selected && !focusRoute ? markStops : routeStops} stopMarks={stopMarks} buses={markers} onBusClick={setSelectedBusId} focus={focus} roadSnap className="h-full" />
         </div>
       </div>
 

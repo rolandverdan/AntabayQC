@@ -16,7 +16,7 @@ export const NAV_ITEMS = [
   { to: '/commuter/settings', label: 'Settings', icon: Settings },
 ]
 
-// Phone bottom bar: the five everyday destinations. Settings sits in the profile menu, Notifications in the bell.
+// Phone bottom bar: the five everyday destinations. Notifications are available from the bell.
 export const BOTTOM_NAV = NAV_ITEMS.filter((item) => item.to !== '/commuter/settings')
 
 // Guests only get the live map. Everything else needs a commuter account.

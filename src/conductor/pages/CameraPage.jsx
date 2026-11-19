@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CircleAlert, Loader2, Minus, Play, Plus, RotateCw, Square, Users, VideoOff } from 'lucide-react'
-import Card, { PageHeader } from '../../admin/components/Card.jsx'
+import Card from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
@@ -476,7 +476,27 @@ function DoorCamera({
     : active ? 'Online' : busy ? 'Connecting' : message ? 'Error' : 'Offline'
 
   return (
-    <Card title={door.title} action={<StatusBadge status={status} />} bodyClass="space-y-3 p-3 sm:p-4">
+    <Card
+      title={(
+        <>
+          <span className="block">{door.title}</span>
+          <span className="mt-1 block"><StatusBadge status={status} /></span>
+        </>
+      )}
+      action={(
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={RotateCw}
+          onClick={onDevicesChanged}
+          aria-label={`Refresh cameras for ${door.title}`}
+          title="Refresh cameras"
+        >
+          <span className="hidden sm:inline">Refresh</span>
+        </Button>
+      )}
+      bodyClass="space-y-3 p-3 sm:p-4"
+    >
       <div className="relative mx-auto aspect-video w-full max-w-[560px] overflow-hidden rounded-lg bg-slate-950">
         {active ? (
           <>
@@ -687,12 +707,6 @@ export function CameraPanel({ feed, visible = true }) {
       aria-hidden={!visible}
       inert={!visible}
     >
-      <PageHeader
-        hideTitle
-        title="Passenger counter"
-        actions={<Button variant="secondary" icon={RotateCw} onClick={refreshDevices}>Refresh cameras</Button>}
-      />
-
       <Card
         title="Onboard passenger count"
         action={<span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${capacity.badge}`}>{capacity.label}</span>}
