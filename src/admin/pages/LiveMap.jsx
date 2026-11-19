@@ -87,7 +87,7 @@ export default function LiveMap() {
         <div className="flex min-w-0 flex-col gap-4">
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="p-1">
-              <MapView stops={shownStops} routes={shownRoutes} buses={markers} onBusClick={setSelectedId} className="h-[420px] lg:h-[460px]" />
+              <MapView stops={shownStops} routes={shownRoutes} buses={markers} onBusClick={setSelectedId} className="h-[420px] lg:h-[460px]" roadSnap />
             </div>
             <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 px-4 py-3 text-xs text-slate-600" aria-label="Map legend">
               <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" />Active GPS report</li>

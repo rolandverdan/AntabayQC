@@ -3,7 +3,7 @@ import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 
 import { Lock, RotateCcw, Save, Check } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import Card, { PageHeader, Notice } from '../components/Card.jsx'
+import Card, { PageHeader } from '../components/Card.jsx'
 import Button from '../components/Button.jsx'
 import Field from '../components/FormField.jsx'
 import PasswordInput from '../components/PasswordInput.jsx'
@@ -143,9 +143,6 @@ export default function Settings() {
   return (
     <>
       <PageHeader title="Settings" description="Administrator profile and preferences." />
-      <Notice tone="blue">
-        Your profile is saved to Firebase Authentication and Firestore. Administrator preferences are saved in Firestore.
-      </Notice>
 
       <div className="grid items-start gap-4 xl:grid-cols-3">
         <form onSubmit={save} noValidate className="space-y-4 xl:col-span-2">

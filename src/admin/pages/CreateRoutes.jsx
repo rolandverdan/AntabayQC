@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Ban, CircleCheck, Download, Eye, Pencil, Plus, Route as RouteIcon, X } from 'lucide-react'
+import { Ban, CircleCheck, Download, Eye, Pencil, Route as RouteIcon } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -16,13 +16,13 @@ import { inputClass } from '../utils/ui.js'
 import { includesText, nextId } from '../utils/format.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { exportCategory } from '../utils/exportConfig.js'
-import { routeColor } from '../utils/geo.js'
+import { ROUTE_COLORS, routeColor } from '../utils/geo.js'
 import { ACCOUNT_STATUSES } from '../data/constants.js'
 import Select from '../../shared/components/Select.jsx'
 import { Section } from '../components/FormParts.jsx'
 
 export default function CreateRoutes() {
-  const { routes, stops, buses, stopsById, saveRoute, setRouteStatus } = useAdminData()
+  const { routes, buses, stopsById, saveRoute, setRouteStatus } = useAdminData()
   const { notify } = useToast()
   const [params, setParams] = useSearchParams()
 
@@ -31,17 +31,28 @@ export default function CreateRoutes() {
   const [form, setForm] = useState(null)
   const [isEdit, setIsEdit] = useState(false)
   const [errors, setErrors] = useState({})
-  const [addStop, setAddStop] = useState('')
   const [viewId, setViewId] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [saving, setSaving] = useState(false)
 
   const busesOf = (routeId) => buses.filter((b) => b.routeId === routeId)
   const stopName = (id) => stopsById[id]?.name || id
-  const ends = (r) => ({ origin: stopName(r.stopIds[0]), dest: stopName(r.stopIds[r.stopIds.length - 1]) })
+  const ends = (r) => {
+    const stopIds = r.stopIds || []
+    return { origin: stopName(stopIds[0]), dest: stopName(stopIds[stopIds.length - 1]) }
+  }
 
-  const openCreate = () => { setErrors({}); setIsEdit(false); setAddStop(''); setForm({ id: nextId('R', routes, 2), name: '', status: 'Active', stopIds: [], busIds: [] }) }
-  const openEdit = (r) => { setErrors({}); setIsEdit(true); setAddStop(''); setForm({ ...r, busIds: busesOf(r.id).map((b) => b.id) }) }
+  const openCreate = () => {
+    const id = nextId('R', routes, 2)
+    setErrors({})
+    setIsEdit(false)
+    setForm({ id, name: '', status: 'Active', color: routeColor(id), stopIds: [] })
+  }
+  const openEdit = (r) => {
+    setErrors({})
+    setIsEdit(true)
+    setForm({ ...r, color: routeColor(r.id, r), stopIds: r.stopIds || [] })
+  }
 
   useEffect(() => {
     if (params.get('new')) { openCreate(); setParams({}, { replace: true }) }
@@ -49,32 +60,21 @@ export default function CreateRoutes() {
   }, [])
 
   const rows = useMemo(
-    () => routes.filter((r) => (!status || r.status === status) && (!q || includesText([r.id, r.name, stopName(r.stopIds[0]), stopName(r.stopIds[r.stopIds.length - 1])], q))),
+    () => routes.filter((r) => (!status || r.status === status) && (!q || includesText([r.id, r.name, stopName(r.stopIds?.[0]), stopName(r.stopIds?.[r.stopIds.length - 1])], q))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [routes, stopsById, q, status],
   )
-
-  const move = (i, d) => setForm((f) => {
-    const s = [...f.stopIds]; const j = i + d
-    if (j < 0 || j >= s.length) return f
-    ;[s[i], s[j]] = [s[j], s[i]]
-    return { ...f, stopIds: s }
-  })
-  const removeStop = (i) => setForm((f) => ({ ...f, stopIds: f.stopIds.filter((_, k) => k !== i) }))
-  const addSelectedStop = () => { if (addStop) { setForm((f) => ({ ...f, stopIds: [...f.stopIds, addStop] })); setAddStop('') } }
-  const toggleBus = (id) => setForm((f) => ({ ...f, busIds: f.busIds.includes(id) ? f.busIds.filter((b) => b !== id) : [...f.busIds, id] }))
 
   const submit = async (ev) => {
     ev.preventDefault()
     const e = {}
     if (!form.name.trim()) e.name = 'Route name is required.'
     else if (routes.some((r) => r.id !== form.id && r.name.toLowerCase() === form.name.trim().toLowerCase())) e.name = 'A route with this name already exists.'
-    if (form.stopIds.length < 2) e.stops = 'Add at least two stops (origin and destination).'
     setErrors(e)
     if (Object.keys(e).length) return
     setSaving(true)
     try {
-      await saveRoute({ id: form.id, name: form.name.trim(), status: form.status, stopIds: form.stopIds }, form.busIds)
+      await saveRoute({ id: form.id, name: form.name.trim(), status: form.status, color: form.color, stopIds: form.stopIds || [] })
       notify(`Route ${form.id} ${isEdit ? 'updated' : 'created'} successfully.`)
       setForm(null)
     } catch (error) {
@@ -84,9 +84,8 @@ export default function CreateRoutes() {
     }
   }
 
-  const mapRoute = (r) => ({ id: r.id, name: r.name, color: routeColor(r.id, r), points: r.stopIds.map((id) => stopsById[id]).filter(Boolean) })
+  const mapRoute = (r) => ({ id: r.id, name: r.name, color: routeColor(r.id, r), points: (r.stopIds || []).map((id) => stopsById[id]).filter(Boolean) })
   const view = routes.find((r) => r.id === viewId)
-  const availableStops = form ? stops.filter((s) => s.status === 'Active' && !form.stopIds.includes(s.id)) : []
 
   // Exports exactly what the table shows: same search and filters.
   const exportCsv = () => {
@@ -102,8 +101,8 @@ export default function CreateRoutes() {
   const columns = [
     { key: 'id', header: 'Route ID', render: (r) => <span className="flex items-center gap-2 font-semibold text-navy"><span className="h-3 w-3 rounded-full" style={{ background: routeColor(r.id, r) }} />{r.id}</span> },
     { key: 'name', header: 'Route name' },
-    { key: 'ends', header: 'Origin → destination', render: (r) => (r.stopIds.length ? <span>{ends(r).origin} <span className="text-slate-400">→</span> {ends(r).dest}</span> : '—') },
-    { key: 'n', header: 'Stops', render: (r) => r.stopIds.length },
+    { key: 'ends', header: 'Origin → destination', render: (r) => ((r.stopIds || []).length ? <span>{ends(r).origin} <span className="text-slate-400">→</span> {ends(r).dest}</span> : '—') },
+    { key: 'n', header: 'Stops', render: (r) => (r.stopIds || []).length },
     { key: 'buses', header: 'Assigned buses', render: (r) => (<div className="flex flex-wrap gap-1">{busesOf(r.id).map((b) => <Badge key={b.id} tone="blue">{b.id}</Badge>)}{busesOf(r.id).length === 0 && <span className="text-slate-400">None</span>}</div>) },
     { key: 'status', header: 'Status', render: (r) => <Badge>{r.status}</Badge> },
     {
@@ -128,7 +127,7 @@ export default function CreateRoutes() {
 
   return (
     <>
-      <PageHeader title="Create Routes" description="Define routes by selecting existing bus stops and arranging them in order." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={RouteIcon} onClick={openCreate}>Add Route</Button></>} />
+      <PageHeader title="Create Routes" description="Create routes first. Add bus stops to routes from Create Bus Stops, and assign routes to buses when creating a bus." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={RouteIcon} onClick={openCreate}>Add Route</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search route ID, name, origin, destination…"
         filters={[{ label: 'Status', value: status, onChange: setStatus, options: ACCOUNT_STATUSES.map((s) => ({ value: s, label: s })) }]}
@@ -141,68 +140,25 @@ export default function CreateRoutes() {
         footer={<><Button variant="secondary" onClick={() => setForm(null)} disabled={saving}>Cancel</Button><Button type="submit" form="route-form" disabled={saving}>{saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create route'}</Button></>}
       >
         {form && (
-          <form id="route-form" onSubmit={submit} noValidate className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-6">
-              <Section title="Route details">
-                <div className="grid grid-cols-3 items-start gap-x-4 gap-y-5">
-                  <Field label="Route ID"><input className={`${inputClass(false)} cursor-not-allowed`} value={form.id} disabled /></Field>
-                  <Field label="Status" className="col-span-2"><Select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-                  <Field label="Route name" required error={errors.name} className="col-span-3"><input className={inputClass(errors.name)} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /></Field>
-                </div>
-              </Section>
-
-              <Section title="Stops">
-                <p className="mb-1.5 text-xs font-semibold text-navy">Ordered bus stops <span className="text-red-500">*</span></p>
-                <div className="flex gap-2">
-                  <div className="min-w-0 flex-1">
-                    <Select value={addStop} onChange={(e) => setAddStop(e.target.value)} aria-label="Select a stop to add">
-                      <option value="">Select a stop to add…</option>
-                      {availableStops.map((s) => <option key={s.id} value={s.id} data-desc={s.name}>{s.id}</option>)}
-                    </Select>
+          <form id="route-form" onSubmit={submit} noValidate className="space-y-6">
+            <Section title="Route details">
+              <div className="grid items-start gap-x-4 gap-y-5 sm:grid-cols-2">
+                <Field label="Route ID"><input className={`${inputClass(false)} cursor-not-allowed`} value={form.id} disabled /></Field>
+                <Field label="Status"><Select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
+                <Field label="Route name" required error={errors.name} className="sm:col-span-2"><input className={inputClass(errors.name)} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /></Field>
+                <Field label="Route color" className="sm:col-span-2">
+                  <div className="flex items-center gap-3">
+                    <input type="color" aria-label="Route color" className="h-10 w-14 cursor-pointer rounded border border-slate-200 bg-white p-1" value={form.color} onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))} />
+                    <span className="font-mono text-sm uppercase text-slate-600">{form.color}</span>
                   </div>
-                  <Button icon={Plus} onClick={addSelectedStop} disabled={!addStop} className="shrink-0 disabled:bg-slate-200! disabled:text-slate-500! disabled:opacity-100!">Add</Button>
-                </div>
-                {errors.stops && <p className="mt-1.5 text-xs font-medium text-red-600">{errors.stops}</p>}
-                <ol className="mt-3 space-y-1.5">
-                  {form.stopIds.map((id, i) => (
-                    <li key={id} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">{i + 1}</span>
-                      <span className="min-w-0 flex-1 truncate">{stopName(id)}
-                        {i === 0 && <span className="ml-1 text-xs text-green-700">(origin)</span>}
-                        {i === form.stopIds.length - 1 && form.stopIds.length > 1 && <span className="ml-1 text-xs text-red-700">(destination)</span>}
-                      </span>
-                      <IconButton icon={ArrowUp} title="Move up" onClick={() => move(i, -1)} disabled={i === 0} />
-                      <IconButton icon={ArrowDown} title="Move down" onClick={() => move(i, 1)} disabled={i === form.stopIds.length - 1} />
-                      <IconButton icon={X} tone="danger" title="Remove stop" onClick={() => removeStop(i)} />
-                    </li>
-                  ))}
-                  {form.stopIds.length === 0 && <li className="text-xs text-slate-500">No stops yet. Origin is the first stop, destination is the last.</li>}
-                </ol>
-              </Section>
-
-              <Section title={<>Assigned buses <span className="font-normal text-slate-500">(optional)</span></>}>
-                <div className="grid gap-x-3 gap-y-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-2">
-                  {buses.map((b) => (
-                    <label key={b.id} className="flex items-center gap-2 text-sm text-slate-700">
-                      <input type="checkbox" className="accent-brand" checked={form.busIds.includes(b.id)} onChange={() => toggleBus(b.id)} />
-                      <span>{b.id} {b.routeId && b.routeId !== form.id && <span className="block text-xs text-slate-400 sm:inline">(currently {b.routeId})</span>}</span>
-                    </label>
-                  ))}
-                </div>
-              </Section>
-            </div>
-            <div className="flex min-h-0 flex-col">
-              <h3 className="mb-4 rounded-md border-l-4 border-brand bg-slate-100 px-3 py-1.5 text-xs font-bold text-navy">Route preview</h3>
-              <MapView
-                stops={form.stopIds.map((id) => stopsById[id]).filter(Boolean)}
-                routes={[mapRoute(form)]}
-                numbered roadSnap
-                emptyMessage="Add at least 2 stops to preview the route."
-                className="h-72 md:h-auto md:min-h-80 md:flex-1"
-                scrollWheelZoom={false}
-              />
-              <p className="mt-2 text-xs text-slate-500">The line follows the road when route data is available; otherwise it connects the stops in order.</p>
-            </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {ROUTE_COLORS.map((color, i) => (
+                      <button key={color} type="button" aria-label={`Use route color ${i + 1}`} aria-pressed={form.color.toLowerCase() === color.toLowerCase()} onClick={() => setForm((f) => ({ ...f, color }))} className={`h-7 w-7 rounded-full border-2 ${form.color.toLowerCase() === color.toLowerCase() ? 'border-slate-900 ring-2 ring-slate-300' : 'border-white shadow ring-1 ring-slate-200'}`} style={{ backgroundColor: color }} />
+                    ))}
+                  </div>
+                </Field>
+              </div>
+            </Section>
           </form>
         )}
       </Modal>
@@ -216,6 +172,10 @@ export default function CreateRoutes() {
                   <div><p className="text-xs font-semibold text-navy">Route ID</p><p className="mt-1 text-sm text-slate-800">{view.id}</p></div>
                   <div><p className="text-xs font-semibold text-navy">Status</p><div className="mt-1"><Badge>{view.status}</Badge></div></div>
                   <div className="col-span-2">
+                    <p className="text-xs font-semibold text-navy">Route color</p>
+                    <div className="mt-1 flex items-center gap-2 text-sm text-slate-800"><span className="h-4 w-4 rounded-full" style={{ backgroundColor: routeColor(view.id, view) }} />{routeColor(view.id, view)}</div>
+                  </div>
+                  <div className="col-span-2">
                     <p className="text-xs font-semibold text-navy">Assigned buses</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {busesOf(view.id).map((b) => <Badge key={b.id} tone="blue">{b.id}</Badge>)}
@@ -226,9 +186,9 @@ export default function CreateRoutes() {
               </Section>
               <Section title="Stops in order">
                 <ol className="divide-y divide-slate-100">
-                  {view.stopIds.map((id, i) => {
+                  {(view.stopIds || []).map((id, i) => {
                     const first = i === 0
-                    const last = i === view.stopIds.length - 1 && view.stopIds.length > 1
+                    const last = i === (view.stopIds || []).length - 1 && (view.stopIds || []).length > 1
                     return (
                       <li key={id} className="flex items-center gap-3 py-2 text-sm">
                         <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${first ? 'bg-green-600' : last ? 'bg-red-600' : 'bg-brand'}`}>{i + 1}</span>
@@ -238,12 +198,13 @@ export default function CreateRoutes() {
                       </li>
                     )
                   })}
+                  {(view.stopIds || []).length === 0 && <li className="py-2 text-sm text-slate-500">No stops yet. Add a bus stop and select this route.</li>}
                 </ol>
               </Section>
             </div>
             <div className="flex min-h-0 flex-col">
               <h3 className="mb-4 rounded-md border-l-4 border-brand bg-slate-100 px-3 py-1.5 text-xs font-bold text-navy">Route preview</h3>
-              <MapView stops={view.stopIds.map((id) => stopsById[id]).filter(Boolean)} routes={[mapRoute(view)]} numbered roadSnap className="h-72 md:h-auto md:min-h-80 md:flex-1" scrollWheelZoom={false} />
+              <MapView stops={(view.stopIds || []).map((id) => stopsById[id]).filter(Boolean)} routes={[mapRoute(view)]} numbered roadSnap emptyMessage="This route has no stops yet." className="h-72 md:h-auto md:min-h-80 md:flex-1" scrollWheelZoom={false} />
             </div>
           </div>
         )}

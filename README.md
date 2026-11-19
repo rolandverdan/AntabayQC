@@ -39,7 +39,7 @@ The Admin console uses Firestore as its source of truth. It starts with **empty*
    ```
 
    Cloud Functions deployment requires a Firebase plan that supports Functions and the project selected in `.firebaserc`. Functions run on Node.js 22.
-4. Sign in with the administrator account. Add stops and routes, then buses and staff. Driver entries are directory-only. Creating a Conductor also creates a Firebase Authentication account through a callable Cloud Function.
+4. Sign in with the administrator account. Create routes first, then add bus stops and select the route or routes they serve; stops are appended in creation order. Assign a route to each bus from Create Buses, then add staff. Driver entries are directory-only. Creating a Conductor also creates a Firebase Authentication account through a callable Cloud Function.
 
 Collections used by the Admin console: `buses`, `routes`, `stops`, `accounts`, `reports`, `emergencies`, `logs`, `adminSettings`, and `busLocations`. Bus, route, stop, and live bus-location records are readable by commuter pages; administrative records are restricted by `firestore.rules`. Signed-in commuters can submit reports and read only reports they submitted.
 

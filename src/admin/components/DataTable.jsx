@@ -5,7 +5,7 @@ import { useAdminData } from '../context/AdminDataContext.jsx'
 /** columns: [{ key, header, render?: (row) => node, className? }] */
 export default function DataTable({ columns, rows, rowKey = 'id', pageSize, emptyTitle = 'No records found', emptyHint = 'Try changing your search or filters.', rowClassName, highlightKeys }) {
   const { settings } = useAdminData()
-  const size = pageSize || settings.pageSize || 8
+  const size = pageSize || settings.pageSize || 10
   const [page, setPage] = useState(1)
   const pages = Math.max(1, Math.ceil(rows.length / size))
   const current = Math.min(page, pages)

@@ -107,7 +107,7 @@ export default function Dashboard() {
 
         {settings.showMapPreview ? (
           <Card title="Map preview" action={<Link to="/admin/map" className="text-xs font-semibold text-brand hover:underline">Open map</Link>} bodyClass="p-2">
-            <MapView stops={stops.filter((s) => s.status === 'Active')} routes={mapRoutes} buses={mapBuses} className="h-56" scrollWheelZoom={false} />
+            <MapView stops={stops.filter((s) => s.status === 'Active')} routes={mapRoutes} buses={mapBuses} className="h-56" scrollWheelZoom={false} roadSnap />
             <p className="px-2 pb-1 pt-2 text-[11px] text-slate-500">{mapBuses.length ? 'Showing reported GPS positions only.' : 'No buses are reporting GPS positions.'}</p>
           </Card>
         ) : (

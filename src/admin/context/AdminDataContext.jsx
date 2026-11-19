@@ -28,7 +28,7 @@ const EMPTY_SETTINGS = {
   notifications: { emergency: true, reports: true, logs: false },
   showMapPreview: true,
   showRecentActivity: true,
-  pageSize: 8,
+  pageSize: 10,
   density: 'comfortable',
 }
 
@@ -120,6 +120,7 @@ export function AdminDataProvider({ children }) {
           settings: {
             ...EMPTY_SETTINGS,
             ...saved,
+            pageSize: saved.pageSize === 8 ? 10 : (saved.pageSize || EMPTY_SETTINGS.pageSize),
             notifications: { ...EMPTY_SETTINGS.notifications, ...saved.notifications },
           },
         }))
@@ -288,10 +289,11 @@ export function AdminDataProvider({ children }) {
       ...(exists ? {} : { createdAt: serverTimestamp() }),
     }, { merge: true })
     for (const route of data.routes) {
-      const has = route.stopIds.includes(stop.id)
+      const currentStopIds = route.stopIds || []
+      const has = currentStopIds.includes(stop.id)
       const wants = routeIds.includes(route.id)
       if (has !== wants) {
-        const stopIds = wants ? [...route.stopIds, stop.id] : route.stopIds.filter((id) => id !== stop.id)
+        const stopIds = wants ? [...currentStopIds, stop.id] : currentStopIds.filter((id) => id !== stop.id)
         batch.set(doc(db, 'routes', route.id), { stopIds, updatedAt: serverTimestamp() }, { merge: true })
       }
     }
@@ -309,7 +311,7 @@ export function AdminDataProvider({ children }) {
     const batch = writeBatch(db)
     batch.delete(doc(db, 'stops', id))
     for (const route of data.routes) {
-      if (route.stopIds.includes(id)) {
+      if ((route.stopIds || []).includes(id)) {
         batch.set(doc(db, 'routes', route.id), {
           stopIds: route.stopIds.filter((stopId) => stopId !== id),
           updatedAt: serverTimestamp(),
@@ -325,21 +327,15 @@ export function AdminDataProvider({ children }) {
     await batch.commit()
   }, [data.routes, data.stops, user])
 
-  const saveRoute = useCallback(async (route, busIds) => {
+  const saveRoute = useCallback(async (route) => {
     const exists = data.routes.some((item) => item.id === route.id)
     const batch = writeBatch(db)
     batch.set(doc(db, 'routes', route.id), {
       ...route,
+      stopIds: route.stopIds || [],
       updatedAt: serverTimestamp(),
       ...(exists ? {} : { createdAt: serverTimestamp() }),
     }, { merge: true })
-    for (const bus of data.buses) {
-      if (busIds.includes(bus.id) && bus.routeId !== route.id) {
-        batch.set(doc(db, 'buses', bus.id), { routeId: route.id, updatedAt: serverTimestamp() }, { merge: true })
-      } else if (!busIds.includes(bus.id) && bus.routeId === route.id) {
-        batch.set(doc(db, 'buses', bus.id), { routeId: '', updatedAt: serverTimestamp() }, { merge: true })
-      }
-    }
     logRecord(batch, {
       action: exists ? 'Route modified' : 'Route added',
       module: 'Routes',
@@ -347,7 +343,7 @@ export function AdminDataProvider({ children }) {
       description: `${route.id} ${route.name} ${exists ? 'modified' : 'created'}.`,
     }, user?.displayName || user?.identifier)
     await batch.commit()
-  }, [data.buses, data.routes, user])
+  }, [data.routes, user])
 
   const setRouteStatus = useCallback(async (id, status) => {
     const batch = writeBatch(db)

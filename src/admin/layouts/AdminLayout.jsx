@@ -7,20 +7,31 @@ import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { signOutFirebaseUser } from '../../firebase/auth.js'
+import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
 
 export default function AdminLayout() {
   const { settings, addLog, dataStatus, dataError, retryData } = useAdminData()
   const { user, logout } = useAuth()
+  const { userProfile } = useCommuter()
   const { notify } = useToast()
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
   const [hovered, setHovered] = useState(false)
-  const expanded = hovered // pure hover: icons only, opens while the pointer / keyboard focus is on the sidebar
+  const [profileOpen, setProfileOpen] = useState(false)
+  const expanded = hovered || profileOpen // the profile menu stays expanded until it is dismissed
   const [mobileOpen, setMobileOpen] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
 
-  useEffect(() => setMobileOpen(false), [pathname])
+  useEffect(() => {
+    setMobileOpen(false)
+    setProfileOpen(false)
+  }, [pathname])
+
+  const adminName = user?.firebaseAuthenticated
+    ? userProfile?.displayName || user.displayName || user.identifier
+    : settings.name
+  const adminEmail = user?.firebaseAuthenticated ? userProfile?.email || user.email : settings.email
 
   const doLogout = async () => {
     try {
@@ -68,12 +79,15 @@ export default function AdminLayout() {
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
         onLogout={() => setConfirmLogout(true)}
+        profileName={adminName}
+        profileEmail={adminEmail}
+        profileOpen={profileOpen}
+        onProfileToggle={setProfileOpen}
       />
-      <div className={`pt-[var(--topbar-h)] transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
+      <div className={`admin-content pt-[var(--topbar-h)] transition-[padding] duration-300 ease-in-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
         <Header
           expanded={expanded}
           onOpenMobile={() => setMobileOpen(true)}
-          onLogout={() => setConfirmLogout(true)}
         />
         <main className="px-4 pb-4 pt-3 md:px-6 md:pb-6">
           <Outlet />

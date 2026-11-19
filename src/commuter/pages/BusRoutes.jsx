@@ -137,7 +137,7 @@ export default function BusRoutes() {
                           {stop.name}
                           {terminal && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-slate-500">{index === 0 ? 'Start' : 'End'}</span>}
                         </p>
-                        <p className="text-xs text-slate-500">{stop.address}</p>
+                        {stop.address && <p className="text-xs text-slate-500">{stop.address}</p>}
                       </div>
                     </li>
                   )

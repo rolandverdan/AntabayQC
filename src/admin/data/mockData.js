@@ -11,7 +11,7 @@ export const defaultSettings = {
   notifications: { emergency: true, reports: true, logs: false, emailDigest: false },
   showMapPreview: true,
   showRecentActivity: true,
-  pageSize: 8,
+  pageSize: 10,
   density: 'comfortable',
   sidebarCollapsed: true,
 }
@@ -110,16 +110,16 @@ const stops = STOP_DEFS.map(([slug, name, address, lat, lng]) => ({
   id: STOP_ID[slug], name, address, lat, lng, status: 'Active',
 }))
 
-// Colours follow the QC Bus poster (Route 1 red … Route 8 light blue).
+// Colours follow the QC Bus route legend.
 const routes = [
-  ['R-01', 'QC Hall – Cubao', '#E3262C', ['hall', 'kalayaan-masigla', 'kalayaan-kamias', 'silangan', 'aurora-15th', 'cubao']],
-  ['R-02', 'QC Hall – Litex / IBP Road', '#EC0D8F', ['hall', 'commonwealth-stpeter', 'ibp-maclang', 'ibp-qcu', 'litex']],
-  ['R-03', 'Welcome Rotonda – Aurora-Katipunan', '#F9C80F', ['rotonda', 'erod-araneta', 'erod-qi', 'erod-nch', 'gilmore-interchange', 'kamuning-market', 'kamias-edsa', 'kamias-anonas', 'anonas-chico', 'anonas-lrt', 'aurora-katipunan']],
-  ['R-04', 'QC Hall – General Luis Avenue', '#792D8B', ['hall', 'north-vertis', 'mindanao-road1', 'tullahan', 'mindanao-congressional', 'mindanao-tandangsora', 'mindanao-munoz', 'mindanao-sauyo', 'mindanao-quirino', 'qcu-novaliches', 'sm-novaliches', 'quirino-foresthills', 'genluis-banahaw', 'genluis']],
-  ['R-05', 'QC Hall – Mindanao Avenue', '#F69627', ['hall', 'visayas-central', 'visayas-vargas', 'congressional-visayas', 'congressional-circle', 'mindanao-congressional', 'mindanao-tandangsora', 'mindanao-munoz', 'sauyo-footbridge', 'mindanao-terminal']],
-  ['R-06', 'QC Hall – Gilmore Avenue', '#06A553', ['hall', 'quezon-pcmc', 'quezon-edsa', 'quezon-examiner', 'quezon-delta', 'tobias-timog', 'tobias-roces', 'gilmore-interchange', 'gilmore-end']],
-  ['R-07', 'QC Hall – Ortigas Avenue', '#4D73B5', ['hall', 'cp-garcia', 'katipunan-stamaria', 'katipunan-ateneo', 'aurora-katipunan', 'katipunan-quirino', 'katipunan-boni', 'erodjr-eastwood', 'erodjr-greenmeadows', 'ortigas']],
-  ['R-08', 'QC Hall – Muñoz', '#3BB4FB', ['hall', 'north-vertis-south', 'qcu-sanfrancisco', 'corregidor-ilocos', 'magsaysay-brgy', 'pma', 'munoz']],
+  ['R-01', 'QC Hall – Cubao', '#EF1744', ['hall', 'kalayaan-masigla', 'kalayaan-kamias', 'silangan', 'aurora-15th', 'cubao']],
+  ['R-02', 'QC Hall – Litex / IBP Road', '#EC008C', ['hall', 'commonwealth-stpeter', 'ibp-maclang', 'ibp-qcu', 'litex']],
+  ['R-03', 'Welcome Rotonda – Aurora-Katipunan', '#F2C300', ['rotonda', 'erod-araneta', 'erod-qi', 'erod-nch', 'gilmore-interchange', 'kamuning-market', 'kamias-edsa', 'kamias-anonas', 'anonas-chico', 'anonas-lrt', 'aurora-katipunan']],
+  ['R-04', 'QC Hall – General Luis Avenue', '#92278F', ['hall', 'north-vertis', 'mindanao-road1', 'tullahan', 'mindanao-congressional', 'mindanao-tandangsora', 'mindanao-munoz', 'mindanao-sauyo', 'mindanao-quirino', 'qcu-novaliches', 'sm-novaliches', 'quirino-foresthills', 'genluis-banahaw', 'genluis']],
+  ['R-05', 'QC Hall – Mindanao Avenue', '#F7941D', ['hall', 'visayas-central', 'visayas-vargas', 'congressional-visayas', 'congressional-circle', 'mindanao-congressional', 'mindanao-tandangsora', 'mindanao-munoz', 'sauyo-footbridge', 'mindanao-terminal']],
+  ['R-06', 'QC Hall – Gilmore Avenue', '#00A651', ['hall', 'quezon-pcmc', 'quezon-edsa', 'quezon-examiner', 'quezon-delta', 'tobias-timog', 'tobias-roces', 'gilmore-interchange', 'gilmore-end']],
+  ['R-07', 'QC Hall – Ortigas Avenue', '#0077B5', ['hall', 'cp-garcia', 'katipunan-stamaria', 'katipunan-ateneo', 'aurora-katipunan', 'katipunan-quirino', 'katipunan-boni', 'erodjr-eastwood', 'erodjr-greenmeadows', 'ortigas']],
+  ['R-08', 'QC Hall – Muñoz', '#00AEEF', ['hall', 'north-vertis-south', 'qcu-sanfrancisco', 'corregidor-ilocos', 'magsaysay-brgy', 'pma', 'munoz']],
 ].map(([id, name, color, slugs]) => ({ id, name, color, stopIds: slugs.map((s) => STOP_ID[s]), status: 'Active' }))
 
 const person = (n, type, fullName, employeeId, username, contact, status = 'Active', daysAgo = 90) => ({

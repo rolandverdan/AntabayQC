@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Download, Eye, MapPin, Pencil, Trash2 } from 'lucide-react'
+import { Download, Eye, MapPin, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -18,12 +18,13 @@ import { inputClass } from '../utils/ui.js'
 import { includesText, nextId } from '../utils/format.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { exportCategory } from '../utils/exportConfig.js'
+import { routeColor } from '../utils/geo.js'
 import { ACCOUNT_STATUSES } from '../data/constants.js'
 import Select from '../../shared/components/Select.jsx'
 import { Section } from '../components/FormParts.jsx'
 
 export default function CreateBusStops() {
-  const { stops, routes, saveStop, deleteStop } = useAdminData()
+  const { stops, routes, stopsById, saveStop, deleteStop } = useAdminData()
   const { notify } = useToast()
   const [params, setParams] = useSearchParams()
 
@@ -37,13 +38,18 @@ export default function CreateBusStops() {
   const [confirm, setConfirm] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  const routesOf = (stopId) => routes.filter((r) => r.stopIds.includes(stopId))
+  const routesOf = (stopId) => routes.filter((r) => (r.stopIds || []).includes(stopId))
 
   const openCreate = () => {
     setErrors({}); setIsEdit(false)
-    setForm({ id: nextId('S', stops), name: '', address: '', lat: '', lng: '', status: 'Active', routeIds: [] })
+    setForm({ id: nextId('S', stops), name: '', lat: '', lng: '', status: 'Active', routeIds: [''] })
   }
-  const openEdit = (s) => { setErrors({}); setIsEdit(true); setForm({ ...s, lat: String(s.lat), lng: String(s.lng), routeIds: routesOf(s.id).map((r) => r.id) }) }
+  const openEdit = (s) => {
+    const routeIds = routesOf(s.id).map((r) => r.id)
+    setErrors({})
+    setIsEdit(true)
+    setForm({ ...s, lat: String(s.lat), lng: String(s.lng), routeIds: routeIds.length ? routeIds : [''] })
+  }
 
   useEffect(() => {
     if (params.get('new')) { openCreate(); setParams({}, { replace: true }) }
@@ -52,15 +58,35 @@ export default function CreateBusStops() {
 
   const rows = useMemo(
     () => stops.filter((s) =>
-      (!status || s.status === status) && (!routeF || routes.find((r) => r.id === routeF)?.stopIds.includes(s.id)) &&
+      (!status || s.status === status) && (!routeF || (routes.find((r) => r.id === routeF)?.stopIds || []).includes(s.id)) &&
       (!q || includesText([s.id, s.name, s.address], q))),
     [stops, routes, q, status, routeF],
   )
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
-  const toggleRoute = (id) => setForm((f) => ({ ...f, routeIds: f.routeIds.includes(id) ? f.routeIds.filter((r) => r !== id) : [...f.routeIds, id] }))
+  const setRoute = (index, id) => {
+    setForm((f) => ({
+      ...f,
+      routeIds: f.routeIds.map((routeId, i) => (i === index ? id : routeId)),
+    }))
+    setErrors((current) => ({ ...current, routeIds: '' }))
+  }
+  const addRoute = () => setForm((f) => ({ ...f, routeIds: [...f.routeIds, ''] }))
+  const removeRoute = (index) => setForm((f) => {
+    const routeIds = f.routeIds.filter((_, i) => i !== index)
+    return { ...f, routeIds: routeIds.length ? routeIds : [''] }
+  })
   const picked = form && form.lat !== '' && form.lng !== '' && Number.isFinite(+form.lat) && Number.isFinite(+form.lng) ? { lat: +form.lat, lng: +form.lng } : null
   const outsideQC = picked && (picked.lat < 14.55 || picked.lat > 14.78 || picked.lng < 120.97 || picked.lng > 121.15)
+  const selectedRouteIds = form ? form.routeIds.filter(Boolean) : []
+  const routePreviews = form
+    ? routes.filter((route) => selectedRouteIds.includes(route.id)).map((route) => ({
+        id: route.id,
+        name: route.name,
+        color: routeColor(route.id, route),
+        points: (route.stopIds || []).map((id) => stopsById[id]).filter((stop) => stop && Number.isFinite(stop.lat) && Number.isFinite(stop.lng)),
+      }))
+    : []
 
   const submit = async (ev) => {
     ev.preventDefault()
@@ -70,15 +96,16 @@ export default function CreateBusStops() {
     else if (id.includes('/')) e.id = 'Stop ID cannot contain a slash.'
     else if (!isEdit && stops.some((s) => s.id === id)) e.id = 'Stop ID already exists.'
     if (!form.name.trim()) e.name = 'Stop name is required.'
-    if (!form.address.trim()) e.address = 'Address / location description is required.'
+    if (!form.routeIds.some(Boolean)) e.routeIds = 'Select at least one route before adding a bus stop.'
     const lat = Number(form.lat), lng = Number(form.lng)
-    if (form.lat === '' || !Number.isFinite(lat) || lat < -90 || lat > 90) e.lat = 'Valid latitude required (click the map to pick).'
-    if (form.lng === '' || !Number.isFinite(lng) || lng < -180 || lng > 180) e.lng = 'Valid longitude required.'
+    if (form.lat === '' || !Number.isFinite(lat) || lat < -90 || lat > 90 || form.lng === '' || !Number.isFinite(lng) || lng < -180 || lng > 180) {
+      e.location = 'Click the map to choose this bus stop’s location.'
+    }
     setErrors(e)
     if (Object.keys(e).length) return
     setSaving(true)
     try {
-      await saveStop({ id, name: form.name.trim(), address: form.address.trim(), lat, lng, status: form.status }, form.routeIds)
+      await saveStop({ id, name: form.name.trim(), lat, lng, status: form.status }, form.routeIds.filter(Boolean))
       notify(`Bus stop ${id} ${isEdit ? 'updated' : 'added'} successfully.`)
       setForm(null)
     } catch (error) {
@@ -109,9 +136,9 @@ export default function CreateBusStops() {
 
   const columns = [
     { key: 'id', header: 'Stop ID', render: (s) => <span className="font-semibold text-navy">{s.id}</span> },
-    { key: 'name', header: 'Name', render: (s) => (<div><p className="font-semibold text-navy">{s.name}</p><p className="max-w-56 truncate text-xs text-slate-500">{s.address}</p></div>) },
+    { key: 'name', header: 'Name', render: (s) => (<div><p className="font-semibold text-navy">{s.name}</p>{s.address && <p className="max-w-56 truncate text-xs text-slate-500">{s.address}</p>}</div>) },
     { key: 'coords', header: 'Latitude, longitude', render: (s) => <span className="font-mono text-xs">{s.lat.toFixed(4)}, {s.lng.toFixed(4)}</span> },
-    { key: 'routes', header: 'Routes', render: (s) => (<div className="flex flex-wrap gap-1">{routesOf(s.id).map((r) => <Badge key={r.id} tone="blue">{r.id}</Badge>)}{routesOf(s.id).length === 0 && <span className="text-slate-400">None</span>}</div>) },
+    { key: 'routes', header: 'Routes', render: (s) => (<div className="flex flex-wrap gap-1">{routesOf(s.id).map((r) => <Badge key={r.id}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ backgroundColor: routeColor(r.id, r) }} />{r.id}</Badge>)}{routesOf(s.id).length === 0 && <span className="text-slate-400">None</span>}</div>) },
     { key: 'status', header: 'Status', render: (s) => <Badge>{s.status}</Badge> },
     {
       key: 'actions', header: 'Actions', render: (s) => (
@@ -126,9 +153,9 @@ export default function CreateBusStops() {
 
   return (
     <>
-      <PageHeader title="Create Bus Stops" description="Create and manage bus stops. Click the map in the form to set coordinates." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button></>} />
+      <PageHeader title="Create Bus Stops" description="Create bus stops by choosing their route, entering a name, and clicking the map to set the location." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button></>} />
       <SearchFilterBar
-        search={q} onSearch={setQ} placeholder="Search stop ID, name, address…"
+        search={q} onSearch={setQ} placeholder="Search stop ID or name…"
         filters={[
           { label: 'Status', value: status, onChange: setStatus, options: ACCOUNT_STATUSES.map((s) => ({ value: s, label: s })) },
           { label: 'Route', value: routeF, onChange: setRouteF, options: routes.map((r) => ({ value: r.id, label: `${r.id} ${r.name}` })) },
@@ -144,36 +171,55 @@ export default function CreateBusStops() {
         {form && (
           <form id="stop-form" onSubmit={submit} noValidate className="grid gap-6 md:grid-cols-2">
             <div className="space-y-6">
-              <Section title="Stop details">
-              <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Stop ID" required error={errors.id}><input className={inputClass(errors.id)} value={form.id} onChange={set('id')} disabled={isEdit} /></Field>
-                <Field label="Status"><Select value={form.status} onChange={set('status')}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-              </div>
-              <Field label="Bus stop name" required error={errors.name}><input className={inputClass(errors.name)} value={form.name} onChange={set('name')} /></Field>
-              <Field label="Address / location description" required error={errors.address}><input className={inputClass(errors.address)} value={form.address} onChange={set('address')} /></Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Latitude" required error={errors.lat}><input className={inputClass(errors.lat)} value={form.lat} onChange={set('lat')} inputMode="decimal" placeholder="14.6500" /></Field>
-                <Field label="Longitude" required error={errors.lng}><input className={inputClass(errors.lng)} value={form.lng} onChange={set('lng')} inputMode="decimal" placeholder="121.0500" /></Field>
-              </div>
-              {outsideQC && <p className="text-xs font-medium text-amber-700">These coordinates look outside Quezon City. Double-check before saving.</p>}
-              </div>
-              </Section>
-              <Section title="Routes serving this stop">
-                <div className="max-h-44 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3">
-                  {routes.map((r) => (
-                    <label key={r.id} className="flex items-center gap-2 text-sm text-slate-700">
-                      <input type="checkbox" className="accent-brand" checked={form.routeIds.includes(r.id)} onChange={() => toggleRoute(r.id)} />
-                      {r.id} · {r.name} {r.status === 'Inactive' && <span className="text-xs text-slate-400">(inactive)</span>}
-                    </label>
-                  ))}
+              <Section title="Select route first">
+                <p className="mb-3 text-xs text-slate-500">Choose one or more routes before entering this stop. Each route can have many stops.</p>
+                <div className="space-y-2">
+                  {form.routeIds.map((routeId, index) => {
+                    const selectedRoute = routes.find((route) => route.id === routeId)
+                    const availableRoutes = routes.filter((route) => !selectedRouteIds.includes(route.id) || route.id === routeId)
+                    return (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: selectedRoute ? routeColor(selectedRoute.id, selectedRoute) : 'transparent' }} />
+                        <div className="min-w-0 flex-1">
+                          <Select aria-label={`Route ${index + 1}`} value={routeId} onChange={(event) => setRoute(index, event.target.value)}>
+                            <option value="">Select a route…</option>
+                            {availableRoutes.map((route) => <option key={route.id} value={route.id} data-desc={route.name}>{route.id}{route.status === 'Inactive' ? ' (inactive)' : ''}</option>)}
+                          </Select>
+                        </div>
+                        {form.routeIds.length > 1 && <IconButton icon={X} title="Remove route" onClick={() => removeRoute(index)} />}
+                      </div>
+                    )
+                  })}
+                  <Button type="button" variant="secondary" icon={Plus} onClick={addRoute} disabled={!routes.length || form.routeIds.some((routeId) => !routeId) || selectedRouteIds.length >= routes.length}>
+                    Add another route
+                  </Button>
+                  {routes.length === 0 && <p className="text-sm text-slate-500">Create a route first, then return here to add bus stops.</p>}
                 </div>
-                <p className="mt-2.5 text-xs text-slate-500">New routes add this stop at the end. Reorder in Create Routes.</p>
+                {errors.routeIds && <p className="mt-1.5 text-xs font-medium text-red-600">{errors.routeIds}</p>}
               </Section>
+              {selectedRouteIds.length > 0 && (
+                <Section title="Stop details">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Stop ID" required error={errors.id}><input className={inputClass(errors.id)} value={form.id} onChange={set('id')} disabled={isEdit} /></Field>
+                      <Field label="Status"><Select value={form.status} onChange={set('status')}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
+                    </div>
+                    <Field label="Bus stop name" required error={errors.name}><input className={inputClass(errors.name)} value={form.name} onChange={set('name')} /></Field>
+                  </div>
+                </Section>
+              )}
             </div>
-            <Section title="Pick location on map" className="flex min-h-0 flex-col">
-              <MapPicker className="h-72 md:h-auto md:min-h-72 md:flex-1" value={picked} onChange={({ lat, lng }) => setForm((f) => ({ ...f, lat: String(lat), lng: String(lng) }))} />
-            </Section>
+            {selectedRouteIds.length > 0 && (
+              <Section title="Pick location on map" className="flex min-h-0 flex-col">
+                <p className="mb-2 text-xs text-slate-500">Click the map to place the bus stop. The coordinates are set automatically.</p>
+                <MapPicker routes={routePreviews} className="h-72 md:h-auto md:min-h-72 md:flex-1" value={picked} onChange={({ lat, lng }) => setForm((f) => ({ ...f, lat: String(lat), lng: String(lng) }))} />
+                {picked
+                  ? <p className="mt-2 text-xs text-slate-600">Selected: {picked.lat.toFixed(6)}, {picked.lng.toFixed(6)}</p>
+                  : <p className="mt-2 text-xs text-slate-500">No location selected yet.</p>}
+                {errors.location && <p className="mt-1.5 text-xs font-medium text-red-600">{errors.location}</p>}
+                {outsideQC && <p className="mt-1.5 text-xs font-medium text-amber-700">These coordinates look outside Quezon City. Double-check the map pin.</p>}
+              </Section>
+            )}
           </form>
         )}
       </Modal>
@@ -182,10 +228,17 @@ export default function CreateBusStops() {
         {view && (
           <div className="space-y-4">
             <DetailGrid items={[
-              ['Stop ID', view.id], ['Status', <Badge>{view.status}</Badge>], ['Address', view.address, true],
+              ['Stop ID', view.id], ['Status', <Badge key="status">{view.status}</Badge>],
+              ...(view.address ? [['Address', view.address, true]] : []),
               ['Latitude', view.lat], ['Longitude', view.lng],
-              ['Routes serving', routesOf(view.id).map((r) => `${r.id} ${r.name}`).join(', ') || 'None', true],
             ]} />
+            <div>
+              <p className="text-xs font-semibold text-navy">Routes serving</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {routesOf(view.id).map((r) => <Badge key={r.id}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ backgroundColor: routeColor(r.id, r) }} />{r.id} · {r.name}</Badge>)}
+                {routesOf(view.id).length === 0 && <span className="text-sm text-slate-500">None</span>}
+              </div>
+            </div>
             <MapView stops={[view]} className="h-56" scrollWheelZoom={false} />
           </div>
         )}

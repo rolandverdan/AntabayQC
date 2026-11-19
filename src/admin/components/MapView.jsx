@@ -14,7 +14,7 @@ function FocusOn({ focus }) {
   return null
 }
 
-function FitBounds({ points, fitKey }) {
+export function FitBounds({ points, fitKey }) {
   const map = useMap()
   useEffect(() => {
     if (points.length > 1) map.fitBounds(points.map((p) => [p.lat, p.lng]), { padding: [30, 30] })
@@ -50,7 +50,7 @@ function useRoadPath(points, enabled) {
   return path
 }
 
-function RoadLine({ route, snap }) {
+export function RoadLine({ route, snap }) {
   const road = useRoadPath(route.points, snap)
   const pos = road || route.points.map((p) => [p.lat, p.lng])
   return (

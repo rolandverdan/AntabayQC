@@ -55,6 +55,11 @@ html, body { overflow-x: hidden; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
+/* The admin sidebar opts into its requested navigation transition under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar, .admin-content, .admin-sidebar-label { transition-duration: 300ms !important; }
+}
+
 /* Responsive safety net for the phone sides (Commuter + Conductor).
    - grid/flex items may shrink below their content width (the classic "card wider than the screen" bug)
    - long words and names wrap instead of widening the page */
