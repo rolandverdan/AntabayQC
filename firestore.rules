@@ -75,17 +75,28 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
-      allow create: if signedIn()
-        && request.auth.uid == userId
-        && request.resource.data.role == 'commuter'
-        && request.resource.data.keys().hasOnly([
+      allow create: if (signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.role == 'commuter'
+          && request.resource.data.keys().hasOnly([
           'displayName',
           'email',
           'phone',
           'role',
           'createdAt',
           'updatedAt'
-        ]);
+          ]))
+        || (isAdmin()
+          && request.resource.data.role == 'conductor'
+          && request.resource.data.staffType == 'Conductor'
+          && request.resource.data.keys().hasAll([
+            'displayName', 'email', 'phone', 'role', 'staffType',
+            'employeeId', 'status', 'createdAt', 'updatedAt'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'displayName', 'email', 'phone', 'role', 'staffType',
+            'employeeId', 'status', 'createdAt', 'updatedAt'
+          ]));
       allow update: if isAdmin()
         || (signedIn()
           && request.auth.uid == userId
@@ -158,7 +169,10 @@ service cloud.firestore {
     }
 
     match /busLocations/{busId} {
-      allow read: if isAdmin() || isPublicBusLocation(busId);
+      allow get: if isAdmin()
+        || !exists(/databases/$(database)/documents/busLocations/$(busId))
+        || isPublicBusLocation(busId);
+      allow list: if isAdmin();
       allow create, update: if isAssignedConductor(busId) && validBusLocation(busId);
       allow delete: if false;
     }

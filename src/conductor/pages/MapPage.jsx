@@ -4,9 +4,10 @@ import Card, { Notice } from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
 import ConductorMap from '../components/ConductorMap.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
-import { VEHICLE, ROUTE, ROUTE_STOPS } from '../data/mock.js'
 import { useConductor } from '../context/ConductorContext.jsx'
 import { capacityStatus } from '../utils/capacity.js'
+import { haversineKm } from '../../admin/utils/geo.js'
+import { routeProgressForPosition } from '../utils/useVehicleLocation.js'
 
 function Tile({ icon: Icon, label, value }) {
   return (
@@ -61,11 +62,18 @@ function feedSummary(feed, gpsActive) {
 export default function MapPage() {
   const locationState = useOutletContext()
   const { settings, passengerCount, passengerEntries, passengerExits, adjustPassengerCount } = useConductor()
-  const { position, nextStop, speed, etaMin, progress, gpsStatus, gpsMessage, gpsAccuracy, gpsUpdatedAt, usePhoneGps, stopPhoneGps, feed } = locationState
+  const { position, speed, gpsStatus, gpsMessage, gpsAccuracy, gpsUpdatedAt, usePhoneGps, stopPhoneGps, feed } = locationState
   const feedState = feedSummary(feed, gpsStatus === 'active')
   const load = capacityStatus(passengerCount, feed.assignment.bus?.capacity)
   const feedBus = feed.assignment.bus
-  const stopsPassed = nextStop ? ROUTE_STOPS.findIndex((s) => s.id === nextStop.id) : -1
+  const route = feed.route
+  const routeStops = feed.routeStops || []
+  const nextStop = feed.nextStop
+  const progress = position && route ? routeProgressForPosition(position, routeStops) : null
+  const etaMin = position && nextStop && speed > 0
+    ? Math.max(1, Math.round((haversineKm(position, nextStop) / speed) * 60))
+    : null
+  const stopsPassed = nextStop ? routeStops.findIndex((s) => s.id === nextStop.id) : -1
   const tripPct = progress === null ? null : Math.round(progress * 100)
   const etaLabel = etaMin ? `About ${etaMin} min` : 'Unavailable'
   const vehicleStatus = gpsStatus === 'requesting'
@@ -79,7 +87,7 @@ export default function MapPage() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_20rem] xl:grid-cols-[1fr_22rem]">
       <div className="h-[50dvh] min-h-[320px] lg:h-[calc(100vh-8.5rem)]">
-        <ConductorMap position={position} nextStopId={nextStop?.id} prefs={settings.map} gpsStatus={gpsStatus} gpsAccuracy={gpsAccuracy} />
+        <ConductorMap position={position} route={route} routeStops={routeStops} nextStopId={nextStop?.id} prefs={settings.map} gpsStatus={gpsStatus} gpsAccuracy={gpsAccuracy} />
       </div>
 
       <div className="space-y-4 lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto">
@@ -140,8 +148,8 @@ export default function MapPage() {
         <Card title="Route">
           <div className="space-y-4">
             <div className="divide-y divide-slate-100">
-              <Row icon={RouteIcon} label={ROUTE.id} value={ROUTE.name} />
-              <Row icon={MapPin} label="Next stop" value={nextStop?.name || 'Unavailable until GPS connects'} />
+              <Row icon={RouteIcon} label={route?.id || 'Assigned route'} value={route?.name || (feed.assignment.status === 'loading' ? 'Loading assignment…' : feedBus?.routeId ? 'Loading route…' : 'No route assigned')} />
+              <Row icon={MapPin} label="Next stop" value={nextStop?.name || (route ? 'Unavailable until GPS connects' : 'Unavailable')} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Tile icon={Clock} label="Estimated arrival" value={etaLabel} />
@@ -150,11 +158,30 @@ export default function MapPage() {
             {tripPct !== null ? (
               <div>
                 <Progress pct={tripPct} label="Trip progress" />
-                <p className="mt-1.5 text-xs text-slate-500">Stop {Math.max(stopsPassed + 1, 1)} of {ROUTE_STOPS.length}</p>
+                <p className="mt-1.5 text-xs text-slate-500">Stop {Math.max(stopsPassed + 1, 1)} of {routeStops.length}</p>
               </div>
             ) : (
-              <p className="text-xs text-slate-500">Enable phone GPS to estimate progress against the assigned route.</p>
+              <p className="text-xs text-slate-500">{route ? 'Enable phone GPS to estimate progress against the assigned route.' : 'Trip progress is unavailable until a route is assigned.'}</p>
             )}
+            <div className="space-y-2 border-t border-slate-100 pt-3">
+              <p className="text-xs font-semibold text-slate-500">Stops in this route</p>
+              {routeStops.length ? (
+                <ol className="max-h-52 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-100">
+                  {routeStops.map((stop, index) => {
+                    const isNext = stop.id === nextStop?.id
+                    return (
+                      <li key={stop.id} className={`flex items-center gap-2 px-3 py-2 text-sm ${isNext ? 'bg-amber-50 font-semibold text-navy' : 'text-slate-700'}`}>
+                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${isNext ? 'bg-amber-400 text-navy' : 'bg-brand text-white'}`}>{index + 1}</span>
+                        <span className="min-w-0 flex-1">{stop.name || stop.id}</span>
+                        {isNext && <span className="shrink-0 text-[10px] font-semibold uppercase text-amber-800">Next</span>}
+                      </li>
+                    )
+                  })}
+                </ol>
+              ) : (
+                <p className="text-xs text-slate-500">No stops are available for the assigned route.</p>
+              )}
+            </div>
           </div>
         </Card>
 
@@ -162,7 +189,7 @@ export default function MapPage() {
           <dl className="divide-y divide-slate-100 text-sm">
             <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0"><dt className="text-slate-500">Latitude</dt><dd className="font-mono font-semibold text-navy">{position ? position.lat.toFixed(5) : 'Unavailable'}</dd></div>
             <div className="flex items-center justify-between gap-3 py-2.5"><dt className="text-slate-500">Longitude</dt><dd className="font-mono font-semibold text-navy">{position ? position.lng.toFixed(5) : 'Unavailable'}</dd></div>
-            <div className="flex items-center justify-between gap-3 py-2.5 last:pb-0"><dt className="text-slate-500">Vehicle</dt><dd className="font-semibold text-navy">{VEHICLE.plate}</dd></div>
+            <div className="flex items-center justify-between gap-3 py-2.5 last:pb-0"><dt className="text-slate-500">Vehicle</dt><dd className="font-semibold text-navy">{feedBus?.plate || feedBus?.id || 'Unavailable'}</dd></div>
             <div className="flex items-center justify-between gap-3 py-2.5"><dt className="text-slate-500">Source</dt><dd className="font-semibold text-navy">{position ? 'Phone GPS' : 'Unavailable'}</dd></div>
             {position && (
               <>
@@ -179,8 +206,8 @@ export default function MapPage() {
           </p>
         </Card>
 
-        {!settings.map.showRoute && !settings.map.showStops && (
-          <Notice tone="blue" icon={Info}>Route line and stops are hidden. Turn them on in Settings → Map display.</Notice>
+        {!settings.map.showRoute && (
+          <Notice tone="blue" icon={Info}>The road route line is hidden. Turn it on in Settings → Map display. Stop markers remain visible.</Notice>
         )}
       </div>
     </div>

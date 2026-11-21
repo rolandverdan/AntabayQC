@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { computeBusLive, haversineKm } from '../../admin/utils/geo.js'
-import { VEHICLE, ROUTE, STOPS_BY_ID } from '../data/mock.js'
-
+import { haversineKm } from '../../admin/utils/geo.js'
 // Fraction (0..1) of the way along a route's stops that is closest to a GPS position.
-// `points` defaults to the demo route; the live feed passes the bus's real route stops.
-export function routeProgressForPosition(position, points = ROUTE.stopIds.map((id) => STOPS_BY_ID[id]).filter(Boolean)) {
+export function routeProgressForPosition(position, points = []) {
   if (points.length < 2) return null
   const lengths = points.slice(1).map((point, index) => haversineKm(points[index], point))
   const totalLength = lengths.reduce((total, length) => total + length, 0)
@@ -122,21 +119,13 @@ export default function useVehicleLocation() {
     }
   }, [])
 
-  const progress = position ? routeProgressForPosition(position) : null
-  const live = progress === null ? null : computeBusLive(VEHICLE, ROUTE, STOPS_BY_ID, progress)
-  const etaMin = live && gpsSpeed > 0
-    ? Math.max(1, Math.round((haversineKm(position, live.nextStop) / gpsSpeed) * 60))
-    : null
   const location = position
-    ? { ...position, label: `Phone GPS · approaching ${live?.nextStop.name || 'the route'}` }
+    ? { ...position, label: 'Phone GPS' }
     : null
 
   return {
     position,
-    progress,
-    nextStop: live?.nextStop || null,
     speed: gpsSpeed,
-    etaMin,
     gpsStatus,
     gpsMessage,
     gpsAccuracy,

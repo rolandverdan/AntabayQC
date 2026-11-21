@@ -91,6 +91,7 @@ export default function CreateAccount() {
     else if (accounts.some((a) => a.id !== form.id && a.username?.toLowerCase() === form.username.trim().toLowerCase())) e.username = 'Already in use.'
     if (!/^(\+63|0)9\d{9}$/.test(form.contact.replace(/[\s-]/g, ''))) e.contact = 'Use a PH mobile number, e.g. 09171234567.'
     if (!isEdit && form.type === 'Conductor') {
+      if (form.status === 'Inactive') e.status = 'Create the account as Active, then deactivate it if needed.'
       if (!passwordMeetsRules(form.password)) e.password = 'Password does not meet all the requirements.'
       if (form.confirm !== form.password) e.confirm = 'Passwords do not match.'
     }
@@ -224,7 +225,7 @@ export default function CreateAccount() {
 
             <Section title="Account details">
               <div className="grid items-start gap-x-4 gap-y-5 sm:grid-cols-2">
-                <Field label="Account status"><Select value={form.status} onChange={set('status')}>{ACCOUNT_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
+                <Field label="Account status" error={errors.status}><Select value={form.status} onChange={set('status')}>{ACCOUNT_STATUSES.map((s) => <option key={s} disabled={!isEdit && form.type === 'Conductor' && s === 'Inactive'}>{s}</option>)}</Select></Field>
                 <Field label="Assigned bus" hint="Assigning replaces the bus's current driver/conductor.">
                   <Select value={form.busId} onChange={set('busId')} disabled={form.status === 'Inactive'}>
                     <option value="">Unassigned</option>

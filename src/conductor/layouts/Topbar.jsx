@@ -4,10 +4,10 @@ import { Bell, Siren, Bus } from 'lucide-react'
 import { LogoTile } from '../../shared/components/Logo.jsx'
 import TopBrand from '../../shared/components/TopBrand.jsx'
 import { NAV_ITEMS } from './navItems.js'
-import { NOTIFICATIONS, VEHICLE, ROUTE } from '../data/mock.js'
+import { NOTIFICATIONS } from '../data/mock.js'
 import { useConductor } from '../context/ConductorContext.jsx'
 
-export default function Topbar({ expanded, onSos }) {
+export default function Topbar({ expanded, onSos, assignment, route }) {
   const { pathname } = useLocation()
   const { settings } = useConductor()
 
@@ -24,7 +24,7 @@ export default function Topbar({ expanded, onSos }) {
       <div className="min-w-0">
         <h1 className="truncate text-base font-bold sm:text-lg">{title}</h1>
         <p className="flex items-center gap-1.5 truncate text-[11px] text-cyan-100">
-          <Bus size={12} /> {VEHICLE.plate} · {ROUTE.name}
+          <Bus size={12} /> {assignment?.bus ? `${assignment.bus.plate || assignment.bus.id} · ${route?.name || (assignment.bus.routeId ? 'Loading route…' : 'No route assigned')}` : assignment?.status === 'loading' ? 'Loading assignment…' : 'No bus assigned'}
         </p>
       </div>
 

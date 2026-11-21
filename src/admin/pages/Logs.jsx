@@ -14,6 +14,12 @@ import { MODULES, SEVERITIES } from '../data/constants.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { LOG_COLUMNS } from '../utils/exportConfig.js'
 
+function timestampMillis(value) {
+  const date = value?.toDate ? value.toDate() : new Date(value || 0)
+  const millis = date.getTime()
+  return Number.isFinite(millis) ? millis : 0
+}
+
 export default function Logs() {
   const { logs } = useAdminData()
   const { notify } = useToast()
@@ -29,7 +35,8 @@ export default function Logs() {
   const rows = useMemo(
     () => logs.filter((l) =>
       (!moduleF || l.module === moduleF) && (!sev || l.severity === sev) && (!userF || l.user === userF) &&
-      inDateRange(l.timestamp, from, to) && (!q || includesText([l.id, l.action, l.user, l.module, l.description], q))),
+      inDateRange(l.timestamp, from, to) && (!q || includesText([l.id, l.action, l.user, l.module, l.description], q)))
+      .sort((a, b) => timestampMillis(b.timestamp) - timestampMillis(a.timestamp)),
     [logs, q, moduleF, sev, userF, from, to],
   )
   const view = logs.find((l) => l.id === viewId)

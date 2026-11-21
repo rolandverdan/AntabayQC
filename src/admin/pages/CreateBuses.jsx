@@ -137,7 +137,7 @@ export default function CreateBuses() {
 
   return (
     <>
-      <PageHeader title="Create Buses" description="Add, edit, and manage the bus fleet." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Bus} onClick={openCreate}>Add Bus</Button></>} />
+      <PageHeader title="Buses" description="Add, edit, and manage the bus fleet." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Bus} onClick={openCreate}>Add Bus</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search bus ID, plate, model, driver…"
         filters={[

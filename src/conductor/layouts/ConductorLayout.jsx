@@ -85,7 +85,7 @@ export default function ConductorLayout() {
         />
       </div>
       <div className={`pt-[var(--topbar-h)] transition-[padding] duration-200 ease-out ${expanded ? 'lg:pl-64' : 'lg:pl-[76px]'}`}>
-        <Topbar expanded={expanded} onSos={() => setSosOpen(true)} />
+        <Topbar expanded={expanded} onSos={() => setSosOpen(true)} assignment={feed.assignment} route={feed.route} />
         {sosReport && (
           <div role="status" className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
             <TriangleAlert size={16} className="shrink-0" />

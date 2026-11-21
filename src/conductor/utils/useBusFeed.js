@@ -93,6 +93,10 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
   }, [routeId])
 
   const route = routeId && routeState.routeId === routeId ? routeState.route : null
+  const routeStops = useMemo(
+    () => route ? (route.stopIds || []).map((id) => stopsById[id]).filter(Boolean) : [],
+    [route, stopsById],
+  )
   const nextStop = useMemo(() => nextStopFor(position, route, stopsById), [position, route, stopsById])
   const busId = assignment.bus?.id || ''
 
@@ -162,5 +166,5 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
     return () => window.clearInterval(timer)
   }, [busId])
 
-  return { assignment, nextStop, send, hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
+  return { assignment, route, routeStops, nextStop, send, hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
 }

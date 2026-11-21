@@ -27,31 +27,38 @@ export function FitBounds({ points, fitKey }) {
 // Road-snapped geometry from the public OSRM demo server (cached per stop list). Falls back to the straight
 // stop-to-stop line when offline or when the request fails.
 const roadCache = new Map()
-function useRoadPath(points, enabled) {
+export function useRoadPath(points, enabled) {
   const key = enabled && points.length > 1 ? points.map((p) => `${(+p.lng).toFixed(5)},${(+p.lat).toFixed(5)}`).join(';') : ''
-  const [path, setPath] = useState(() => (key && roadCache.get(key)) || null)
+  const [result, setResult] = useState(() => key && roadCache.has(key)
+    ? { key, path: roadCache.get(key), status: 'ready' }
+    : { key: '', path: null, status: 'idle' })
   useEffect(() => {
-    if (!key) { setPath(null); return undefined }
-    if (roadCache.has(key)) { setPath(roadCache.get(key)); return undefined }
-    setPath(null)
+    if (!key) { setResult({ key, path: null, status: 'idle' }); return undefined }
+    if (roadCache.has(key)) {
+      setResult({ key, path: roadCache.get(key), status: 'ready' })
+      return undefined
+    }
+    setResult({ key, path: null, status: 'loading' })
     const ctrl = new AbortController()
     fetch(`https://router.project-osrm.org/route/v1/driving/${key}?overview=full&geometries=geojson`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('route failed'))))
       .then((j) => {
         const coords = j?.routes?.[0]?.geometry?.coordinates
-        if (!coords?.length) return
+        if (!coords?.length) throw new Error('No road geometry returned')
         const line = coords.map(([lng, lat]) => [lat, lng])
         roadCache.set(key, line)
-        setPath(line)
+        setResult({ key, path: line, status: 'ready' })
       })
-      .catch(() => {})
+      .catch((error) => {
+        if (error.name !== 'AbortError') setResult({ key, path: null, status: 'error' })
+      })
     return () => ctrl.abort()
   }, [key])
-  return path
+  return result.key === key ? result : { key, path: null, status: key ? 'loading' : 'idle' }
 }
 
 export function RoadLine({ route, snap }) {
-  const road = useRoadPath(route.points, snap)
+  const { path: road } = useRoadPath(route.points, snap)
   const pos = road || route.points.map((p) => [p.lat, p.lng])
   return (
     <>

@@ -82,9 +82,10 @@ export default function SettingsPage() {
           <Row title="Show route line" description="Draw your route on the map." htmlFor="m-route">
             <Toggle id="m-route" checked={map.showRoute} onChange={(v) => updateSetting('map', 'showRoute', v)} label="Show route line" />
           </Row>
-          <Row title="Show bus stops" description="Mark every stop on your route." htmlFor="m-stops">
-            <Toggle id="m-stops" checked={map.showStops} onChange={(v) => updateSetting('map', 'showStops', v)} label="Show bus stops" />
-          </Row>
+          <div className="py-3">
+            <p className="text-sm font-semibold leading-5 text-navy">Route stops</p>
+            <p className="text-xs leading-4 text-slate-500">Every stop on your assigned route is shown on the map.</p>
+          </div>
           <Row title="Follow my vehicle" description="Keep the map centered on the vehicle." htmlFor="m-follow">
             <Toggle id="m-follow" checked={map.followVehicle} onChange={(v) => updateSetting('map', 'followVehicle', v)} label="Follow my vehicle" />
           </Row>

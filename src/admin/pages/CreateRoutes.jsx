@@ -127,7 +127,7 @@ export default function CreateRoutes() {
 
   return (
     <>
-      <PageHeader title="Create Routes" description="Create routes first. Add bus stops to routes from Create Bus Stops, and assign routes to buses when creating a bus." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={RouteIcon} onClick={openCreate}>Add Route</Button></>} />
+      <PageHeader title="Routes" description="Add routes first. Add bus stops to routes from Bus Stops, then assign routes to buses." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={RouteIcon} onClick={openCreate}>Add Route</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search route ID, name, origin, destination…"
         filters={[{ label: 'Status', value: status, onChange: setStatus, options: ACCOUNT_STATUSES.map((s) => ({ value: s, label: s })) }]}

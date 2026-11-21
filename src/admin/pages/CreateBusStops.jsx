@@ -153,7 +153,7 @@ export default function CreateBusStops() {
 
   return (
     <>
-      <PageHeader title="Create Bus Stops" description="Create bus stops by choosing their route, entering a name, and clicking the map to set the location." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button></>} />
+      <PageHeader title="Bus Stops" description="Add bus stops by choosing their route, entering a name, and clicking the map to set the location." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={MapPin} onClick={openCreate}>Add Bus Stop</Button></>} />
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search stop ID or name…"
         filters={[

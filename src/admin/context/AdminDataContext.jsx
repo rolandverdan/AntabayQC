@@ -9,8 +9,8 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { auth, db } from '../../firebase/firebase.js'
+import { createConductorAccountClient } from '../../firebase/conductorAccounts.js'
 import {
-  createConductorAccount,
   resetConductorPassword as resetConductorPasswordFunction,
   setConductorAccountStatus as setConductorAccountStatusFunction,
   updateConductorAccount,
@@ -19,7 +19,7 @@ import { useAuth } from './AuthContext.jsx'
 
 const Ctx = createContext(null)
 const COLLECTIONS = ['buses', 'routes', 'stops', 'accounts', 'logs', 'reports', 'emergencies', 'busLocations']
-const PUBLIC_COLLECTIONS = new Set(['buses', 'routes', 'stops', 'busLocations'])
+const PUBLIC_COLLECTIONS = new Set(['buses', 'routes', 'stops'])
 const EMPTY_SETTINGS = {
   name: '',
   email: '',
@@ -90,6 +90,8 @@ export function AdminDataProvider({ children }) {
     const ready = new Set()
     const collections = isAdmin ? COLLECTIONS : [...PUBLIC_COLLECTIONS]
     const unsubscribers = []
+    const busLocationUnsubscribers = new Map()
+    const publicBusLocations = new Map()
 
     setData(emptyData())
     setDataError('')
@@ -106,6 +108,32 @@ export function AdminDataProvider({ children }) {
       unsubscribers.push(onSnapshot(collection(db, name), (snapshot) => {
         if (!active) return
         setData((current) => ({ ...current, [name]: snapshotRows(snapshot) }))
+
+        if (!isAdmin && name === 'buses') {
+          const busIds = new Set(snapshot.docs.map((item) => item.id))
+          for (const [busId, unsubscribe] of busLocationUnsubscribers) {
+            if (busIds.has(busId)) continue
+            unsubscribe()
+            busLocationUnsubscribers.delete(busId)
+            publicBusLocations.delete(busId)
+          }
+          for (const busId of busIds) {
+            if (busLocationUnsubscribers.has(busId)) continue
+            const unsubscribe = onSnapshot(doc(db, 'busLocations', busId), (locationSnapshot) => {
+              if (!active) return
+              if (locationSnapshot.exists()) {
+                const location = serialize(locationSnapshot.data())
+                publicBusLocations.set(busId, { ...location, id: location.id || busId, docId: busId })
+              } else {
+                publicBusLocations.delete(busId)
+              }
+              setData((current) => ({ ...current, busLocations: [...publicBusLocations.values()] }))
+            }, fail)
+            busLocationUnsubscribers.set(busId, unsubscribe)
+          }
+          setData((current) => ({ ...current, busLocations: [...publicBusLocations.values()] }))
+        }
+
         ready.add(name)
         if (ready.size === collections.length && (!isAdmin || ready.has('adminSettings'))) setDataStatus('ready')
       }, fail))
@@ -132,6 +160,7 @@ export function AdminDataProvider({ children }) {
     return () => {
       active = false
       unsubscribers.forEach((unsubscribe) => unsubscribe())
+      busLocationUnsubscribers.forEach((unsubscribe) => unsubscribe())
     }
   }, [authReady, isAdmin, retry])
 
@@ -171,12 +200,17 @@ export function AdminDataProvider({ children }) {
     const isNew = !data.accounts.some((item) => item.id === id)
 
     if (account.type === 'Conductor') {
-      const request = {
-        account: { ...account, id },
-        busId: busId || '',
+      const request = { account: { ...account, id }, busId: busId || '' }
+      if (isNew) {
+        await createConductorAccountClient({
+          ...request,
+          password,
+          buses: data.buses,
+          adminName: user?.displayName || user?.identifier,
+        })
+      } else {
+        await updateConductorAccount(request)
       }
-      if (isNew) request.password = password
-      await (isNew ? createConductorAccount : updateConductorAccount)(request)
       return
     }
 
