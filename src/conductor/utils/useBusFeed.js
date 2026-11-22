@@ -28,7 +28,8 @@ function nextStopFor(position, route, stopsById) {
   return points[points.length - 1]
 }
 
-export default function useBusFeed({ uid, position, speed, gpsAccuracy, passengers, entries, exits }) {
+// `enabled`: only send while the conductor has a trip running (Start trip on the Map page).
+export default function useBusFeed({ uid, position, speed, gpsAccuracy, passengers, entries, exits, enabled = true }) {
   // Results are tagged with the uid / route they belong to, so stale ones are ignored without
   // resetting state inside the effects.
   const [found, setFound] = useState({ uid: '', status: 'loading', accountId: '', bus: null, error: '' })
@@ -52,13 +53,14 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
           return
         }
         const accountId = snapshot.docs[0].id
+        const employeeId = snapshot.docs[0].data().employeeId || ''
         unsubscribeBus = onSnapshot(
           query(collection(db, 'buses'), where('conductorId', '==', accountId), limit(1)),
           (buses) => {
             const bus = buses.empty ? null : { ...buses.docs[0].data(), id: buses.docs[0].id }
-            setAssignment({ status: bus ? 'ready' : 'no-bus', accountId, bus, error: '' })
+            setAssignment({ status: bus ? 'ready' : 'no-bus', accountId, employeeId, bus, error: '' })
           },
-          (error) => setAssignment({ status: 'error', accountId, bus: null, error: error.message }),
+          (error) => setAssignment({ status: 'error', accountId, employeeId, bus: null, error: error.message }),
         )
       })
       .catch((error) => {
@@ -120,8 +122,9 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
       }
       record.lat = lat
       record.lng = lng
-      if (Number.isFinite(speed)) record.speed = Math.round(speed)
-      if (Number.isFinite(gpsAccuracy)) record.accuracy = Math.round(gpsAccuracy)
+      // Firestore rules reject speed outside 0–200 km/h; a GPS glitch must not block the whole update.
+      if (Number.isFinite(speed)) record.speed = Math.min(200, Math.max(0, Math.round(speed)))
+      if (Number.isFinite(gpsAccuracy)) record.accuracy = Math.min(100000, Math.max(0, Math.round(gpsAccuracy)))
       if (tracker.heading !== null) record.heading = tracker.heading
       if (nextStop) {
         record.nextStopId = nextStop.id
@@ -135,7 +138,8 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
   const lastSent = useRef({ at: 0, passengers: null })
   const inFlight = useRef(false)
   useEffect(() => {
-    if (!busId) return undefined
+    if (!busId || !enabled) return undefined
+    lastSent.current = { at: 0, passengers: null } // send right away when a trip starts
     const trySend = async () => {
       const record = latest.current
       if (!record || inFlight.current) return
@@ -164,7 +168,7 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
     }
     const timer = window.setInterval(trySend, 1000)
     return () => window.clearInterval(timer)
-  }, [busId])
+  }, [busId, enabled])
 
-  return { assignment, route, routeStops, nextStop, send, hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
+  return { assignment, route, routeStops, nextStop, send, sharing: Boolean(busId && enabled), hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
 }

@@ -111,3 +111,67 @@ The rules verify the authenticated conductor against the assigned account and bu
 ## How to check it works
 
 Log in as the assigned conductor and open the Map page. The **Live feed to admin** card should say "Last sent …". If it says "The server refused the update", the rules aren't published or the bus isn't assigned to that conductor.
+
+---
+
+# Conductor SOS → Emergency Logs
+
+The conductor **SOS** button now saves the report to `emergencies/{id}`, which Admin → Emergency Logs already lists. Today only admins can write there, so the conductor app shows **"Report NOT sent. Call operations directly."** until this rule is added.
+
+**Replace** the `emergencies` match:
+
+```
+match /emergencies/{emergencyId} {
+  allow read, update, delete: if isAdmin();
+  allow create: if isAdmin() || isConductorSos(emergencyId);
+}
+```
+
+**Add** next to the other functions (it reuses `isConductor()` and `isAssignedConductor()` from the live-feed rules above):
+
+```
+// A conductor may create one new SOS for the bus they are assigned to. Admin handles it from there.
+function isConductorSos(emergencyId) {
+  let data = request.resource.data;
+  return isConductor()
+    && data.keys().hasOnly([
+        'id', 'type', 'severity', 'status', 'busId', 'routeId', 'location', 'lat', 'lng',
+        'description', 'reportedBy', 'reporterUid', 'source', 'datetime', 'history', 'createdAt'
+      ])
+    && data.keys().hasAll(['id', 'type', 'severity', 'status', 'busId', 'location', 'description', 'reportedBy', 'reporterUid', 'source', 'datetime', 'history', 'createdAt'])
+    && data.id == emergencyId
+    && data.status == 'New'
+    && data.source == 'conductor-sos'
+    && data.reporterUid == request.auth.uid
+    && data.severity in ['Critical', 'High', 'Medium', 'Low']
+    && data.type is string && data.type.size() <= 60
+    && data.description is string && data.description.size() <= 400
+    && data.location is string && data.location.size() <= 120
+    && data.history is list && data.history.size() == 1
+    && data.createdAt == request.time
+    && (!('lat' in data) || (data.lat is number && data.lat >= -90 && data.lat <= 90))
+    && (!('lng' in data) || (data.lng is number && data.lng >= -180 && data.lng <= 180))
+    && isAssignedConductor(data.busId);
+}
+```
+
+## What the app writes
+
+| Field | Example | Notes |
+|---|---|---|
+| id | `Xy12…` | same as the document id |
+| type | `Medical Emergency` | Admin incident types, plus `Other` |
+| severity | `Critical` | Medical, accident, security, fire = Critical; breakdown, harassment, other = High |
+| status | `New` | admin changes it afterwards |
+| busId, routeId | `BUS-001`, `NCR 0001` | conductor's assigned bus and route |
+| location | `14.65432, 121.04321 (phone GPS)` | or `Unavailable (phone GPS off)` |
+| lat, lng | numbers | only when GPS is on |
+| description | text | up to 300 characters from the conductor |
+| reportedBy | conductor's name | |
+| reporterUid | Firebase uid | must match the signed-in user |
+| source | `conductor-sos` | |
+| datetime | ISO time | same format Admin uses |
+| history | `[{ status: 'New', at, by }]` | |
+| createdAt | server time | |
+
+A conductor must have an assigned bus to send an SOS. Without one the rule refuses it, and the app tells them to call operations.

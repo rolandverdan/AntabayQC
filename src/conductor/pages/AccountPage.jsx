@@ -29,7 +29,13 @@ export default function AccountPage() {
   const { profile, updateProfile, session } = useConductor()
   const { userProfile } = useCommuter()
   const { notify } = useToast()
-  const { requestLogout } = useOutletContext()
+  const { requestLogout, feed } = useOutletContext()
+  const assignment = feed?.assignment
+  const assignedBus = assignment?.bus
+  const loadingAssignment = assignment?.status === 'loading'
+  const conductorId = assignment?.employeeId || (loadingAssignment ? 'Loading…' : 'Not set')
+  const vehicle = assignedBus ? `${assignedBus.id}${assignedBus.plate ? ` · ${assignedBus.plate}` : ''}` : loadingAssignment ? 'Loading…' : 'No bus assigned'
+  const routeName = feed?.route ? `${feed.route.id} · ${feed.route.name}` : assignedBus?.routeId ? 'Loading…' : loadingAssignment ? 'Loading…' : 'No route assigned'
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(profile)
   const [saving, setSaving] = useState(false)
@@ -79,9 +85,9 @@ export default function AccountPage() {
           <Button icon={Pencil} onClick={open} className="mt-4 w-full">Edit profile</Button>
         </div>
         <dl className="divide-y divide-slate-100 border-t border-slate-100 px-5">
-          <Item icon={IdCard} label="Conductor ID" value={profile.conductorId} />
-          <Item icon={Bus} label="Assigned vehicle" value={profile.assignedVehicle} />
-          <Item icon={RouteIcon} label="Assigned route" value={profile.assignedRoute} />
+          <Item icon={IdCard} label="Conductor ID" value={conductorId} />
+          <Item icon={Bus} label="Assigned vehicle" value={vehicle} />
+          <Item icon={RouteIcon} label="Assigned route" value={routeName} />
           <Item icon={Phone} label="Contact number" value={accountProfile.contact || 'Not provided'} />
           <Item icon={Mail} label="Email address" value={accountProfile.email} />
         </dl>
@@ -90,7 +96,7 @@ export default function AccountPage() {
       <p className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 md:text-sm">
         <Info size={16} className="mt-0.5 shrink-0" />
         {session?.firebaseAuthenticated
-          ? 'Your name, email and phone come from your Firebase account. Conductor ID, vehicle and route are sample assignments.'
+          ? 'Your name, email and phone come from your account. Conductor ID, vehicle and route are set by the admin.'
           : 'Details are sample data. Edits stay in this session and reset when you log out.'}
       </p>
 

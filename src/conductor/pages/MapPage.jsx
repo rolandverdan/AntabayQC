@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { Gauge, MapPin, Clock, Users, Route as RouteIcon, Info, LocateFixed, CircleStop, CloudUpload, Minus, Plus } from 'lucide-react'
+import { Gauge, MapPin, Clock, Users, Route as RouteIcon, Info, LocateFixed, CloudUpload, Minus, Plus, Play, Flag, X } from 'lucide-react'
 import Card, { Notice } from '../../admin/components/Card.jsx'
 import Button from '../../admin/components/Button.jsx'
 import ConductorMap from '../components/ConductorMap.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
+import ConfirmDialog from '../../admin/components/ConfirmDialog.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
 import { capacityStatus } from '../utils/capacity.js'
 import { haversineKm } from '../../admin/utils/geo.js'
@@ -42,28 +44,115 @@ function Progress({ pct, label, tone = 'bg-brand' }) {
 }
 
 // Plain-language state of the live feed to the admin side.
-function feedSummary(feed, gpsActive) {
+function feedSummary(feed, gpsActive, tripActive) {
   const { assignment, send } = feed
   if (assignment.status === 'loading') return { badge: 'Connecting', text: 'Looking up your assigned bus…' }
   if (assignment.status === 'no-account') return { badge: 'Error', text: 'This login is not linked to a conductor staff account. Ask an admin to create it in Accounts.' }
   if (assignment.status === 'no-bus') return { badge: 'Offline', text: 'No bus is assigned to you yet, so nothing is sent. Ask an admin to assign one in Buses.' }
   if (assignment.status === 'error') return { badge: 'Error', text: `Could not look up your bus: ${assignment.error}` }
   if (assignment.status !== 'ready') return { badge: 'Offline', text: 'Sign in to send live updates.' }
+  if (!tripActive) return { badge: 'Offline', text: 'Not sharing. Start a trip to share your location and passenger count with admin and commuters.' }
   if (send.status === 'error') return { badge: 'Error', text: send.error }
   if (send.status === 'sending' && send.lastSentAt === null) return { badge: 'Connecting', text: 'Sending the first update… If this stays, check that mobile data is on.' }
   if (send.status === 'sending') return { badge: 'Connecting', text: 'Sending… If this stays, mobile data may be off or weak; updates are kept and sent when it returns.' }
   if (send.lastSentAt === null) return { badge: 'Connecting', text: 'Preparing the first update…' }
   return {
     badge: 'Online',
-    text: `Last sent ${new Date(send.lastSentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}. ${gpsActive ? 'Location and passenger count are shared.' : 'Only the passenger count is shared until you enable phone GPS.'}`,
+    text: `Last sent ${new Date(send.lastSentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}. ${gpsActive ? 'Location and passenger count are shared.' : 'Only the passenger count is shared until phone GPS connects.'}`,
   }
+}
+
+function formatDuration(ms) {
+  const totalMinutes = Math.max(0, Math.floor(ms / 60000))
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return hours ? `${hours} h ${minutes} min` : `${minutes} min`
+}
+
+const clockTime = (time) => new Date(time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+
+// Start/End trip. While a trip runs, phone GPS is on and the live feed is shared.
+// The door cameras are separate: they keep their own Start/Stop buttons on the Camera page.
+function TripCard({ trip, gpsStatus, gpsMessage, usePhoneGps, canStart }) {
+  const [confirmEnd, setConfirmEnd] = useState(false)
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!trip.active) return undefined
+    const timer = window.setInterval(() => setNow(Date.now()), 15000)
+    return () => window.clearInterval(timer)
+  }, [trip.active])
+  const elapsed = trip.active && trip.startedAt ? Math.max(now, trip.startedAt) - trip.startedAt : 0
+  const gpsTrouble = trip.active && (gpsStatus === 'error' || gpsStatus === 'idle')
+
+  return (
+    <Card title="Trip" action={<StatusBadge status={trip.active ? 'Online' : 'Offline'} />}>
+      {trip.active ? (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            Running since <span className="font-semibold text-navy">{clockTime(trip.startedAt)}</span> · {formatDuration(elapsed)}
+          </p>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-lg bg-slate-50 p-2.5">
+              <p className="text-xs text-slate-500">Distance</p>
+              <p className="mt-0.5 font-bold text-navy">{trip.distanceKm.toFixed(1)} km</p>
+            </div>
+            <div className="rounded-lg bg-green-50 p-2.5">
+              <p className="text-xs text-green-800">Boarded</p>
+              <p className="mt-0.5 font-bold text-green-900">{trip.boarded}</p>
+            </div>
+            <div className="rounded-lg bg-amber-50 p-2.5">
+              <p className="text-xs text-amber-800">Alighted</p>
+              <p className="mt-0.5 font-bold text-amber-900">{trip.alighted}</p>
+            </div>
+          </div>
+          {gpsTrouble && (
+            <div role="alert" className="space-y-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <p>{gpsMessage || 'Phone GPS is off, so your location is not being shared.'}</p>
+              <Button variant="secondary" size="sm" icon={LocateFixed} onClick={usePhoneGps}>Turn GPS back on</Button>
+            </div>
+          )}
+          {gpsStatus === 'requesting' && <p role="status" className="text-xs text-slate-500">Waiting for phone GPS…</p>}
+          <Button variant="danger" icon={Flag} onClick={() => setConfirmEnd(true)} className="w-full">End trip</Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {trip.summary && (
+            <div className="relative rounded-lg border border-slate-200 bg-slate-50 p-3 pr-9 text-sm">
+              <button type="button" onClick={trip.dismissSummary} className="absolute right-2 top-2 rounded p-1 text-slate-500 hover:bg-slate-200" aria-label="Dismiss last trip summary">
+                <X size={14} />
+              </button>
+              <p className="font-semibold text-navy">Last trip</p>
+              <p className="mt-0.5 text-xs text-slate-600">
+                {clockTime(trip.summary.startedAt)} – {clockTime(trip.summary.endedAt)} · {formatDuration(trip.summary.endedAt - trip.summary.startedAt)}
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                {trip.summary.distanceKm.toFixed(1)} km · {trip.summary.boarded} boarded · {trip.summary.alighted} alighted
+              </p>
+            </div>
+          )}
+          <p className="text-sm text-slate-600">Start a trip when the bus leaves. Your location and passenger count are shared with admin and commuters until you end it.</p>
+          <Button icon={Play} onClick={trip.startTrip} disabled={!canStart} className="w-full">Start trip</Button>
+          {!canStart && <p className="text-xs text-slate-500">You can start a trip once an admin assigns you a bus.</p>}
+        </div>
+      )}
+      <ConfirmDialog
+        open={confirmEnd}
+        title="End this trip?"
+        message="Location sharing and phone GPS will stop. The door cameras keep running until you stop them on the Camera page."
+        confirmLabel="End trip"
+        tone="danger"
+        onConfirm={() => { setConfirmEnd(false); trip.endTrip() }}
+        onCancel={() => setConfirmEnd(false)}
+      />
+    </Card>
+  )
 }
 
 export default function MapPage() {
   const locationState = useOutletContext()
   const { settings, passengerCount, passengerEntries, passengerExits, adjustPassengerCount } = useConductor()
-  const { position, speed, gpsStatus, gpsMessage, gpsAccuracy, gpsUpdatedAt, usePhoneGps, stopPhoneGps, feed } = locationState
-  const feedState = feedSummary(feed, gpsStatus === 'active')
+  const { position, speed, gpsStatus, gpsMessage, gpsAccuracy, gpsUpdatedAt, usePhoneGps, feed, trip } = locationState
+  const feedState = feedSummary(feed, gpsStatus === 'active', trip.active)
   const load = capacityStatus(passengerCount, feed.assignment.bus?.capacity)
   const feedBus = feed.assignment.bus
   const route = feed.route
@@ -86,49 +175,34 @@ export default function MapPage() {
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_20rem] xl:grid-cols-[1fr_22rem]">
-      <div className="h-[50dvh] min-h-[320px] lg:h-[calc(100vh-8.5rem)]">
+      <div className="relative h-[50dvh] min-h-[320px] lg:h-[calc(100vh-8.5rem)]">
         <ConductorMap position={position} route={route} routeStops={routeStops} nextStopId={nextStop?.id} prefs={settings.map} gpsStatus={gpsStatus} gpsAccuracy={gpsAccuracy} />
+        {/* Passenger counter floats on the map so − / + are always on screen with it. */}
+        <div className="absolute bottom-7 left-3 z-[600] flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 p-1.5 shadow-md">
+          <Button variant="secondary" size="sm" icon={Minus} onClick={() => adjustPassengerCount(-1)} disabled={passengerCount === 0} aria-label="Remove one passenger" className="h-11 w-11 shrink-0" />
+          <div className="min-w-[4.5rem] text-center" role="status" aria-label={`${passengerCount} passengers onboard, ${load.label}`}>
+            <p className="text-lg font-bold leading-5 text-navy">
+              {passengerCount}
+              {load.limit && <span className="text-xs font-semibold text-slate-500">/{load.limit}</span>}
+            </p>
+            <span className={`mt-0.5 inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ring-1 ring-inset ${load.badge}`}>{load.label}</span>
+          </div>
+          <Button variant="secondary" size="sm" icon={Plus} onClick={() => adjustPassengerCount(1)} aria-label="Add one passenger" className="h-11 w-11 shrink-0" />
+        </div>
       </div>
 
       <div className="space-y-4 lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto">
+        <TripCard trip={trip} gpsStatus={gpsStatus} gpsMessage={gpsMessage} usePhoneGps={usePhoneGps} canStart={feed.assignment.status === 'ready'} />
+
         <Card
           title="Vehicle status"
           action={<StatusBadge status={vehicleStatus} />}
         >
           <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs leading-4 text-slate-500">Passengers onboard</p>
-                <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${load.badge}`}>{load.label}</span>
-              </div>
-              <Button variant="secondary" size="sm" icon={Minus} onClick={() => adjustPassengerCount(-1)} disabled={passengerCount === 0} aria-label="Remove one passenger" className="h-10 w-10 shrink-0" />
-              <p className="min-w-[3.5rem] text-center text-lg font-bold leading-6 text-navy">
-                {passengerCount}
-                {load.limit && <span className="text-xs font-semibold text-slate-500">/{load.limit}</span>}
-              </p>
-              <Button variant="secondary" size="sm" icon={Plus} onClick={() => adjustPassengerCount(1)} aria-label="Add one passenger" className="h-10 w-10 shrink-0" />
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <Tile icon={Gauge} label="Speed" value={speed === null ? 'Unavailable' : `${Math.round(speed)} km/h`} />
               <Tile icon={Users} label="Entries / exits" value={`${passengerEntries} in · ${passengerExits} out`} />
             </div>
-            {gpsStatus === 'active' ? (
-              <Button variant="secondary" size="sm" icon={CircleStop} onClick={stopPhoneGps} className="w-full">
-                Stop phone GPS
-              </Button>
-            ) : (
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={LocateFixed}
-                onClick={usePhoneGps}
-                disabled={gpsStatus === 'requesting'}
-                className="w-full"
-              >
-                {gpsStatus === 'requesting' ? 'Waiting for phone GPS…' : gpsStatus === 'error' ? 'Retry phone GPS' : 'Enable phone GPS'}
-              </Button>
-            )}
-            {gpsMessage && <p role="status" className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{gpsMessage}</p>}
           </div>
         </Card>
 
@@ -161,7 +235,7 @@ export default function MapPage() {
                 <p className="mt-1.5 text-xs text-slate-500">Stop {Math.max(stopsPassed + 1, 1)} of {routeStops.length}</p>
               </div>
             ) : (
-              <p className="text-xs text-slate-500">{route ? 'Enable phone GPS to estimate progress against the assigned route.' : 'Trip progress is unavailable until a route is assigned.'}</p>
+              <p className="text-xs text-slate-500">{route ? 'Start a trip to estimate progress against the assigned route.' : 'Trip progress is unavailable until a route is assigned.'}</p>
             )}
             <div className="space-y-2 border-t border-slate-100 pt-3">
               <p className="text-xs font-semibold text-slate-500">Stops in this route</p>
@@ -202,7 +276,7 @@ export default function MapPage() {
             <Info size={14} className="mt-0.5 shrink-0" />
             {position
               ? 'Phone GPS is the location source. Route progress and next stop are estimates against the assigned route, not road-snapped navigation.'
-              : 'Vehicle location is not available until you enable phone GPS. No fallback position is shown.'}
+              : 'Vehicle location is not available until you start a trip. No fallback position is shown.'}
           </p>
         </Card>
 

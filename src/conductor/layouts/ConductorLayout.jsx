@@ -11,19 +11,32 @@ import { useConductor } from '../context/ConductorContext.jsx'
 import { useToast } from '../../admin/context/ToastContext.jsx'
 import useVehicleLocation from '../utils/useVehicleLocation.js'
 import useBusFeed from '../utils/useBusFeed.js'
+import useTrip from '../utils/useTrip.js'
+import useConductorAlerts from '../utils/useConductorAlerts.js'
 import { CameraPanel } from '../pages/CameraPage.jsx'
 import { signOutFirebaseUser } from '../../firebase/auth.js'
 import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
 
 export default function ConductorLayout() {
-  const { profile, session, logout, sosReport, setSosReport, passengerCount, passengerEntries, passengerExits } = useConductor()
+  const { profile, session, logout, sosReport, setSosReport, passengerCount, passengerEntries, passengerExits, addAlert } = useConductor()
   const { userProfile } = useCommuter()
   const { notify } = useToast()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const location = useVehicleLocation()
+  // Start/End trip controls phone GPS and the live feed. The door cameras have their own buttons.
+  const trip = useTrip({
+    position: location.position,
+    gpsAccuracy: location.gpsAccuracy,
+    gpsStatus: location.gpsStatus,
+    startGps: location.usePhoneGps,
+    stopGps: location.stopPhoneGps,
+    entries: passengerEntries,
+    exits: passengerExits,
+  })
   // Runs for the whole conductor session (not just one page) so the admin side keeps getting updates.
   const feed = useBusFeed({
+    enabled: trip.active,
     uid: session?.uid || '',
     position: location.position,
     speed: location.speed,
@@ -31,6 +44,15 @@ export default function ConductorLayout() {
     passengers: passengerCount,
     entries: passengerEntries,
     exits: passengerExits,
+  })
+  useConductorAlerts({
+    addAlert,
+    passengerCount,
+    capacity: feed.assignment.bus?.capacity,
+    trip,
+    gpsStatus: location.gpsStatus,
+    gpsMessage: location.gpsMessage,
+    feed,
   })
 
   // Like Admin, the sidebar expands on hover/focus and while its profile menu is open.
@@ -49,6 +71,7 @@ export default function ConductorLayout() {
   const doLogout = async () => {
     try {
       if (session?.firebaseAuthenticated) await signOutFirebaseUser()
+      trip.endTrip() // a trip never carries over to the next person who signs in on this phone
       setConfirmLogout(false)
       logout()
       notify('You have been logged out.', 'info')
@@ -90,7 +113,7 @@ export default function ConductorLayout() {
           <div role="status" className="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
             <TriangleAlert size={16} className="shrink-0" />
             <p className="min-w-0 flex-1">
-              <span className="font-semibold">SOS report {sosReport.id}</span> · {sosReport.type}
+              <span className="font-semibold">SOS · {sosReport.type}</span> · {sosReport.status}
             </p>
             <button type="button" onClick={() => setSosReport(null)} className="rounded p-1 hover:bg-amber-100" aria-label="Dismiss SOS banner">
               <X size={16} />
@@ -100,7 +123,7 @@ export default function ConductorLayout() {
         {/* Bottom padding = bottom-nav height + breathing room, so the fixed nav never covers content. */}
         <main id="main" className="px-4 pt-4 pb-[calc(var(--bottom-nav-h)+1rem)] md:px-6 md:pt-6 lg:pb-6">
           <div key={pathname} className="route-page-enter font-sans">
-            <Outlet context={{ ...location, feed, requestLogout: () => setConfirmLogout(true) }} />
+            <Outlet context={{ ...location, feed, trip, requestLogout: () => setConfirmLogout(true) }} />
           </div>
           {/* Always mounted so door cameras keep counting while other conductor pages are open. */}
           <CameraPanel feed={feed} visible={pathname.replace(/\/+$/, '') === '/conductor/camera'} />
@@ -109,7 +132,14 @@ export default function ConductorLayout() {
 
       <BottomNav />
 
-      <SosModal open={sosOpen} onClose={() => setSosOpen(false)} location={location.location} />
+      <SosModal
+        open={sosOpen}
+        onClose={() => setSosOpen(false)}
+        location={location.location}
+        bus={feed.assignment.bus}
+        route={feed.route}
+        reporterName={profileName}
+      />
       <ConfirmDialog
         open={confirmLogout}
         title="Log out?"

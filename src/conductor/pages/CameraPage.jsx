@@ -5,6 +5,7 @@ import Button from '../../admin/components/Button.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { useConductor } from '../context/ConductorContext.jsx'
 import { capacityStatus } from '../utils/capacity.js'
+import { MIN_SCORE, TRACK_TTL_MS, finishTrack, isTrustedBox, matchToTracks, newTrack, stepTrack } from '../utils/doorTracker.js'
 
 const DOORS = [
   { id: 'door-1', title: 'Door 1 camera' },
@@ -51,98 +52,17 @@ function usePersonModel() {
   return { model, modelStatus: status, modelError: error, loadModel: load }
 }
 
-// Tracking tuning. Positions are fractions of the frame (0..1).
-const MIN_SCORE = 0.45 // person confidence; people close to the camera are often only partly visible
-const MATCH_RADIUS = 0.35 // how far a person may move between two checks and still be the same track
-const TRACK_TTL_MS = 2000 // keep a lost track this long so a brief miss does not split one walk into two people
 const DETECT_PAUSE_MS = 30 // short pause between checks so the page stays responsive
-const LINE_DEAD_ZONE = 0.05 // band around the line where the side is undecided (prevents jitter double-counts)
-const SMOOTHING = 0.6 // weight of the newest position; the rest is the track's previous position (damps box jumps)
-const CONFIRM_CHECKS = 2 // a person must be seen on the new side this many checks in a row…
-const CONFIRM_MS = 300 // …and for at least this long before a crossing counts (ignores one-frame bounces)
-// No per-person cooldown: if a bounce ever slips through it produces an exit AND an entry,
-// which cancel out so the onboard total stays right (a cooldown would keep only half of it).
-const CROSSING_COOLDOWN_MS = 0
 const STREAM_STALL_MS = 4000 // Wi-Fi camera: if the picture is pixel-identical this long, the stream died; reconnect
 const RETRY_MS = 5000 // Wi-Fi camera: wait between reconnect attempts (a restarting ESP32 needs a few seconds)
 const RETRY_PAUSE_MS = 500 // how often to look for the picture to come back while reconnecting
 const LONG_OUTAGE_MS = 15000 // after this long, also tell the conductor to check the phone's Wi-Fi
-const MAX_BOX_SPAN = 0.85 // a box wider (vertical line) / taller (horizontal line) than this fills nearly the whole
-// picture (someone right at the lens); its centre says little about which side they are on, so it is not trusted
-
-// Advance one track by one check. Returns the updated track and, if a crossing was confirmed,
-// the side the person came from.
-function stepTrack(track, rawCenter, orientation, now, trusted = true) {
-  const x = track.x + (rawCenter.x - track.x) * SMOOTHING
-  const y = track.y + (rawCenter.y - track.y) * SMOOTHING
-  const side = trusted ? sideOfLine({ x, y }, orientation) : null
-  const next = { ...track, x, y, seenAt: now }
-  let crossedFrom = null
-
-  if (side === null) return { track: next, crossedFrom }
-  if (track.side === null) return { track: { ...next, side, pendingSide: null, pendingCount: 0 }, crossedFrom }
-  if (side === track.side) return { track: { ...next, pendingSide: null, pendingCount: 0 }, crossedFrom }
-
-  const pendingCount = track.pendingSide === side ? track.pendingCount + 1 : 1
-  const pendingSince = track.pendingSide === side ? track.pendingSince : now
-  if (pendingCount >= CONFIRM_CHECKS && now - pendingSince >= CONFIRM_MS) {
-    if (now - (track.countedAt ?? -Infinity) >= CROSSING_COOLDOWN_MS) {
-      crossedFrom = track.side
-      next.countedAt = now
-    }
-    return { track: { ...next, side, pendingSide: null, pendingCount: 0 }, crossedFrom }
-  }
-  return { track: { ...next, pendingSide: side, pendingCount, pendingSince }, crossedFrom }
-}
-
-// A person often walks out of view right after crossing, before the live confirmation finishes.
-// When their track expires, count the crossing if they were last seen settled on the other side.
-function finishTrack(track, now) {
-  const endedOnOtherSide = track.side !== null && track.pendingSide !== null && track.pendingSide !== track.side
-  if (!endedOnOtherSide || track.pendingCount < CONFIRM_CHECKS) return null
-  if (now - (track.countedAt ?? -Infinity) < CROSSING_COOLDOWN_MS) return null
-  return track.side
-}
-
-function newTrack(id, center, orientation, now, trusted = true) {
-  return { id, ...center, side: trusted ? sideOfLine(center, orientation) : null, seenAt: now, pendingSide: null, pendingCount: 0 }
-}
-
-function isTrustedBox(person, orientation) {
-  return (orientation === 'horizontal' ? person.height : person.width) <= MAX_BOX_SPAN
-}
-
-function sideOfLine(point, orientation) {
-  const coordinate = orientation === 'horizontal' ? point.y : point.x
-  if (coordinate <= 0.5 - LINE_DEAD_ZONE) return 0
-  if (coordinate >= 0.5 + LINE_DEAD_ZONE) return 1
-  return null
-}
-
-// Pair each detected person with the nearest existing track, closest pairs first.
-function matchToTracks(centers, tracks) {
-  const pairs = []
-  centers.forEach((center, personIndex) => {
-    tracks.forEach((track, trackIndex) => {
-      const distance = Math.hypot(center.x - track.x, center.y - track.y)
-      if (distance < MATCH_RADIUS) pairs.push({ personIndex, trackIndex, distance })
-    })
-  })
-  pairs.sort((a, b) => a.distance - b.distance)
-  const trackForPerson = new Map()
-  const usedTracks = new Set()
-  for (const { personIndex, trackIndex } of pairs) {
-    if (trackForPerson.has(personIndex) || usedTracks.has(trackIndex)) continue
-    trackForPerson.set(personIndex, trackIndex)
-    usedTracks.add(trackIndex)
-  }
-  return { trackForPerson, usedTracks }
-}
 
 function DoorCamera({
   door, devices, selectedDevice, onDeviceChange, onDevicesChanged,
   claimDevice, releaseDevice, model, loadModel, modelStatus, onCrossing,
 }) {
+  const { addAlert } = useConductor()
   const videoRef = useRef(null)
   const imgRef = useRef(null)
   const activeDeviceId = useRef('')
@@ -161,6 +81,23 @@ function DoorCamera({
   const [clock, setClock] = useState(0)
   const [orientation, setOrientation] = useState('horizontal')
   const [outsideSide, setOutsideSide] = useState(0)
+  // Many webcams send a mirrored picture. Flipping turns the video back to how the door really
+  // looks; detections are flipped the same way so the line, boxes and sides all agree.
+  const [flipped, setFlipped] = useState(() => {
+    try {
+      return localStorage.getItem(`antabayqc_camera_flip_${door.id}`) === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleFlipped = (next) => {
+    setFlipped(next)
+    try {
+      localStorage.setItem(`antabayqc_camera_flip_${door.id}`, next ? '1' : '0')
+    } catch {
+      /* the setting just will not be remembered */
+    }
+  }
   const isWifiSource = selectedDevice === WIFI_SOURCE
   const active = Boolean(stream || activeWifiUrl)
 
@@ -394,7 +331,7 @@ function DoorCamera({
           .map((result) => {
             const [x, y, width, height] = result.bbox
             return {
-              x: x / frameWidth,
+              x: flipped ? 1 - (x + width) / frameWidth : x / frameWidth,
               y: y / frameHeight,
               width: width / frameWidth,
               height: height / frameHeight,
@@ -403,7 +340,7 @@ function DoorCamera({
           })
 
         const centers = people.map((person) => ({ x: person.x + person.width / 2, y: person.y + person.height / 2 }))
-        const { trackForPerson, usedTracks } = matchToTracks(centers, tracks)
+        const { trackForPerson, usedTracks } = matchToTracks(centers, tracks, now)
         const nextTracks = centers.map((center, personIndex) => {
           const trackIndex = trackForPerson.get(personIndex)
           const trusted = isTrustedBox(people[personIndex], orientation)
@@ -416,7 +353,7 @@ function DoorCamera({
 
         const unmatched = tracks.filter((track, index) => !usedTracks.has(index))
         for (const track of unmatched) {
-          if (now - track.seenAt >= TRACK_TTL_MS) countCrossing(finishTrack(track, now), now)
+          if (now - track.seenAt >= TRACK_TTL_MS) countCrossing(finishTrack(track, orientation), now)
         }
         tracks = [...nextTracks, ...unmatched.filter((track) => now - track.seenAt < TRACK_TTL_MS)]
         setDetections(people.map((person, index) => ({
@@ -453,7 +390,7 @@ function DoorCamera({
         source.srcObject = null
       }
     }
-  }, [stream, activeWifiUrl, model, orientation, outsideSide, onCrossing])
+  }, [stream, activeWifiUrl, model, orientation, outsideSide, flipped, onCrossing])
 
   // Hide the "+1 entry / −1 exit" badge a moment after each crossing.
   useEffect(() => {
@@ -464,6 +401,20 @@ function DoorCamera({
 
   // Tick once a second while the Wi-Fi link is down, so the "paused for N s" text stays current.
   const linkDown = Boolean(activeWifiUrl) && link.state !== 'live'
+
+  // Put camera drop-outs and recoveries on the Alerts page.
+  const previousLink = useRef(link)
+  useEffect(() => {
+    const before = previousLink.current
+    previousLink.current = link
+    if (before.state === link.state) return
+    if (link.state === 'reconnecting') {
+      addAlert({ category: 'camera', tone: 'warning', title: `${door.title} lost connection`, body: 'Counting is paused until the camera comes back.' })
+    } else if (link.state === 'live' && before.state === 'reconnecting') {
+      const seconds = Math.max(1, Math.round((link.since - before.since) / 1000))
+      addAlert({ category: 'camera', tone: 'info', title: `${door.title} reconnected`, body: `Counting was paused for ${seconds} s. People who passed then were not counted.` })
+    }
+  }, [link, door.title, addAlert])
   useEffect(() => {
     if (!linkDown) return undefined
     const timer = window.setInterval(() => setClock(Date.now()), 1000)
@@ -501,13 +452,13 @@ function DoorCamera({
         {active ? (
           <>
             {stream ? (
-              <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-fill" aria-label={`${door.title} live video`} />
+              <video ref={videoRef} autoPlay muted playsInline className={`h-full w-full object-fill ${flipped ? '-scale-x-100' : ''}`} aria-label={`${door.title} live video`} />
             ) : (
               <img
                 ref={imgRef}
                 src={activeWifiUrl}
                 crossOrigin="anonymous"
-                className="h-full w-full object-fill"
+                className={`h-full w-full object-fill ${flipped ? '-scale-x-100' : ''}`}
                 alt={`${door.title} Wi-Fi camera live video`}
               />
             )}
@@ -607,6 +558,14 @@ function DoorCamera({
             placeholder={DEFAULT_WIFI_URL}
           />
           <span className="mt-1 block font-normal text-slate-500">Connect this device to the camera&apos;s Wi-Fi first. The camera allows one viewer at a time.</span>
+          {/* The ESP32-CAM only speaks http. A page opened over https (the hosted site) is not allowed to show it. */}
+          {typeof window !== 'undefined' && window.location.protocol === 'https:' && /^http:/i.test(wifiUrl.trim()) && (
+            <span role="note" className="mt-2 block rounded-lg bg-amber-50 px-3 py-2 font-normal text-amber-900">
+              This page is open over https, and the camera only supports http, so the browser may block the video.
+              If it keeps saying &quot;Connecting&quot;, open the app from the phone&apos;s installed app (APK) or allow
+              &quot;Insecure content&quot; for this site in the browser&apos;s site settings.
+            </span>
+          )}
         </label>
       )}
 
@@ -627,6 +586,11 @@ function DoorCamera({
           </select>
         </label>
       </div>
+
+      <label className="flex items-center gap-2 text-xs font-semibold text-navy">
+        <input type="checkbox" checked={flipped} onChange={(event) => toggleFlipped(event.target.checked)} className="h-4 w-4 accent-brand" />
+        Flip picture left ↔ right (use if the video looks mirrored)
+      </label>
 
       <div className="flex flex-wrap gap-2">
         {active ? (

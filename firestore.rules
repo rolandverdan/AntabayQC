@@ -164,8 +164,34 @@ service cloud.firestore {
         ]);
     }
 
+    // A conductor may create one new SOS for the bus they are assigned to. Admin handles it from there.
+    function isConductorSos(emergencyId) {
+      let data = request.resource.data;
+      return isConductor()
+        && data.keys().hasOnly([
+            'id', 'type', 'severity', 'status', 'busId', 'routeId', 'location', 'lat', 'lng',
+            'description', 'reportedBy', 'reporterUid', 'source', 'datetime', 'history', 'createdAt'
+          ])
+        && data.keys().hasAll(['id', 'type', 'severity', 'status', 'busId', 'location', 'description', 'reportedBy', 'reporterUid', 'source', 'datetime', 'history', 'createdAt'])
+        && data.id == emergencyId
+        && data.status == 'New'
+        && data.source == 'conductor-sos'
+        && data.reporterUid == request.auth.uid
+        && data.severity in ['Critical', 'High', 'Medium', 'Low']
+        && data.type is string && data.type.size() <= 60
+        && data.description is string && data.description.size() <= 400
+        && data.location is string && data.location.size() <= 120
+        && data.history is list && data.history.size() == 1
+        && data.createdAt == request.time
+        && (!('lat' in data) || (data.lat is number && data.lat >= -90 && data.lat <= 90))
+        && (!('lng' in data) || (data.lng is number && data.lng >= -180 && data.lng <= 180))
+        && data.busId is string && data.busId != ''
+        && isAssignedConductor(data.busId);
+    }
+
     match /emergencies/{emergencyId} {
-      allow read, write: if isAdmin();
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin() || isConductorSos(emergencyId);
     }
 
     match /busLocations/{busId} {

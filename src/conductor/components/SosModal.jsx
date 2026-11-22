@@ -5,7 +5,8 @@ import {
 } from 'lucide-react'
 import Modal from '../../admin/components/Modal.jsx'
 import Button from '../../admin/components/Button.jsx'
-import { EMERGENCY_TYPES, VEHICLE, ROUTE } from '../data/mock.js'
+import { EMERGENCY_TYPES } from '../data/mock.js'
+import { sendSos } from '../utils/sendSos.js'
 import { useConductor } from '../context/ConductorContext.jsx'
 import HoldButton from './HoldButton.jsx'
 
@@ -15,12 +16,11 @@ const MAX_DESC = 300
 const fmtTime = (d) => d.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })
 
 /**
- * SOS flow: 1) choose type + optional details  2) confirm  3) simulated result.
- * `location` is the current mock vehicle location supplied by the layout.
- * FRONTEND DEMO: nothing is transmitted and nobody is contacted.
+ * SOS flow: 1) choose type + optional details  2) confirm  3) send to Admin → Emergency Logs.
+ * `location` is the phone GPS position (null when GPS is off); `bus` / `route` are the real assignment.
  */
-export default function SosModal({ open, onClose, location }) {
-  const { settings, setSosReport } = useConductor()
+export default function SosModal({ open, onClose, location, bus, route, reporterName }) {
+  const { settings, setSosReport, addAlert } = useConductor()
   const [step, setStep] = useState('select') // select | confirm | sending | sent
   const [typeId, setTypeId] = useState('')
   const [description, setDescription] = useState('')
@@ -44,23 +44,42 @@ export default function SosModal({ open, onClose, location }) {
     setStep('confirm')
   }
 
-  const submit = () => {
+  const vehicleLabel = bus ? `${bus.id}${bus.plate ? ` · ${bus.plate}` : ''}` : 'No bus assigned'
+  const routeLabel = route ? `${route.id} · ${route.name}` : bus?.routeId || 'No route assigned'
+
+  const submit = async () => {
     setStep('sending')
-    setTimeout(() => {
-      const r = {
-        id: `SOS-${Math.floor(1000 + Math.random() * 9000)}`,
-        type: type.label,
-        description: description.trim(),
-        location,
-        vehicle: `${VEHICLE.id} · ${VEHICLE.plate}`,
-        route: `${ROUTE.id} · ${ROUTE.name}`,
-        at: new Date(),
-        status: 'Recorded',
-      }
+    const base = {
+      type: type.label,
+      description: description.trim(),
+      location,
+      vehicle: vehicleLabel,
+      route: routeLabel,
+      at: new Date(),
+    }
+    try {
+      const result = await sendSos({ typeId, description: description.trim(), location, bus, route, reporterName })
+      const r = { ...base, id: result.id, status: result.outcome === 'sent' ? 'Sent to operations' : 'Waiting for signal', outcome: result.outcome }
       setReport(r)
       setSosReport(r)
-      setStep('sent')
-    }, 1200)
+      addAlert({
+        category: 'sos',
+        tone: 'danger',
+        title: result.outcome === 'sent' ? `SOS sent: ${type.label}` : `SOS waiting for signal: ${type.label}`,
+        body: result.outcome === 'sent'
+          ? 'Operations can see it in Emergency Logs.'
+          : 'It will send automatically when the phone has mobile data. Call operations if it is urgent.',
+      })
+    } catch (sendError) {
+      console.error('SOS could not be sent:', sendError)
+      const r = { ...base, id: 'Not sent', status: 'Not sent', outcome: 'failed', error: sendError.code === 'permission-denied'
+        ? 'The server refused the report (this account is not allowed to send SOS yet).'
+        : sendError.message }
+      setReport(r)
+      setSosReport(r)
+      addAlert({ category: 'sos', tone: 'danger', title: `SOS NOT sent: ${type.label}`, body: 'Call operations directly.' })
+    }
+    setStep('sent')
   }
 
   const locked = step === 'sending'
@@ -90,7 +109,7 @@ export default function SosModal({ open, onClose, location }) {
   } else if (step === 'sending') {
     title = 'Sending report…'
   } else {
-    title = 'Report recorded'
+    title = report?.outcome === 'failed' ? 'Report NOT sent' : report?.outcome === 'queued' ? 'Waiting for signal' : 'Report sent'
     footer = <Button onClick={onClose} className="w-full sm:w-auto">Done</Button>
   }
 
@@ -162,7 +181,7 @@ export default function SosModal({ open, onClose, location }) {
               label="Current location"
               value={location ? `${location.label} (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})` : 'Unavailable; enable phone GPS to include location'}
             />
-            <Row label="Vehicle" value={`${VEHICLE.id} · ${VEHICLE.plate}`} />
+            <Row label="Vehicle / route" value={`${vehicleLabel} · ${routeLabel}`} />
           </dl>
           {settings.sos.holdToConfirm && (
             <p className="mt-3 flex items-start gap-2 text-xs text-slate-500">
@@ -176,21 +195,39 @@ export default function SosModal({ open, onClose, location }) {
       {step === 'sending' && (
         <div className="flex flex-col items-center gap-3 py-8 text-slate-600" role="status">
           <Loader2 size={32} className="animate-spin text-brand" />
-          <p className="text-sm">Recording your report…</p>
+          <p className="text-sm">Sending your report to operations…</p>
         </div>
       )}
 
       {step === 'sent' && report && (
         <div>
-          <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-3 text-sm text-green-900" role="status">
-            <CircleCheck size={20} className="mt-0.5 shrink-0" />
-            <div>
-              <p className="font-semibold">Report created</p>
-              <p className="mt-0.5 text-xs">
-                Your emergency report has been recorded.
-              </p>
+          {report.outcome === 'sent' && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-3 text-sm text-green-900" role="status">
+              <CircleCheck size={20} className="mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold">Sent to operations</p>
+                <p className="mt-0.5 text-xs">Your report is in Admin → Emergency Logs.</p>
+              </div>
             </div>
-          </div>
+          )}
+          {report.outcome === 'queued' && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900" role="status">
+              <Loader2 size={20} className="mt-0.5 shrink-0 animate-spin" />
+              <div>
+                <p className="font-semibold">Waiting for signal</p>
+                <p className="mt-0.5 text-xs">The phone has no connection right now. The report sends automatically when mobile data is back. If it is urgent, call operations.</p>
+              </div>
+            </div>
+          )}
+          {report.outcome === 'failed' && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 px-3 py-3 text-sm text-red-900" role="alert">
+              <TriangleAlert size={20} className="mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold">Report NOT sent. Call operations directly.</p>
+                <p className="mt-0.5 text-xs">{report.error}</p>
+              </div>
+            </div>
+          )}
           <dl className="divide-y divide-slate-100 rounded-lg border border-slate-200 text-sm">
             <Row label="Report ID" value={report.id} />
             <Row label="Emergency type" value={report.type} strong />
@@ -203,9 +240,8 @@ export default function SosModal({ open, onClose, location }) {
             />
             <Row label="Vehicle / route" value={`${report.vehicle} · ${report.route}`} />
             <Row label="Time" value={<span className="inline-flex items-center gap-1"><Clock size={14} />{fmtTime(report.at)}</span>} />
-            <Row label="Status" value={<span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{report.status}</span>} />
+            <Row label="Status" value={<span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${report.outcome === 'sent' ? 'bg-green-100 text-green-800' : report.outcome === 'queued' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>{report.status}</span>} />
           </dl>
-          <p className="mt-3 text-xs text-slate-500">In a real deployment, this is where a backend would notify the operations center.</p>
         </div>
       )}
     </Modal>

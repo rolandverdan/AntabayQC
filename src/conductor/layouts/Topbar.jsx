@@ -4,15 +4,14 @@ import { Bell, Siren, Bus } from 'lucide-react'
 import { LogoTile } from '../../shared/components/Logo.jsx'
 import TopBrand from '../../shared/components/TopBrand.jsx'
 import { NAV_ITEMS } from './navItems.js'
-import { NOTIFICATIONS } from '../data/mock.js'
 import { useConductor } from '../context/ConductorContext.jsx'
 
 export default function Topbar({ expanded, onSos, assignment, route }) {
   const { pathname } = useLocation()
-  const { settings } = useConductor()
+  const { unreadAlerts } = useConductor()
 
   const title = NAV_ITEMS.find((n) => pathname.startsWith(n.to))?.label || 'Conductor'
-  const alertCount = NOTIFICATIONS.filter((notification) => settings.notifications[notification.category]).length
+  const alertCount = unreadAlerts
 
   return (
     <header className="pt-safe fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-brand text-white shadow-md">

@@ -23,6 +23,18 @@ function readPassengerTotals() {
   return { count: 0, entries: 0, exits: 0 }
 }
 
+const ALERTS_KEY = 'antabayqc_conductor_alerts_v1'
+const MAX_ALERTS = 50
+
+function readAlerts() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(ALERTS_KEY) || '[]')
+    return Array.isArray(stored) ? stored.filter((alert) => alert && alert.id && alert.title).slice(0, MAX_ALERTS) : []
+  } catch {
+    return []
+  }
+}
+
 function readSession() {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
@@ -88,6 +100,27 @@ export function ConductorProvider({ children }) {
     }
   }, [])
 
+  // Alerts raised on this phone (bus full, camera lost, trip started, SOS sent…). Newest first.
+  const [alerts, setAlerts] = useState(readAlerts)
+  useEffect(() => {
+    try {
+      localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts))
+    } catch (error) {
+      console.error('Could not save conductor alerts in this browser:', error)
+    }
+  }, [alerts])
+  const addAlert = useCallback(({ category = 'system', tone = 'info', title, body = '' }) => {
+    const at = Date.now()
+    setAlerts((current) => [
+      { id: `${at}-${Math.random().toString(36).slice(2, 7)}`, category, tone, title, body, at, read: false },
+      ...current,
+    ].slice(0, MAX_ALERTS))
+  }, [])
+  const markAlertsRead = useCallback(() => {
+    setAlerts((current) => (current.some((alert) => !alert.read) ? current.map((alert) => ({ ...alert, read: true })) : current))
+  }, [])
+  const clearAlerts = useCallback(() => setAlerts([]), [])
+
   const logout = useCallback(() => {
     try {
       sessionStorage.removeItem(SESSION_KEY)
@@ -98,6 +131,9 @@ export function ConductorProvider({ children }) {
     setSettings(initialSettings)
     setProfile(initialProfile)
     setSosReport(null)
+    // The next person to sign in on this phone starts from zero, not with the last shift's count.
+    setPassengerTotals({ count: 0, entries: 0, exits: 0 })
+    setAlerts([])
   }, [])
 
   const updateProfile = useCallback((patch) => setProfile((p) => ({ ...p, ...patch })), [])
@@ -119,6 +155,8 @@ export function ConductorProvider({ children }) {
     recordPassengerCrossing,
     setPassengerCount,
     adjustPassengerCount,
+    alerts, addAlert, markAlertsRead, clearAlerts,
+    unreadAlerts: alerts.filter((alert) => !alert.read).length,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

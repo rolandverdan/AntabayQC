@@ -144,7 +144,7 @@ export default function ConductorMap({ position, route, routeStops = [], nextSto
       </MapContainer>
 
       {prefs.showRoute && route && mapStops.length > 1 && !roadPath && (
-        <div role="status" className="pointer-events-none absolute bottom-3 left-3 z-[500] rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
+        <div role="status" className="pointer-events-none absolute bottom-24 left-3 z-[500] rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
           {roadStatus === 'error' ? 'Could not load the road route. Check your internet connection.' : 'Loading road route…'}
         </div>
       )}
