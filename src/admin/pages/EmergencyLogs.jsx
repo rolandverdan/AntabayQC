@@ -13,7 +13,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import Modal from '../components/Modal.jsx'
 import Field from '../components/FormField.jsx'
 import { DetailHeader, InfoTile, SmallLabel, toneOf } from '../components/FormParts.jsx'
-import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
+import { fmtDateTime, inDateRange, includesText, sequentialDisplayIds } from '../utils/format.js'
 import { inputClass } from '../utils/ui.js'
 import { EMERGENCY_SEVERITIES, EMERGENCY_STATUSES, INCIDENT_TYPES } from '../data/constants.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
@@ -53,6 +53,7 @@ export default function EmergencyLogs() {
       .sort((a, b) => (Number(!unresolved(a)) - Number(!unresolved(b))) || (SEV_ORDER[a.severity] - SEV_ORDER[b.severity]) || b.datetime.localeCompare(a.datetime)),
     [emergencies, q, sev, status, type, from, to],
   )
+  const displayIds = useMemo(() => sequentialDisplayIds(emergencies, 'EMG', 'datetime'), [emergencies])
   const view = emergencies.find((e) => e.id === viewId)
 
   const rowClass = (e) => {
@@ -74,10 +75,10 @@ export default function EmergencyLogs() {
   }
 
   const columns = [
-    { key: 'id', header: 'Emergency ID', render: (e) => <span className="font-mono text-xs font-semibold text-navy">{e.id}</span> },
+    { key: 'displayId', header: 'Emergency ID', render: (e) => <span className="font-semibold text-navy">{displayIds.get(e.id)}</span> },
     { key: 'datetime', header: 'Date & time', render: (e) => <span className="whitespace-nowrap">{fmtDateTime(e.datetime)}</span> },
     { key: 'bus', header: 'Bus / route', render: (e) => `${e.busId} · ${e.routeId}` },
-    { key: 'type', header: 'Incident', render: (e) => <span className="font-semibold text-navy">{e.type}</span> },
+    { key: 'type', header: 'Incident', render: (e) => <span className="text-navy">{e.type}</span> },
     { key: 'location', header: 'Location', render: (e) => <span className="line-clamp-2 max-w-48">{e.location}</span> },
     { key: 'severity', header: 'Severity', render: (e) => <Badge>{e.severity}</Badge> },
     { key: 'status', header: 'Status', render: (e) => <Badge>{e.status}</Badge> },
@@ -126,14 +127,13 @@ export default function EmergencyLogs() {
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search ID, bus, location, description…"
         filters={[
+          { key: 'date-range', render: () => <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} /> },
           { label: 'Severity', value: sev, onChange: setSev, options: EMERGENCY_SEVERITIES.map((s) => ({ value: s, label: s })) },
           { label: 'Status', value: status, onChange: setStatus, options: EMERGENCY_STATUSES.map((s) => ({ value: s, label: s })) },
           { label: 'Incident', value: type, onChange: setType, options: INCIDENT_TYPES.map((s) => ({ value: s, label: s })) },
         ]}
         onClear={() => { setQ(''); setSev(''); setStatus(''); setType(''); setFrom(''); setTo('') }}
-      >
-        <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} />
-      </SearchFilterBar>
+      />
       <DataTable columns={columns} rows={rows} rowClassName={rowClass} highlightKeys={highlight} emptyTitle="No incidents match" emptyHint="Record an incident here or connect an incident feed." />
 
       <Modal

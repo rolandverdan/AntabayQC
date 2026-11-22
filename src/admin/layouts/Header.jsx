@@ -6,7 +6,7 @@ import { LogoTile } from '../../shared/components/Logo.jsx'
 
 export default function Header({
   expanded,
-  roleLabel = 'Admin Console',
+  roleLabel = 'Admin',
   onOpenMobile,
   title,
   commuterMode = false,
@@ -24,7 +24,7 @@ export default function Header({
         <Menu size={20} />
       </button>
       <span className="ml-1 lg:hidden"><LogoTile size="sm" /></span>
-      <TopBrand expanded={expanded} roleLabel={roleLabel} />
+      <TopBrand expanded={expanded} roleLabel={roleLabel} persistent />
       {/* Admin page titles live in each page's header (below the navbar); only commuter mode keeps a title here. */}
       {commuterMode && (
         <div className="min-w-0 pl-3 lg:pl-6">

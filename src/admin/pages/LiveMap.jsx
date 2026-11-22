@@ -6,24 +6,20 @@ import Badge from '../components/Badge.jsx'
 import MapView from '../components/MapView.jsx'
 import OccupancyBar from '../components/OccupancyBar.jsx'
 import { busImage, routeColor } from '../utils/geo.js'
-import { BUS_STATUSES } from '../data/constants.js'
 import { fmtDateTime } from '../utils/format.js'
-import Select from '../../shared/components/Select.jsx'
 
 export default function LiveMap() {
   const { buses, routes, stops, accountsById, routesById, stopsById, busLocationsById } = useAdminData()
   const [routeF, setRouteF] = useState('')
-  const [busF, setBusF] = useState('')
-  const [statusF, setStatusF] = useState('')
   const [pickedId, setSelectedId] = useState('')
 
   const live = useMemo(() => buses
-    .filter((bus) => (!routeF || bus.routeId === routeF) && (!busF || bus.id === busF) && (!statusF || bus.status === statusF))
+    .filter((bus) => !routeF || bus.routeId === routeF)
     .flatMap((bus) => {
       const location = busLocationsById[bus.id]
       if (!location || !Number.isFinite(Number(location.lat)) || !Number.isFinite(Number(location.lng))) return []
       return [{ bus, location }]
-    }), [buses, busLocationsById, routeF, busF, statusF])
+    }), [buses, busLocationsById, routeF])
 
   const shownRoutes = (routeF ? routes.filter((route) => route.id === routeF) : routes.filter((route) => route.status === 'Active'))
     .map((route) => ({
@@ -68,24 +64,8 @@ export default function LiveMap() {
         No GPS/device integration is configured. Bus positions, speed, arrival estimates, and passenger counts are not simulated.
       </p>
 
-      <div className="mb-4 flex shrink-0 flex-col gap-3 sm:flex-row">
-        <Select value={routeF} onChange={(event) => { setRouteF(event.target.value); setBusF('') }} aria-label="Route filter">
-          <option value="">Route: All active</option>
-          {routes.map((route) => <option key={route.id} value={route.id}>{route.id} · {route.name}</option>)}
-        </Select>
-        <Select value={busF} onChange={(event) => setBusF(event.target.value)} aria-label="Bus filter">
-          <option value="">Bus: All</option>
-          {buses.filter((bus) => !routeF || bus.routeId === routeF).map((bus) => <option key={bus.id} value={bus.id}>{bus.id}</option>)}
-        </Select>
-        <Select value={statusF} onChange={(event) => setStatusF(event.target.value)} aria-label="Status filter">
-          <option value="">Status: All</option>
-          {BUS_STATUSES.map((status) => <option key={status}>{status}</option>)}
-        </Select>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-        <div className="flex min-w-0 flex-col gap-4">
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-4">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="p-1">
               <MapView stops={shownStops} routes={shownRoutes} buses={markers} onBusClick={setSelectedId} className="h-[420px] lg:h-[460px]" roadSnap />
             </div>
@@ -95,8 +75,9 @@ export default function LiveMap() {
               <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-red-600" />Emergency status</li>
               <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border-2 border-navy bg-white" />Bus stop</li>
             </ul>
-          </div>
+        </div>
 
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           <Card title="Routes" bodyClass="p-4">
             {routes.length ? (
               <>
@@ -105,7 +86,7 @@ export default function LiveMap() {
                     <button
                       key={route.id}
                       type="button"
-                      onClick={() => { setRouteF(routeF === route.id ? '' : route.id); setBusF('') }}
+                      onClick={() => setRouteF(routeF === route.id ? '' : route.id)}
                       title={route.name}
                       className={`flex h-11 min-w-0 items-center gap-2.5 rounded-lg border px-3 text-left text-xs transition hover:bg-slate-50 ${routeF === route.id ? 'border-brand bg-brand/5 ring-1 ring-brand/30' : 'border-slate-200'} ${route.status !== 'Active' ? 'opacity-60' : ''}`}
                     >
@@ -118,9 +99,7 @@ export default function LiveMap() {
               </>
             ) : <p className="text-sm text-slate-500">No routes have been added to the database yet.</p>}
           </Card>
-        </div>
 
-        <div className="flex min-w-0 flex-col gap-4">
           <Card title="Bus information" className="shrink-0" bodyClass="p-4" action={selected ? <button type="button" onClick={() => setSelectedId('')} className="text-xs font-semibold text-brand hover:underline">Fleet overview</button> : null}>
             {selected ? (
               <div className="space-y-3 text-sm">

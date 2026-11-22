@@ -39,6 +39,18 @@ function nextEmployeeId(accounts, type) {
 
 const EMPTY = { id: '', type: 'Driver', firstName: '', lastName: '', avatar: '', employeeId: '', username: '', contact: '', busId: '', status: 'Active', password: '', confirm: '' }
 
+function phoneDigits(value = '') {
+  let digits = String(value).replace(/\D/g, '')
+  if (digits.startsWith('63')) digits = digits.slice(2)
+  if (digits.startsWith('0')) digits = digits.slice(1)
+  return digits.slice(0, 10)
+}
+
+function formatPhoneDigits(value) {
+  const digits = phoneDigits(value)
+  return [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6, 10)].filter(Boolean).join(' ')
+}
+
 export default function CreateAccount() {
   const { accounts, buses, saveAccount, setAccountStatus, resetConductorPassword } = useAdminData()
   const { notify } = useToast()
@@ -89,7 +101,7 @@ export default function CreateAccount() {
     if (!form.username.trim()) e.username = 'Email is required.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.username.trim())) e.username = 'Enter a valid email address.'
     else if (accounts.some((a) => a.id !== form.id && a.username?.toLowerCase() === form.username.trim().toLowerCase())) e.username = 'Already in use.'
-    if (!/^(\+63|0)9\d{9}$/.test(form.contact.replace(/[\s-]/g, ''))) e.contact = 'Use a PH mobile number, e.g. 09171234567.'
+    if (!/^9\d{9}$/.test(form.contact)) e.contact = 'Enter 10 digits after +63, starting with 9.'
     if (!isEdit && form.type === 'Conductor') {
       if (form.status === 'Inactive') e.status = 'Create the account as Active, then deactivate it if needed.'
       if (!passwordMeetsRules(form.password)) e.password = 'Password does not meet all the requirements.'
@@ -116,7 +128,7 @@ export default function CreateAccount() {
         avatar: form.avatar || '',
         employeeId: form.employeeId,
         username: form.username.trim().toLowerCase(),
-        contact: form.contact.replace(/[\s-]/g, ''),
+        contact: `+63${form.contact}`,
         status: form.status,
         uid: existing?.uid || '',
         createdAt: existing?.createdAt,
@@ -132,7 +144,7 @@ export default function CreateAccount() {
 
   const openEdit = (a) => {
     setErrors({})
-    setForm({ ...EMPTY, ...splitName(a.fullName), ...a, busId: busOf(a.id)?.id || '', password: '', confirm: '' })
+    setForm({ ...EMPTY, ...splitName(a.fullName), ...a, contact: phoneDigits(a.contact), busId: busOf(a.id)?.id || '', password: '', confirm: '' })
   }
   const openReset = (a) => { setResetErrors({}); setReset({ account: a, password: '', confirm: '' }) }
   const submitReset = async (ev) => {
@@ -159,7 +171,7 @@ export default function CreateAccount() {
   const nameOf = (id) => accounts.find((a) => a.id === id)?.fullName
 
   const columns = [
-    { key: 'fullName', header: 'Name', render: (a) => (<div className="flex items-center gap-3"><Avatar src={a.avatar} size="sm" /><div><p className="font-semibold text-navy">{a.fullName}</p><p className="text-xs text-slate-500">{a.employeeId}</p></div></div>) },
+    { key: 'fullName', header: 'Name', render: (a) => (<div className="flex items-center gap-3"><Avatar src={a.avatar} size="sm" /><div><p className="text-navy">{a.fullName}</p><p className="text-xs font-semibold text-slate-500">{a.employeeId}</p></div></div>) },
     { key: 'type', header: 'Role', render: (a) => <Badge>{a.type}</Badge> },
     { key: 'username', header: 'Email / username' },
     { key: 'contact', header: 'Contact' },
@@ -218,7 +230,22 @@ export default function CreateAccount() {
               <div className="grid items-start gap-x-4 gap-y-5 sm:grid-cols-2">
                 <Field label="First name" required error={errors.firstName}><input className={inputClass(errors.firstName)} value={form.firstName} onChange={set('firstName')} autoComplete="given-name" /></Field>
                 <Field label="Last name" required error={errors.lastName}><input className={inputClass(errors.lastName)} value={form.lastName} onChange={set('lastName')} autoComplete="family-name" /></Field>
-                <Field label="Contact number" required error={errors.contact}><input className={inputClass(errors.contact)} value={form.contact} onChange={set('contact')} placeholder="09171234567" inputMode="tel" /></Field>
+                <Field label="Contact number" required error={errors.contact}>
+                  <div className="flex">
+                    <span className="inline-flex items-center rounded-l-lg border border-r-0 border-slate-300 bg-slate-50 px-3 text-sm font-medium text-slate-600">+63</span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      maxLength={12}
+                      className={`${inputClass(errors.contact)} rounded-l-none`}
+                      value={formatPhoneDigits(form.contact)}
+                      onChange={(event) => setForm((current) => ({ ...current, contact: phoneDigits(event.target.value) }))}
+                      placeholder="917 123 4567"
+                      aria-label="Philippine mobile number"
+                    />
+                  </div>
+                </Field>
                 <Field label="Email" required error={errors.username}><input type="email" autoComplete="email" className={inputClass(errors.username)} value={form.username} onChange={set('username')} /></Field>
               </div>
             </Section>

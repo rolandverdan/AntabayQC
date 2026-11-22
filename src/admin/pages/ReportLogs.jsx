@@ -12,7 +12,7 @@ import Modal from '../components/Modal.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { DetailHeader, InfoTile, SmallLabel, toneOf } from '../components/FormParts.jsx'
 import { downloadCsv } from '../utils/csv.js'
-import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
+import { fmtDateTime, inDateRange, includesText, sequentialDisplayIds } from '../utils/format.js'
 import { REPORT_STATUSES, REPORT_TYPES } from '../data/constants.js'
 import Select from '../../shared/components/Select.jsx'
 
@@ -43,6 +43,7 @@ export default function ReportLogs() {
       .sort((a, b) => b.datetime.localeCompare(a.datetime)),
     [reports, q, type, status, routeF, from, to],
   )
+  const displayIds = useMemo(() => sequentialDisplayIds(reports, 'REP', 'datetime'), [reports])
   const view = reports.find((r) => r.id === viewId)
 
   const applyStatus = async (id, s) => {
@@ -69,7 +70,7 @@ export default function ReportLogs() {
   }
 
   const columns = [
-    { key: 'id', header: 'Report ID', render: (r) => <span className="font-mono text-xs font-semibold text-navy">{r.id}</span> },
+    { key: 'displayId', header: 'Report ID', render: (r) => <span className="font-semibold text-navy">{displayIds.get(r.id)}</span> },
     { key: 'type', header: 'Type' },
     { key: 'datetime', header: 'Date & time', render: (r) => <span className="whitespace-nowrap">{fmtDateTime(r.datetime)}</span> },
     { key: 'ref', header: 'Bus / route', render: (r) => `${r.busId || 'No bus'}${r.routeId ? ` · ${r.routeId}` : ''}` },
@@ -96,14 +97,13 @@ export default function ReportLogs() {
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search report ID, bus, route, description…"
         filters={[
-          { label: 'Type', value: type, onChange: setType, options: REPORT_TYPES.map((t) => ({ value: t, label: t })) },
+          { key: 'date-range', render: () => <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} /> },
           { label: 'Status', value: status, onChange: setStatus, options: REPORT_STATUSES.map((s) => ({ value: s, label: s })) },
           { label: 'Route', value: routeF, onChange: setRouteF, options: routes.map((r) => ({ value: r.id, label: r.id })) },
+          { label: 'Type', value: type, onChange: setType, options: REPORT_TYPES.map((t) => ({ value: t, label: t })) },
         ]}
         onClear={() => { setQ(''); setType(''); setStatus(''); setRouteF(''); setFrom(''); setTo('') }}
-      >
-        <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} />
-      </SearchFilterBar>
+      />
       <DataTable columns={columns} rows={rows} highlightKeys={highlight} emptyTitle="No reports match" />
 
       <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Report ${view.id}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>

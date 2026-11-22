@@ -9,7 +9,7 @@ const TONES = {
 }
 
 const AUTO = {
-  Active: 'green', Inactive: 'gray', Maintenance: 'amber', Emergency: 'red',
+  Active: 'green', Inactive: 'red', Maintenance: 'amber', Emergency: 'red',
   Critical: 'red', High: 'orange', Medium: 'amber', Low: 'blue',
   New: 'red', Acknowledged: 'amber', 'In Progress': 'blue', Resolved: 'green',
   Pending: 'amber', 'Under Review': 'blue', Dismissed: 'gray',

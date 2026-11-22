@@ -1,10 +1,10 @@
-import { Search, RotateCcw } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { inputClass } from '../utils/ui.js'
 import Select from '../../shared/components/Select.jsx'
 import DatePicker from '../../shared/components/DatePicker.jsx'
 
 /** filters: [{ label, value, onChange, options: [{ value, label }] }] ; children = extra controls (e.g. date range) */
-export default function SearchFilterBar({ search, onSearch, placeholder = 'Search…', filters = [], onClear, children }) {
+export default function SearchFilterBar({ search, onSearch, placeholder = 'Search…', filters = [], children }) {
   // No outer card: the controls sit directly on the page background so there is no "card inside a card",
   // with extra space below so they never touch the table.
   return (
@@ -20,7 +20,9 @@ export default function SearchFilterBar({ search, onSearch, placeholder = 'Searc
           className={`${inputClass(false)} min-h-10 pl-9`}
         />
       </div>
-      {filters.map((f) => (
+      {filters.map((f) => f.render ? (
+        <div key={f.key || f.label}>{f.render()}</div>
+      ) : (
         <Select
           key={f.label}
           value={f.value}
@@ -35,11 +37,6 @@ export default function SearchFilterBar({ search, onSearch, placeholder = 'Searc
         </Select>
       ))}
       {children}
-      {onClear && (
-        <button type="button" onClick={onClear} className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline">
-          <RotateCcw size={13} /> Clear
-        </button>
-      )}
     </div>
   )
 }

@@ -99,7 +99,9 @@ export default function ConductorLayout() {
         )}
         {/* Bottom padding = bottom-nav height + breathing room, so the fixed nav never covers content. */}
         <main id="main" className="px-4 pt-4 pb-[calc(var(--bottom-nav-h)+1rem)] md:px-6 md:pt-6 lg:pb-6">
-          <Outlet context={{ ...location, feed, requestLogout: () => setConfirmLogout(true) }} />
+          <div key={pathname} className="route-page-enter font-sans">
+            <Outlet context={{ ...location, feed, requestLogout: () => setConfirmLogout(true) }} />
+          </div>
           {/* Always mounted so door cameras keep counting while other conductor pages are open. */}
           <CameraPanel feed={feed} visible={pathname.replace(/\/+$/, '') === '/conductor/camera'} />
         </main>

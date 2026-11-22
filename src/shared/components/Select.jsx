@@ -94,7 +94,14 @@ export default function Select({
   }, [open])
   useEffect(() => { setActive(0) }, [query])
   useEffect(() => {
-    if (open) listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: 'nearest' })
+    if (!open) return
+    const list = listRef.current
+    const option = list?.querySelector('[data-active="true"]')
+    if (!list || !option) return
+    const listRect = list.getBoundingClientRect()
+    const optionRect = option.getBoundingClientRect()
+    if (optionRect.top < listRect.top) list.scrollTop -= listRect.top - optionRect.top
+    else if (optionRect.bottom > listRect.bottom) list.scrollTop += optionRect.bottom - listRect.bottom
   }, [active, open])
 
   const pick = (opt) => {

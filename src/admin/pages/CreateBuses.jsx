@@ -49,8 +49,7 @@ export default function CreateBuses() {
     () => buses.filter((b) =>
       (!status || b.status === status) && (!routeF || b.routeId === routeF) &&
       (!q || includesText([b.id, b.plate, b.model, name(b.driverId), name(b.conductorId)], q)))
-      // Newest first, so a bus that was just added is on page 1. Seed buses (no createdAt) fall back to bus number.
-      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '') || (parseInt(b.id.replace(/\D/g, ''), 10) || 0) - (parseInt(a.id.replace(/\D/g, ''), 10) || 0)),
+      .sort((a, b) => (parseInt(a.id.replace(/\D/g, ''), 10) || 0) - (parseInt(b.id.replace(/\D/g, ''), 10) || 0) || a.id.localeCompare(b.id)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [buses, accountsById, q, status, routeF],
   )

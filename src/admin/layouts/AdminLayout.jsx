@@ -90,7 +90,9 @@ export default function AdminLayout() {
           onOpenMobile={() => setMobileOpen(true)}
         />
         <main className="px-4 pb-4 pt-3 md:px-6 md:pb-6">
-          <Outlet />
+          <div key={pathname} className="route-page-enter font-sans">
+            <Outlet />
+          </div>
         </main>
       </div>
       <ConfirmDialog

@@ -9,7 +9,7 @@ import DataTable from '../components/DataTable.jsx'
 import SearchFilterBar, { DateRange } from '../components/SearchFilterBar.jsx'
 import Modal from '../components/Modal.jsx'
 import { DetailHeader, InfoTile, toneOf } from '../components/FormParts.jsx'
-import { fmtDateTime, inDateRange, includesText } from '../utils/format.js'
+import { fmtDateTime, inDateRange, includesText, sequentialDisplayIds } from '../utils/format.js'
 import { MODULES, SEVERITIES } from '../data/constants.js'
 import { downloadCsv, todayStamp } from '../utils/csv.js'
 import { LOG_COLUMNS } from '../utils/exportConfig.js'
@@ -32,6 +32,7 @@ export default function Logs() {
   const [viewId, setViewId] = useState(null)
 
   const users = [...new Set(logs.map((l) => l.user))]
+  const displayIds = useMemo(() => sequentialDisplayIds(logs, 'LOG', 'timestamp'), [logs])
   const rows = useMemo(
     () => logs.filter((l) =>
       (!moduleF || l.module === moduleF) && (!sev || l.severity === sev) && (!userF || l.user === userF) &&
@@ -52,9 +53,9 @@ export default function Logs() {
   }
 
   const columns = [
-    { key: 'id', header: 'Log ID', render: (l) => <span className="font-mono text-xs font-semibold text-navy">{l.id}</span> },
+    { key: 'displayId', header: 'Log ID', render: (l) => <span className="font-semibold text-navy">{displayIds.get(l.id)}</span> },
     { key: 'timestamp', header: 'Timestamp', render: (l) => <span className="whitespace-nowrap">{fmtDateTime(l.timestamp)}</span> },
-    { key: 'action', header: 'Action', render: (l) => <span className="font-semibold text-navy">{l.action}</span> },
+    { key: 'action', header: 'Action', render: (l) => <span className="text-navy">{l.action}</span> },
     { key: 'user', header: 'User' },
     { key: 'module', header: 'Module' },
     { key: 'severity', header: 'Severity', render: (l) => <Badge>{l.severity}</Badge> },
@@ -71,14 +72,13 @@ export default function Logs() {
       <SearchFilterBar
         search={q} onSearch={setQ} placeholder="Search keyword in logs…"
         filters={[
+          { key: 'date-range', render: () => <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} /> },
           { label: 'Module', value: moduleF, onChange: setModuleF, options: MODULES.map((m) => ({ value: m, label: m })) },
           { label: 'Severity', value: sev, onChange: setSev, options: SEVERITIES.map((s) => ({ value: s, label: s })) },
           { label: 'User', value: userF, onChange: setUserF, options: users.map((u) => ({ value: u, label: u })) },
         ]}
         onClear={() => { setQ(''); setModuleF(''); setSev(''); setUserF(''); setFrom(''); setTo('') }}
-      >
-        <DateRange from={from} to={to} onFrom={setFrom} onTo={setTo} />
-      </SearchFilterBar>
+      />
       <DataTable columns={columns} rows={rows} pageSize={10} emptyTitle="No log entries match" />
 
       <Modal open={!!view} onClose={() => setViewId(null)} title="Log details" bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>

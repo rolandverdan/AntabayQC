@@ -7,7 +7,6 @@ import Button from '../components/Button.jsx'
 import Badge from '../components/Badge.jsx'
 import MapView from '../components/MapView.jsx'
 import RecentActivity from '../components/RecentActivity.jsx'
-import PassengerTrend from '../components/PassengerTrend.jsx'
 import { OCCUPANCY, occupancyLevel } from '../utils/occupancy.js'
 import { BUS_STATUSES } from '../data/constants.js'
 import { busImage, routeColor } from '../utils/geo.js'
@@ -23,7 +22,7 @@ export default function Dashboard() {
   const pendingReports = reports.filter((r) => r.status === 'Pending').length
   const resolvedReports = reports.filter((r) => r.status === 'Resolved').length
 
-  const statusCounts = BUS_STATUSES.map((s) => ({ s, n: buses.filter((b) => b.status === s).length }))
+  const statusCounts = BUS_STATUSES.filter((status) => status !== 'Emergency').map((s) => ({ s, n: buses.filter((b) => b.status === s).length }))
   const passengerLocations = busLocations.filter((location) => typeof location.passengers === 'number' && Number.isFinite(location.passengers))
   const occ = { green: 0, yellow: 0, red: 0 }
   passengerLocations.forEach((location) => {
@@ -59,7 +58,6 @@ export default function Dashboard() {
     <>
       <PageHeader
         title="Dashboard"
-        description="Overview of the ANTABAY QC system."
         actions={
           <div className="flex flex-wrap gap-2 sm:justify-end" role="group" aria-label="Quick actions">
             <Button icon={UserPlus} variant="secondary" onClick={() => navigate('/admin/accounts?new=driver')}>Register Driver</Button>
@@ -87,7 +85,7 @@ export default function Dashboard() {
             {statusCounts.map(({ s, n }) => (
               <div key={s}>
                 <div className="mb-2 flex items-center justify-between text-xs"><Badge>{s}</Badge><span className="font-semibold text-navy">{n}</span></div>
-                <div className="h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-brand" style={{ width: `${buses.length ? (n / buses.length) * 100 : 0}%` }} /></div>
+                <div className="h-2 rounded-full bg-slate-100"><div className={`h-full rounded-full ${s === 'Active' ? 'bg-green-500' : s === 'Inactive' ? 'bg-red-500' : 'bg-amber-500'}`} style={{ width: `${buses.length ? (n / buses.length) * 100 : 0}%` }} /></div>
               </div>
             ))}
           </div>
@@ -115,10 +113,11 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className={settings.showRecentActivity ? 'xl:col-span-2' : 'xl:col-span-3'}><PassengerTrend locations={busLocations} /></div>
-        {settings.showRecentActivity && <RecentActivity emergencies={emergencies} reports={reports} logs={logs} />}
-      </div>
+      {settings.showRecentActivity && (
+        <div className="mt-6">
+          <RecentActivity emergencies={emergencies} reports={reports} logs={logs} />
+        </div>
+      )}
     </>
   )
 }

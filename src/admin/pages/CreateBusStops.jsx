@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Download, Eye, MapPin, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Download, Eye, MapPin, Pencil, Trash2, X } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { PageHeader } from '../components/Card.jsx'
@@ -71,7 +71,6 @@ export default function CreateBusStops() {
     }))
     setErrors((current) => ({ ...current, routeIds: '' }))
   }
-  const addRoute = () => setForm((f) => ({ ...f, routeIds: [...f.routeIds, ''] }))
   const removeRoute = (index) => setForm((f) => {
     const routeIds = f.routeIds.filter((_, i) => i !== index)
     return { ...f, routeIds: routeIds.length ? routeIds : [''] }
@@ -136,7 +135,7 @@ export default function CreateBusStops() {
 
   const columns = [
     { key: 'id', header: 'Stop ID', render: (s) => <span className="font-semibold text-navy">{s.id}</span> },
-    { key: 'name', header: 'Name', render: (s) => (<div><p className="font-semibold text-navy">{s.name}</p>{s.address && <p className="max-w-56 truncate text-xs text-slate-500">{s.address}</p>}</div>) },
+    { key: 'name', header: 'Name', render: (s) => (<div><p className="text-navy">{s.name}</p>{s.address && <p className="max-w-56 truncate text-xs text-slate-500">{s.address}</p>}</div>) },
     { key: 'coords', header: 'Latitude, longitude', render: (s) => <span className="font-mono text-xs">{s.lat.toFixed(4)}, {s.lng.toFixed(4)}</span> },
     { key: 'routes', header: 'Routes', render: (s) => (<div className="flex flex-wrap gap-1">{routesOf(s.id).map((r) => <Badge key={r.id}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ backgroundColor: routeColor(r.id, r) }} />{r.id}</Badge>)}{routesOf(s.id).length === 0 && <span className="text-slate-400">None</span>}</div>) },
     { key: 'status', header: 'Status', render: (s) => <Badge>{s.status}</Badge> },
@@ -190,9 +189,6 @@ export default function CreateBusStops() {
                       </div>
                     )
                   })}
-                  <Button type="button" variant="secondary" icon={Plus} onClick={addRoute} disabled={!routes.length || form.routeIds.some((routeId) => !routeId) || selectedRouteIds.length >= routes.length}>
-                    Add another route
-                  </Button>
                   {routes.length === 0 && <p className="text-sm text-slate-500">Create a route first, then return here to add bus stops.</p>}
                 </div>
                 {errors.routeIds && <p className="mt-1.5 text-xs font-medium text-red-600">{errors.routeIds}</p>}
