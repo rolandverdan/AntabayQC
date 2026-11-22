@@ -31,14 +31,16 @@ The Admin console uses Firestore as its source of truth. It starts with **empty*
 
 1. In the `antabayqc` Firebase project, enable Email/Password sign-in and create a Firestore database.
 2. Create the first administrator in Firebase Authentication. In Firestore, create `users/{that-auth-user-uid}` with `displayName`, `email`, `phone`, and `role: "admin"` (plus `createdAt` and `updatedAt` timestamps). Admin roles must be assigned by a trusted administrator; users cannot grant themselves admin access.
-3. From the repository root, install/use the Firebase CLI, sign in, and deploy the Firestore rules:
+3. From the repository root, install the app and Functions dependencies, sign in to Firebase, and deploy:
 
    ```bash
-   npx firebase-tools login
-   npx firebase-tools deploy --only firestore:rules
+   npm install
+   npm run install:functions
+   npx firebase login
+   npm run deploy
    ```
 
-   Conductor creation uses a separate Firebase Authentication session plus these rules, so it does not require Cloud Functions. Editing conductor accounts, changing their status, and resetting passwords still use callable Cloud Functions; deploying those requires a Firebase plan that supports Functions. Functions run on Node.js 22.
+   `npm run deploy` builds the Vite app and deploys Hosting, Firestore rules, and Cloud Functions. On the Spark plan, deploy the web app and rules without Functions using `npm run deploy:app`. To deploy only Hosting, run `npm run deploy:hosting`; to deploy only rules or Functions, use `npm run deploy:rules` or `npm run deploy:functions`. Cloud Functions deployment requires a Firebase plan that supports Functions. Functions run on Node.js 22.
 4. Sign in with the administrator account. Create routes first, then add bus stops and select the route or routes they serve; stops are appended in creation order. Assign a route to each bus from Create Buses, then add staff. Driver entries are directory-only. Creating a Conductor also creates a Firebase Authentication account through a callable Cloud Function.
 
 Collections used by the Admin console: `buses`, `routes`, `stops`, `accounts`, `reports`, `emergencies`, `logs`, `adminSettings`, and `busLocations`. Bus, route, stop, and live bus-location records are readable by commuter pages; administrative records are restricted by `firestore.rules`. Signed-in commuters can submit reports and read only reports they submitted.

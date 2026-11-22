@@ -49,7 +49,7 @@ export function getAuthErrorMessage(error, action = 'sign in') {
     case 'auth/invalid-credential':
     case 'auth/user-not-found':
     case 'auth/wrong-password':
-      return 'No matching email/password account was found, or the password is incorrect. A Firestore role document alone does not create login credentials; add the user in Firebase Authentication and enable Email/Password sign-in. If the account uses Google, choose Continue with Google.'
+      return 'Incorrect email or password. Try Google sign-in if applicable.'
     case 'permission-denied':
       return 'Firebase Authentication succeeded, but Firestore denied access to the user profile. Publish the project Firestore rules and confirm they allow the signed-in user to read their own users/{uid} document.'
     case 'auth/user-disabled':

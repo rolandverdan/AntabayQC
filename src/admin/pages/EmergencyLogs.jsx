@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { AlignLeft, ArrowLeft, Bus, Clock, Download, Eye, Hash, MapPin, ShieldAlert, Siren, TriangleAlert, CircleCheck, Activity, User, Plus } from 'lucide-react'
+import { AlignLeft, Bus, Clock, Download, Eye, Hash, MapPin, ShieldAlert, Siren, TriangleAlert, CircleCheck, Activity, User, Plus } from 'lucide-react'
 import { useAdminData } from '../context/AdminDataContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { StatCard, PageHeader } from '../components/Card.jsx'
@@ -39,7 +38,6 @@ export default function EmergencyLogs() {
   const [form, setForm] = useState({ type: '', busId: '', routeId: '', location: '', description: '', severity: 'Medium', reportedBy: 'Administrator', status: 'New' })
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
-  const navigate = useNavigate()
   const highlight = useHighlight()
   // Arriving from a notification: clear filters so the picked incidents are definitely visible.
   useEffect(() => {
@@ -117,7 +115,7 @@ export default function EmergencyLogs() {
 
   return (
     <>
-      <PageHeader title="Emergency Logs" description="Manually recorded incidents. No emergency dispatch service is connected." actions={<><Button icon={ArrowLeft} variant="secondary" onClick={() => navigate('/admin/dashboard')}>Back to Dashboard</Button><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Plus} onClick={() => setFormOpen(true)}>Record incident</Button></>} />
+      <PageHeader title="Emergency Logs" description="Manually recorded incidents. No emergency dispatch service is connected." actions={<><Button icon={Download} variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>Export CSV ({rows.length})</Button><Button icon={Plus} onClick={() => setFormOpen(true)}>Record incident</Button></>} />
       <div className="mb-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard icon={Siren} label="Total emergencies" value={emergencies.length} />
         <StatCard icon={Activity} label="Active incidents" value={emergencies.filter(unresolved).length} tone="amber" sub="Not yet resolved" />
@@ -178,7 +176,7 @@ export default function EmergencyLogs() {
         </form>
       </Modal>
 
-      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Incident ${view.id}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
+      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Incident ${displayIds.get(view.id)}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (
           <div className="space-y-3">
             <DetailHeader icon={ShieldAlert} tone={toneOf(view.severity)} title={view.type}>
@@ -186,7 +184,7 @@ export default function EmergencyLogs() {
               <Badge dot>{view.status}</Badge>
             </DetailHeader>
             <div className="grid gap-3 sm:grid-cols-2">
-              <InfoTile icon={Hash} label="Emergency ID" value={view.id} mono />
+              <InfoTile icon={Hash} label="Emergency ID" value={displayIds.get(view.id)} mono />
               <InfoTile icon={Clock} label="Date & time" value={fmtDateTime(view.datetime)} />
               <InfoTile icon={Bus} label="Bus / route" value={[view.busId, view.routeId].filter(Boolean).join(' · ')} />
               <InfoTile icon={User} label="Reported by" value={view.reportedBy} />

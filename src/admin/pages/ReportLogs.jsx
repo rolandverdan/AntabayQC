@@ -19,7 +19,7 @@ import Select from '../../shared/components/Select.jsx'
 const needsAttention = (r) => (r.status === 'Pending' || r.status === 'Under Review') && r.priority === 'High'
 
 export default function ReportLogs() {
-  const { reports, routes, updateReportStatus } = useAdminData()
+  const { reports, routes, buses, updateReportStatus } = useAdminData()
   const { notify } = useToast()
   const [q, setQ] = useState('')
   const [type, setType] = useState('')
@@ -106,7 +106,7 @@ export default function ReportLogs() {
       />
       <DataTable columns={columns} rows={rows} highlightKeys={highlight} emptyTitle="No reports match" />
 
-      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Report ${view.id}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
+      <Modal open={!!view} onClose={() => setViewId(null)} title={view ? `Report ${displayIds.get(view.id)}` : ''} bodyClass="bg-slate-100/70" footer={<Button variant="secondary" onClick={() => setViewId(null)}>Close</Button>}>
         {view && (
           <div className="space-y-3">
             <DetailHeader icon={TriangleAlert} tone={toneOf(view.priority)} title={view.type} subtitle={view.description}>
@@ -114,14 +114,14 @@ export default function ReportLogs() {
               <Badge dot>{view.status}</Badge>
             </DetailHeader>
             <div className="grid gap-3 sm:grid-cols-2">
-              <InfoTile icon={Hash} label="Report ID" value={view.id} mono />
+              <InfoTile icon={Hash} label="Report ID" value={displayIds.get(view.id)} mono />
               <InfoTile icon={Clock} label="Date & time" value={fmtDateTime(view.datetime)} />
               <InfoTile icon={Bus} label="Bus / route" value={[view.busId || view.otherBus, view.routeId].filter(Boolean).join(' · ')} />
               <InfoTile icon={User} label="Reported by" value={view.reportedBy} />
               {view.source === 'Commuter' && (
                 <>
                   <InfoTile icon={Inbox} label="Source" value="Commuter app" />
-                  <InfoTile icon={Hash} label="Case reference" value={view.caseRef} />
+                  <InfoTile icon={Hash} label="Plate Number" value={buses.find((bus) => bus.id === view.busId)?.plate || view.plate} />
                   <InfoTile icon={MapPin} label="Location" value={view.location} />
                   <InfoTile icon={Phone} label="Contact phone" value={view.contactPhone} />
                   <InfoTile icon={Star} label="Rating" value={view.rating ? `${view.rating} / 5` : ''} />

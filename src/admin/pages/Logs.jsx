@@ -88,7 +88,7 @@ export default function Logs() {
               <Badge dot>{view.severity}</Badge>
             </DetailHeader>
             <div className="grid gap-3 sm:grid-cols-2">
-              <InfoTile icon={Hash} label="Log ID" value={view.id} mono />
+              <InfoTile icon={Hash} label="Log ID" value={displayIds.get(view.id)} mono />
               <InfoTile icon={Clock} label="Timestamp" value={fmtDateTime(view.timestamp)} />
               <InfoTile icon={User} label="User / account" value={view.user} />
               <InfoTile icon={ShieldCheck} label="Module" value={view.module} />
