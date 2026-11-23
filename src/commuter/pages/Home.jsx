@@ -15,7 +15,13 @@ import {
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { isFreshBusLocation, routeColor } from '../../admin/utils/geo.js'
 import { useNotifications } from '../context/NotificationsContext.jsx'
-import { TONE_CLASSES } from '../data/notifications.js'
+
+const TONE_CLASSES = {
+  amber: 'bg-amber-100 text-amber-700',
+  blue: 'bg-blue-100 text-blue-700',
+  green: 'bg-green-100 text-green-700',
+  red: 'bg-red-100 text-red-700',
+}
 
 const FAQS = [
   { q: 'How do I know when my bus is arriving?', a: 'Open Live Tracking to see recent bus locations and next stops when a conductor GPS feed is available. Arrival-time estimates are not available yet.' },
@@ -110,7 +116,6 @@ export default function CommuterHome() {
             <span className="mx-2 font-normal text-white/40">|</span>
             {activeBuses} Live Bus{activeBuses === 1 ? '' : 'es'}
           </p>
-          <p className="mt-0.5 text-xs text-blue-100">Service hours: 6:00 AM – 9:00 PM, Monday – Sunday</p>
 
           <form onSubmit={search} role="search" className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 text-slate-700 shadow-sm focus-within:ring-2 focus-within:ring-white/70">
             <Search size={18} className="shrink-0 text-slate-400" />

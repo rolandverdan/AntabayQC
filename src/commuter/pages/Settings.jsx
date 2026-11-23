@@ -27,7 +27,7 @@ const defaults = {
     name: '',
     email: '',
     phone: '',
-    routePreference: 'R-02',
+    routePreference: '',
   },
   alerts: { service: true, safety: true, route: true, report: false },
   preferences: { darkMode: false, compactView: false, useLocation: true, soundAlerts: true },
@@ -421,23 +421,7 @@ export default function Settings() {
           footer={<Button onClick={() => setActiveDialog('')}>Close</Button>}
         >
           <div className="space-y-4">
-            <div className="space-y-3">
-              {[
-                { name: 'This phone', type: 'Mobile', location: 'Manila, Philippines', status: 'Active now' },
-                { name: 'Office tablet', type: 'Tablet', location: 'Quezon City, Philippines', status: 'Last used 2 hours ago' },
-                { name: 'Work computer', type: 'Desktop', location: 'Metro Manila, Philippines', status: 'Last used yesterday' },
-              ].map((device) => (
-                <div key={device.name} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                  <div>
-                    <p className="text-sm font-semibold text-navy">{device.name}</p>
-                    <p className="mt-1 text-xs text-slate-500">{device.type} · {device.location}</p>
-                  </div>
-                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700">
-                    {device.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-slate-500">Device-session management is not connected to Firebase Authentication yet.</p>
           </div>
         </Modal>
       )}

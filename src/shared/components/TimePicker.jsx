@@ -37,7 +37,6 @@ function Column({ title, items, isActive, onPick, format = pad, refKey }) {
             >
               {format(it)}
             </button>
-      {required && <input tabIndex={-1} aria-hidden="true" required value={value || ''} onChange={() => {}} className="pointer-events-none absolute inset-0 h-full w-full opacity-0" />}
           </li>
         ))}
       </ul>
@@ -84,6 +83,7 @@ export default function TimePicker({ value, onChange, required = false, disabled
         <Clock size={16} className="shrink-0 text-brand" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate">{parsed ? label(parsed) : placeholder}</span>
       </button>
+      {required && <input tabIndex={-1} aria-hidden="true" required value={value || ''} onChange={() => {}} className="pointer-events-none absolute inset-0 h-full w-full opacity-0" />}
 
       {open && createPortal(
         <div ref={panelRef} id={listId} role="dialog" aria-label="Choose time" style={style} className="z-[1300] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">

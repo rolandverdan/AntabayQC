@@ -21,7 +21,6 @@ Commuters can create Firebase accounts at `/signup` or sign in with Google from 
 | Firebase Admin | Administrator account created in Firebase Authentication with Firestore role `admin` | Set in Firebase Authentication | `/admin/dashboard` |
 | Conductor | Created from Admin → Accounts | Set when the account is created | `/conductor/map` |
 | Driver | Admin-managed staff record; no sign-in account | — | — |
-| Commuter | `commuter` | `Commuter123!` | `/commuter/home` |
 
 All three sides share the Admin sidebar (icon-only, expands on hover, pin button in the header, drawer on phones) and the Admin header.
 

@@ -56,6 +56,7 @@ export default function LostItemReports() {
       .filter((report) => report.type === 'Lost Item')
       .map((r) => ({
         id: r.caseRef || r.id,
+        routeId: r.routeId,
         title: String(r.description || '').split(':')[0] || 'Lost item',
         status: STATUS_FOR_COMMUTER[r.status] || 'In Review',
         filed: fmtFiled(r.datetime),
@@ -172,7 +173,7 @@ export default function LostItemReports() {
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 line-clamp-2">{report.description}</p>
 
               <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <span className="rounded-md bg-rose-600 px-2 py-1 text-[10px] font-black text-white">R-01</span>
+                <span className="rounded-md bg-brand px-2 py-1 text-[10px] font-black text-white">{report.routeId || 'Route'}</span>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-700">Lost Route &amp; Unit</p>
                   <p className="truncate text-sm text-slate-600">{report.route} · {report.bus}</p>

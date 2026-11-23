@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Info } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import Button from '../admin/components/Button.jsx'
 import Field from '../admin/components/FormField.jsx'
 import { inputClass } from '../admin/utils/ui.js'
@@ -9,19 +9,12 @@ import { useAdminData } from '../admin/context/AdminDataContext.jsx'
 import { useToast } from '../admin/context/ToastContext.jsx'
 import { useConductor } from '../conductor/context/ConductorContext.jsx'
 import { useCommuter } from '../commuter/context/CommuterContext.jsx'
-import { COMMUTER_USERNAMES, COMMUTER_PASSWORD } from '../commuter/data/credentials.js'
 import { getAuthErrorMessage, signInWithEmail, signInWithGoogle } from '../firebase/auth.js'
 import AuthShell, { FormFeedback } from '../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../shared/hooks/useRoleSwitch.js'
 
 // ONE login for the whole system. Each account belongs to a role; the role decides where it lands.
 const HOME = { admin: '/admin/dashboard', conductor: '/conductor/dashboard', commuter: '/commuter/home' }
-
-function findRole(id, pw) {
-  const name = id.trim().toLowerCase()
-  if (COMMUTER_USERNAMES.includes(name) && pw === COMMUTER_PASSWORD) return 'commuter'
-  return null
-}
 
 export default function Login() {
   const admin = useAuth()
@@ -94,22 +87,6 @@ export default function Login() {
       setFeedback({ type: 'error', text: 'Please fix the highlighted fields.' })
       return
     }
-    const role = findRole(identifier, password)
-    if (role) {
-      setBusy(true)
-      setFeedback({ type: 'success', text: 'Login successful. Redirecting…' })
-      const id = identifier.trim()
-      window.setTimeout(async () => {
-        try {
-          await finish(role, () => commuter.enter('account', id))
-        } catch (error) {
-          setBusy(false)
-          setFeedback({ type: 'error', text: getAuthErrorMessage(error, 'complete sign in') })
-        }
-      }, 600)
-      return
-    }
-
     setBusy(true)
     try {
       const { user, profile, role } = await signInWithEmail(identifier, password)
@@ -184,14 +161,6 @@ export default function Login() {
         <p className="mt-4 text-center text-sm text-slate-600">
           New commuter? <Link to="/signup" className="font-semibold text-brand hover:underline">Sign up</Link>
         </p>
-
-        <div className="mt-5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-          <Info size={14} className="mt-0.5 shrink-0" />
-          <div className="space-y-0.5">
-            <p className="font-semibold">Commuter demo account (not Firebase-authenticated)</p>
-            <p>Commuter: <span className="font-semibold">commuter</span> / {COMMUTER_PASSWORD}</p>
-          </div>
-        </div>
       </form>
     </AuthShell>
   )

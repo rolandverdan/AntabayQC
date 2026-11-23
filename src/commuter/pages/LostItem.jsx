@@ -306,7 +306,9 @@ export default function LostItem() {
                 <ClipboardList size={18} className="text-brand" aria-hidden="true" />
                 <span>My Recent Inquiries</span>
               </div>
-              <span className="text-xs font-semibold text-slate-500">Oct 2026</span>
+              <span className="text-xs font-semibold text-slate-500">
+                {recentInquiries.length ? new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'No recent inquiries'}
+              </span>
             </div>
 
             <div className="space-y-3">
