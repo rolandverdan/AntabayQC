@@ -57,8 +57,9 @@ export default function useTrip({ position, gpsAccuracy, gpsStatus, startGps, st
     })
   }, [active, lat, lng, gpsAccuracy])
 
-  const startTrip = useCallback(() => {
-    setTrip({ ...IDLE, status: 'active', startedAt: Date.now(), startEntries: entries, startExits: exits })
+  // `baseline`: entry/exit totals at the start of the trip (0 when the counts were just reset).
+  const startTrip = useCallback((baseline = { entries, exits }) => {
+    setTrip({ ...IDLE, status: 'active', startedAt: Date.now(), startEntries: baseline.entries, startExits: baseline.exits })
     startGps()
   }, [entries, exits, startGps])
 

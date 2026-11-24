@@ -87,7 +87,7 @@ function isPublicBusLocation(busId) {
 match /busLocations/{busId} {
   allow read: if isAdmin() || isPublicBusLocation(busId);
   allow create, update: if isAssignedConductor(busId) && validBusLocation(busId);
-  allow delete: if false;
+  allow delete: if isAdmin() || isAssignedConductor(busId); // End trip removes the bus from the live maps
 }
 ```
 

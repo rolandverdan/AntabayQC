@@ -18,7 +18,7 @@ import { signOutFirebaseUser } from '../../firebase/auth.js'
 import { useCommuter } from '../../commuter/context/CommuterContext.jsx'
 
 export default function ConductorLayout() {
-  const { profile, session, logout, sosReport, setSosReport, passengerCount, passengerEntries, passengerExits, addAlert } = useConductor()
+  const { profile, session, logout, sosReport, setSosReport, passengerCount, passengerEntries, passengerExits, resetPassengerTotals, addAlert } = useConductor()
   const { userProfile } = useCommuter()
   const { notify } = useToast()
   const navigate = useNavigate()
@@ -45,11 +45,37 @@ export default function ConductorLayout() {
     entries: passengerEntries,
     exits: passengerExits,
   })
+  // Start trip: a clean slate (onboard, boarded and alighted back to 0) and a fresh live record.
+  // End trip: stop sharing and delete the live record so no old data stays on the admin/commuter maps.
+  const tripControls = {
+    ...trip,
+    startTrip: () => {
+      resetPassengerTotals()
+      trip.startTrip({ entries: 0, exits: 0 })
+    },
+    endTrip: async () => {
+      trip.endTrip()
+      try {
+        const outcome = await feed.clearLive()
+        if (outcome === 'queued') notify('Trip ended. The bus will be removed from the live map once the phone has signal.', 'info')
+      } catch (error) {
+        console.error('Could not remove the live record:', error)
+        addAlert({
+          category: 'system',
+          tone: 'warning',
+          title: 'Bus still shown on the live map',
+          body: error.code === 'permission-denied'
+            ? 'The server refused to remove it. Ask an admin to publish the latest Firestore rules.'
+            : 'It could not be removed. Check the connection and end the trip again later.',
+        })
+      }
+    },
+  }
   useConductorAlerts({
     addAlert,
     passengerCount,
     capacity: feed.assignment.bus?.capacity,
-    trip,
+    trip: tripControls,
     gpsStatus: location.gpsStatus,
     gpsMessage: location.gpsMessage,
     feed,
@@ -70,8 +96,10 @@ export default function ConductorLayout() {
 
   const doLogout = async () => {
     try {
+      // End the trip while still signed in, so the live record can be removed.
+      // A trip never carries over to the next person who signs in on this phone.
+      if (trip.active) await tripControls.endTrip()
       if (session?.firebaseAuthenticated) await signOutFirebaseUser()
-      trip.endTrip() // a trip never carries over to the next person who signs in on this phone
       setConfirmLogout(false)
       logout()
       notify('You have been logged out.', 'info')
@@ -123,7 +151,7 @@ export default function ConductorLayout() {
         {/* Bottom padding = bottom-nav height + breathing room, so the fixed nav never covers content. */}
         <main id="main" className="px-4 pt-4 pb-[calc(var(--bottom-nav-h)+1rem)] md:px-6 md:pt-6 lg:pb-6">
           <div key={pathname} className="route-page-enter font-sans">
-            <Outlet context={{ ...location, feed, trip, requestLogout: () => setConfirmLogout(true) }} />
+            <Outlet context={{ ...location, feed, trip: tripControls, requestLogout: () => setConfirmLogout(true) }} />
           </div>
           {/* Always mounted so door cameras keep counting while other conductor pages are open. */}
           <CameraPanel feed={feed} visible={pathname.replace(/\/+$/, '') === '/conductor/camera'} />

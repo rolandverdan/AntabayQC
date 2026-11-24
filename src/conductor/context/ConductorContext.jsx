@@ -62,11 +62,19 @@ export function ConductorProvider({ children }) {
     }))
   }, [])
 
-  // Manual correction by the conductor (+1 / −1). Changes the onboard total only; the
-  // entry/exit totals stay as the camera counted them.
+  // Manual +1 / −1 by the conductor counts as a passenger boarding / alighting, so the onboard
+  // count, entries/exits and the trip's boarded/alighted totals stay in sync.
   const adjustPassengerCount = useCallback((delta) => {
-    setPassengerTotals((current) => ({ ...current, count: Math.max(0, current.count + delta) }))
+    setPassengerTotals((current) => {
+      if (delta > 0) return { ...current, count: current.count + delta, entries: current.entries + delta }
+      const removed = Math.min(current.count, -delta)
+      if (removed === 0) return current
+      return { ...current, count: current.count - removed, exits: current.exits + removed }
+    })
   }, [])
+
+  // A new trip starts from zero onboard, zero boarded, zero alighted.
+  const resetPassengerTotals = useCallback(() => setPassengerTotals({ count: 0, entries: 0, exits: 0 }), [])
 
   const setPassengerCount = useCallback((count) => {
     if (!Number.isSafeInteger(count) || count < 0) return false
@@ -155,6 +163,7 @@ export function ConductorProvider({ children }) {
     recordPassengerCrossing,
     setPassengerCount,
     adjustPassengerCount,
+    resetPassengerTotals,
     alerts, addAlert, markAlertsRead, clearAlerts,
     unreadAlerts: alerts.filter((alert) => !alert.read).length,
   }

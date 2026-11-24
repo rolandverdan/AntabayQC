@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { collection, doc, getDocs, limit, onSnapshot, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import { db } from '../../firebase/firebase.js'
 import { bearingDeg, haversineKm } from '../../admin/utils/geo.js'
 import { routeProgressForPosition } from './useVehicleLocation.js'
@@ -10,6 +10,7 @@ import { routeProgressForPosition } from './useVehicleLocation.js'
 
 const HEARTBEAT_MS = 15000 // send at least this often while there is something to report
 const MIN_GAP_MS = 5000 // never send more often than this (keeps Firestore writes and data use low)
+const CLEAR_WAIT_MS = 5000 // how long End trip waits for the server to confirm the live record is gone
 const HEADING_MIN_MOVE_KM = 0.01 // only update the heading after moving 10 m, so GPS jitter does not spin the bus icon
 
 function nextStopFor(position, route, stopsById) {
@@ -137,12 +138,15 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
   // 3. Send: right away when the passenger count changes, otherwise on a heartbeat.
   const lastSent = useRef({ at: 0, passengers: null })
   const inFlight = useRef(false)
+  const pendingWrite = useRef(null) // the upload in progress, so End trip can wait for it
+  const stopped = useRef(true) // set by clearLive so no upload slips out after End trip
   useEffect(() => {
     if (!busId || !enabled) return undefined
+    stopped.current = false
     lastSent.current = { at: 0, passengers: null } // send right away when a trip starts
     const trySend = async () => {
       const record = latest.current
-      if (!record || inFlight.current) return
+      if (!record || inFlight.current || stopped.current) return
       const now = Date.now()
       const countChanged = record.passengers !== lastSent.current.passengers
       const due = now - lastSent.current.at >= HEARTBEAT_MS
@@ -151,7 +155,8 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
       lastSent.current = { at: now, passengers: record.passengers }
       setSend((current) => ({ ...current, status: 'sending' }))
       try {
-        await setDoc(doc(db, 'busLocations', record.busId), { ...record, updatedAt: serverTimestamp() })
+        pendingWrite.current = setDoc(doc(db, 'busLocations', record.busId), { ...record, updatedAt: serverTimestamp() })
+        await pendingWrite.current
         setSend({ status: 'sent', lastSentAt: Date.now(), error: '' })
       } catch (error) {
         console.error('Live feed upload failed:', error)
@@ -164,11 +169,44 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
         }))
       } finally {
         inFlight.current = false
+        pendingWrite.current = null
       }
     }
     const timer = window.setInterval(trySend, 1000)
     return () => window.clearInterval(timer)
   }, [busId, enabled])
 
-  return { assignment, route, routeStops, nextStop, send, sharing: Boolean(busId && enabled), hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
+  // 4. End trip: stop uploading and delete busLocations/{busId}, so the bus disappears from the
+  //    admin and commuter maps right away instead of showing its last position.
+  //    Resolves 'cleared', 'queued' (no signal yet; Firestore deletes it when back online) or 'none'.
+  const clearLive = useCallback(async () => {
+    stopped.current = true
+    if (!busId) return 'none'
+    try {
+      await pendingWrite.current // let a last upload land first so it cannot re-create the record
+    } catch {
+      /* already reported by the uploader */
+    }
+    const removal = deleteDoc(doc(db, 'busLocations', busId))
+    const outcome = await Promise.race([
+      removal.then(() => 'cleared'),
+      new Promise((resolve) => window.setTimeout(() => resolve('queued'), CLEAR_WAIT_MS)),
+    ])
+    if (outcome === 'queued') removal.catch((error) => console.error('Queued live record removal was refused:', error))
+    setSend({ status: 'idle', lastSentAt: null, error: '' })
+    return outcome
+  }, [busId])
+
+  // A record left behind (phone died or the app closed mid-trip) is removed the next time this
+  // conductor opens the app without a trip running.
+  const enabledRef = useRef(enabled)
+  useEffect(() => {
+    enabledRef.current = enabled
+  }, [enabled])
+  useEffect(() => {
+    if (!busId || enabledRef.current) return
+    deleteDoc(doc(db, 'busLocations', busId)).catch((error) => console.error('Could not remove the old live record:', error))
+  }, [busId])
+
+  return { assignment, route, routeStops, nextStop, send, clearLive, sharing: Boolean(busId && enabled), hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
 }

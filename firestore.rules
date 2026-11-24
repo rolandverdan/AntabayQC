@@ -200,7 +200,8 @@ service cloud.firestore {
         || isPublicBusLocation(busId);
       allow list: if isAdmin();
       allow create, update: if isAssignedConductor(busId) && validBusLocation(busId);
-      allow delete: if false;
+      // End trip removes the bus from the live maps.
+      allow delete: if isAdmin() || isAssignedConductor(busId);
     }
 
     match /adminSettings/{settingId} {
