@@ -108,8 +108,8 @@ export default function BusRoutes() {
               <dl className="grid grid-cols-3 gap-2 text-center">
                 {[
                   ['Active buses', activeOnRoute],
-                  ['Every', '15–20 min'],
-                  ['Trip time', '30–45 min'],
+                  ['Stops', selectedStops.length],
+                  ['Route status', selectedRoute.status || 'Unknown'],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
                     <dt className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</dt>

@@ -15,7 +15,13 @@ import {
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import { isFreshBusLocation, routeColor } from '../../admin/utils/geo.js'
 import { useNotifications } from '../context/NotificationsContext.jsx'
-import { TONE_CLASSES } from '../data/notifications.js'
+
+const TONE_CLASSES = {
+  amber: 'bg-amber-100 text-amber-700',
+  blue: 'bg-blue-100 text-blue-700',
+  green: 'bg-green-100 text-green-700',
+  red: 'bg-red-100 text-red-700',
+}
 
 const FAQS = [
   { q: 'How do I know when my bus is arriving?', a: 'Open Live Tracking to see recent bus locations and next stops when a conductor GPS feed is available. Arrival-time estimates are not available yet.' },

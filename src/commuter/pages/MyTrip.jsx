@@ -7,7 +7,6 @@ import {
   MapPin,
   Navigation,
   ShieldCheck,
-  Star,
   X,
 } from 'lucide-react'
 import { PageHeader } from '../../admin/components/Card.jsx'
@@ -18,30 +17,24 @@ import Select from '../../shared/components/Select.jsx'
 import DatePicker from '../../shared/components/DatePicker.jsx'
 import TimePicker from '../../shared/components/TimePicker.jsx'
 
-const upcomingTrips = [
-  {
-    route: 'R-02 QC Hall ↔ Commonwealth',
-    time: 'Today · 7:40 AM',
-    from: 'Quezon Memorial Circle',
-    to: 'Commonwealth Avenue',
-    status: 'On time',
-    tone: 'green',
-  },
-  {
-    route: 'R-03 Cubao ↔ Katipunan',
-    time: 'Today · 8:20 AM',
-    from: 'Cubao Terminal',
-    to: 'Katipunan Ave',
-    status: 'Boarding soon',
-    tone: 'blue',
-  },
-]
+const SAVED_TRIPS_KEY = 'antabayqc_saved_trips'
 
-const tripHistory = [
-  { route: 'R-01 QC Hall ↔ Cubao', date: 'Oct 22', rating: 4.8 },
-  { route: 'R-05 Batasan ↔ Eastwood', date: 'Oct 20', rating: 4.6 },
-  { route: 'R-02 QC Hall ↔ Commonwealth', date: 'Oct 18', rating: 4.9 },
-]
+const readSavedTrips = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SAVED_TRIPS_KEY) || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const persistSavedTrips = (trips) => {
+  try {
+    localStorage.setItem(SAVED_TRIPS_KEY, JSON.stringify(trips))
+  } catch {
+    // The trip list can still update for this page session if browser storage is unavailable.
+  }
+}
 
 const normalizeTripDate = (dateValue) => {
   if (!dateValue) return null
@@ -89,22 +82,17 @@ const formatTripTime = (dateValue, timeValue) => {
 export default function MyTrip() {
   const { routes, stopsById } = useAdminData()
   const { notify } = useToast()
-  const [savedTrips, setSavedTrips] = useState(upcomingTrips)
+  const [savedTrips, setSavedTrips] = useState(readSavedTrips)
   const [showTripDetails, setShowTripDetails] = useState(false)
   const [showAddTrip, setShowAddTrip] = useState(false)
   const [selectedRouteId, setSelectedRouteId] = useState('')
   const [tripDraft, setTripDraft] = useState({ date: '', time: '' })
   const [tripErrors, setTripErrors] = useState({})
-  const [expandedHistory, setExpandedHistory] = useState('')
 
-  const tripDetails = {
-    route: 'R-02 QC Hall ↔ Commonwealth',
-    date: 'Today · 7:40 AM',
-    from: 'Quezon Memorial Circle',
-    to: 'Commonwealth Avenue',
-    note: 'Route R-02 · Quezon City Hall to Commonwealth Avenue.',
-    status: 'On time',
-  }
+  const tripDetails = savedTrips[0] ? {
+    ...savedTrips[0],
+    note: savedTrips[0].route,
+  } : null
 
   const validateTripDraft = () => {
     const nextErrors = {}
@@ -160,14 +148,18 @@ export default function MyTrip() {
 
     const routeStops = route.stopIds.map((id) => stopsById[id]).filter(Boolean)
     const timeLabel = formatTripTime(tripDraft.date, tripDraft.time)
-    setSavedTrips((items) => [...items, {
+    setSavedTrips((items) => {
+      const next = [...items, {
       route: `${route.id} ${route.name}`,
       time: timeLabel,
       from: routeStops[0]?.name || 'Route origin',
       to: routeStops[routeStops.length - 1]?.name || 'Route destination',
       status: 'Saved route',
       tone: 'blue',
-    }])
+      }]
+      persistSavedTrips(next)
+      return next
+    })
     setShowAddTrip(false)
     setSelectedRouteId('')
     setTripDraft({ date: '', time: '' })
@@ -183,7 +175,7 @@ export default function MyTrip() {
       />
 
       <Modal open={showTripDetails} onClose={() => setShowTripDetails(false)} title="Trip details" size="md">
-        <div className="space-y-4">
+        {tripDetails ? <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -222,7 +214,7 @@ export default function MyTrip() {
           <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
             <div className="flex items-center gap-2">
               <Clock3 size={15} className="text-brand" />
-              <span>{tripDetails.date}</span>
+              <span>{tripDetails.time}</span>
             </div>
             <div className="flex items-center gap-2">
               <ShieldCheck size={15} className="text-green-700" />
@@ -231,7 +223,7 @@ export default function MyTrip() {
           </div>
 
           <p className="text-sm leading-6 text-slate-600">{tripDetails.note}</p>
-        </div>
+        </div> : <p className="text-sm text-slate-500">Save a route first to view trip details.</p>}
       </Modal>
 
       <Modal
@@ -313,63 +305,26 @@ export default function MyTrip() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold text-slate-500">Upcoming trip</p>
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
-                On time
-              </span>
-            </div>
-            <h2 className="mt-1 text-xl font-black text-navy">Today, 7:40 AM</h2>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-navy">
-              <span className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-2 py-0.5 text-xs font-bold text-fuchsia-700">R-02</span>
-              <span className="text-slate-700">QC Hall</span>
-              <ArrowRight size={15} className="text-brand" />
-              <span className="text-slate-700">Commonwealth</span>
-            </div>
-
-            <div className="my-4 border-t border-slate-200" />
-
-            <div className="relative space-y-4">
-              <div className="absolute left-[6px] top-3 h-[calc(100%-24px)] border-l-2 border-dashed border-blue-200" />
-              <div className="relative flex items-start gap-3">
-                <span className="mt-1 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border-2 border-green-500 bg-white">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-slate-500">Board at</p>
-                  <p className="text-sm font-bold text-navy">Quezon Memorial Circle</p>
+            {tripDetails ? (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-slate-500">Saved trip</p>
+                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-700">{tripDetails.status}</span>
                 </div>
-              </div>
-              <div className="relative flex items-start gap-3">
-                <span className="mt-1 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border-2 border-brand bg-white">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-slate-500">Get off at</p>
-                  <p className="text-sm font-bold text-navy">Commonwealth Avenue</p>
+                <h2 className="mt-2 text-xl font-black text-navy">{tripDetails.time}</h2>
+                <p className="mt-2 text-sm font-bold text-navy">{tripDetails.route}</p>
+                <p className="mt-2 text-sm text-slate-600">{tripDetails.from} → {tripDetails.to}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link to="/commuter/live-tracking" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white"><Navigation size={16} />Track bus</Link>
+                  <button type="button" onClick={() => setShowTripDetails(true)} className="min-h-11 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-brand">View details</button>
                 </div>
+              </>
+            ) : (
+              <div className="py-2 text-center">
+                <p className="text-sm font-semibold text-navy">No upcoming trip saved</p>
+                <p className="mt-1 text-xs text-slate-500">Add a route and schedule to keep it here.</p>
               </div>
-            </div>
-
-            <p className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-green-700">
-              <ShieldCheck size={15} />
-              Safety check passed
-            </p>
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Link to="/commuter/live-tracking" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2">
-                <Navigation size={16} />
-                Track bus
-              </Link>
-              <button
-                type="button"
-                onClick={() => setShowTripDetails(true)}
-                className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
-              >
-                View details
-              </button>
-            </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -405,7 +360,11 @@ export default function MyTrip() {
                         <button
                           type="button"
                           onClick={() => {
-                            setSavedTrips((items) => items.filter((item) => item.route !== trip.route))
+                            setSavedTrips((items) => {
+                              const next = items.filter((item) => item.route !== trip.route)
+                              persistSavedTrips(next)
+                              return next
+                            })
                             notify('Saved route removed for this session.', 'info')
                           }}
                           aria-label={`Remove ${trip.route} from saved trips`}
@@ -428,47 +387,6 @@ export default function MyTrip() {
         </section>
 
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                <Star size={18} />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-navy">Trip history</h3>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {tripHistory.map((trip) => (
-                <div key={`${trip.route}-${trip.date}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:border-brand/25">
-                  <button
-                    type="button"
-                    onClick={() => setExpandedHistory((current) => current === trip.route ? '' : trip.route)}
-                    aria-expanded={expandedHistory === trip.route}
-                    className="w-full rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-navy">{trip.route}</span>
-                        <span className="mt-1 block text-xs text-slate-500">{trip.date}</span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-600">
-                          <Star size={12} fill="currentColor" /> {trip.rating}
-                        </span>
-                      </span>
-                    </span>
-                  </button>
-                  {expandedHistory === trip.route && (
-                    <p className="mt-3 border-t border-slate-200 pt-2 text-xs leading-5 text-slate-500">
-                      You can share feedback from the Feedback page.
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <h3 className="mb-3 text-lg font-black text-navy">Quick actions</h3>
             <div className="space-y-3">

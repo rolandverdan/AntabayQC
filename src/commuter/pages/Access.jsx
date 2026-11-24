@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, Eye, EyeOff, Info, UserRound } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, UserRound } from 'lucide-react'
 import Button from '../../admin/components/Button.jsx'
 import Field from '../../admin/components/FormField.jsx'
 import { inputClass } from '../../admin/utils/ui.js'
 import { useCommuter } from '../context/CommuterContext.jsx'
-import { COMMUTER_USERNAMES, COMMUTER_PASSWORD } from '../data/credentials.js'
 import AuthShell, { FormFeedback } from '../../shared/components/AuthShell.jsx'
 import useRoleSwitch from '../../shared/hooks/useRoleSwitch.js'
-import { getAuthErrorMessage } from '../../firebase/auth.js'
+import { getAuthErrorMessage, signInWithEmail } from '../../firebase/auth.js'
 
 export default function Access() {
   const { session, enter } = useCommuter()
@@ -49,13 +48,22 @@ export default function Access() {
       setFeedback({ type: 'error', text: 'Please fix the highlighted fields.' })
       return
     }
-    const ok = COMMUTER_USERNAMES.includes(identifier.trim().toLowerCase()) && password === COMMUTER_PASSWORD
-    if (!ok) {
-      setFeedback({ type: 'error', text: 'Incorrect email/username or password.' })
-      return
+    setBusy(true)
+    try {
+      const { user, role } = await signInWithEmail(identifier, password)
+      if (role !== 'commuter') {
+        setFeedback({ type: 'error', text: 'This account is not registered as a commuter.' })
+        setBusy(false)
+        return
+      }
+      await signOutOthers('commuter', { preserveFirebaseAuth: true })
+      enter('account', user.email || user.uid, true, role)
+      setFeedback({ type: 'success', text: 'Signed in. Opening the commuter app…' })
+      navigate(location.state?.from?.startsWith('/commuter') ? location.state.from : '/commuter/home', { replace: true })
+    } catch (error) {
+      setBusy(false)
+      setFeedback({ type: 'error', text: getAuthErrorMessage(error) })
     }
-    setFeedback({ type: 'success', text: 'Signed in. Opening the commuter app…' })
-    await go('account', identifier.trim())
   }
 
   return (
@@ -63,10 +71,10 @@ export default function Access() {
       role="Commuter app"
       heading="Ride better around Quezon City"
       blurb="Check bus routes, stops, timetables, and trip updates. No account is needed to look around."
-      footer="Commuter portal · frontend demo"
+      footer="ANTABAY QC · Quezon City"
     >
       <h1 className="text-xl font-bold text-navy">Commuter Access</h1>
-      <p className="mb-4 mt-1 text-sm text-slate-500">Continue as a guest, or sign in with a demo commuter account.</p>
+      <p className="mb-4 mt-1 text-sm text-slate-500">Continue as a guest, or sign in with your registered commuter account.</p>
 
       <Button type="button" className="w-full" icon={ArrowRight} onClick={() => go('guest')} disabled={busy}>Continue as guest</Button>
 
@@ -92,12 +100,6 @@ export default function Access() {
         </div>
       </form>
 
-      <div className="mt-4 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-        <Info size={14} className="mt-0.5 shrink-0" />
-        <p>
-          Demo only. Use <span className="font-semibold">commuter</span> and password <span className="font-semibold">{COMMUTER_PASSWORD}</span>, or just continue as a guest. No real authentication is used.
-        </p>
-      </div>
     </AuthShell>
   )
 }

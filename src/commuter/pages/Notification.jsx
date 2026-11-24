@@ -11,9 +11,9 @@ import { useToast } from '../../admin/context/ToastContext.jsx'
 import { useNotifications } from '../context/NotificationsContext.jsx'
 
 const summaryStats = [
-  { label: 'Unread', value: '3', icon: Bell, tone: 'blue' },
-  { label: 'Active alerts', value: '2', icon: AlertTriangle, tone: 'amber' },
-  { label: 'Resolved', value: '6', icon: CheckCircle2, tone: 'green' },
+  { label: 'Unread', value: '0', icon: Bell, tone: 'blue' },
+  { label: 'Active alerts', value: '0', icon: AlertTriangle, tone: 'amber' },
+  { label: 'Resolved', value: '0', icon: CheckCircle2, tone: 'green' },
 ]
 
 const filters = ['All', 'Unread', 'Service', 'Safety']
@@ -196,11 +196,7 @@ export default function Notification() {
               <h3 className="text-lg font-black text-navy">Recent actions</h3>
             </div>
 
-            <ul className="space-y-3 text-sm text-slate-600">
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Lost item report reviewed for Terminal 2.</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Feedback submitted for Route 3 service quality.</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Route and schedule updated after road repair notice.</li>
-            </ul>
+            <p className="text-sm text-slate-500">No recent actions are available.</p>
           </div>
         </aside>
       </div>
