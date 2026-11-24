@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
-=======
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { collection, deleteField, doc, getDoc, getDocs, limit, onSnapshot, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
->>>>>>> ef1ba5ed931ec260e592311daa498c736b46e653
+import { collection, deleteDoc, deleteField, doc, getDocs, limit, onSnapshot, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import { db } from '../../firebase/firebase.js'
 import { bearingDeg, haversineKm } from '../../admin/utils/geo.js'
 import { routeProgressForPosition } from './useVehicleLocation.js'
@@ -142,14 +137,9 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
 
   // 3. Send: right away when the passenger count changes, otherwise on a heartbeat.
   const lastSent = useRef({ at: 0, passengers: null })
-<<<<<<< HEAD
-  const inFlight = useRef(false)
-  const pendingWrite = useRef(null) // the upload in progress, so End trip can wait for it
+  const inFlight = useRef(null) // the upload in progress, so End trip can wait for it
+  const legacyMode = useRef(false) // published rules do not know tripActive yet
   const stopped = useRef(true) // set by clearLive so no upload slips out after End trip
-=======
-  const inFlight = useRef(null)
-  const legacyMode = useRef(false)
->>>>>>> ef1ba5ed931ec260e592311daa498c736b46e653
   useEffect(() => {
     if (!busId || !enabled) return undefined
     stopped.current = false
@@ -169,11 +159,6 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
       const request = setDoc(locationRef, data, { merge: true })
       inFlight.current = request
       try {
-<<<<<<< HEAD
-        pendingWrite.current = setDoc(doc(db, 'busLocations', record.busId), { ...record, updatedAt: serverTimestamp() })
-        await pendingWrite.current
-        setSend({ status: 'sent', lastSentAt: Date.now(), error: '' })
-=======
         await request
         setSend(legacyMode.current
           ? {
@@ -182,7 +167,6 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
             error: 'GPS is updating, but trip status is not supported by the published Firestore rules. Deploy the latest Firestore rules to keep the bus visible until the trip ends.',
           }
           : { status: 'sent', lastSentAt: Date.now(), error: '' })
->>>>>>> ef1ba5ed931ec260e592311daa498c736b46e653
       } catch (error) {
         if (error.code === 'permission-denied' && !legacyMode.current) {
           legacyMode.current = true
@@ -219,35 +203,38 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
             : error.message,
         }))
       } finally {
-<<<<<<< HEAD
-        inFlight.current = false
-        pendingWrite.current = null
-=======
         if (inFlight.current === request) inFlight.current = null
->>>>>>> ef1ba5ed931ec260e592311daa498c736b46e653
       }
     }
     const timer = window.setInterval(trySend, 1000)
     return () => window.clearInterval(timer)
   }, [busId, enabled])
 
-<<<<<<< HEAD
   // 4. End trip: stop uploading and delete busLocations/{busId}, so the bus disappears from the
-  //    admin and commuter maps right away instead of showing its last position.
-  //    Resolves 'cleared', 'queued' (no signal yet; Firestore deletes it when back online) or 'none'.
+  //    admin and commuter maps right away and no old position or count is left behind.
+  //    If the published rules do not allow the delete yet, the record is marked tripActive: false
+  //    instead (commuter maps hide it). Resolves 'cleared', 'marked', 'queued' or 'none'.
   const clearLive = useCallback(async () => {
     stopped.current = true
     if (!busId) return 'none'
     try {
-      await pendingWrite.current // let a last upload land first so it cannot re-create the record
+      await inFlight.current // let a last upload land first so it cannot re-create the record
     } catch {
       /* already reported by the uploader */
     }
-    const removal = deleteDoc(doc(db, 'busLocations', busId))
-    const outcome = await Promise.race([
-      removal.then(() => 'cleared'),
-      new Promise((resolve) => window.setTimeout(() => resolve('queued'), CLEAR_WAIT_MS)),
-    ])
+    const locationRef = doc(db, 'busLocations', busId)
+    const removal = deleteDoc(locationRef)
+    let outcome
+    try {
+      outcome = await Promise.race([
+        removal.then(() => 'cleared'),
+        new Promise((resolve) => window.setTimeout(() => resolve('queued'), CLEAR_WAIT_MS)),
+      ])
+    } catch (error) {
+      if (error.code !== 'permission-denied' || legacyMode.current) throw error
+      await setDoc(locationRef, { tripActive: false, updatedAt: serverTimestamp() }, { merge: true })
+      outcome = 'marked'
+    }
     if (outcome === 'queued') removal.catch((error) => console.error('Queued live record removal was refused:', error))
     setSend({ status: 'idle', lastSentAt: null, error: '' })
     return outcome
@@ -265,26 +252,4 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
   }, [busId])
 
   return { assignment, route, routeStops, nextStop, send, clearLive, sharing: Boolean(busId && enabled), hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
-=======
-  useEffect(() => {
-    if (!busId || enabled || legacyMode.current) return undefined
-    let cancelled = false
-    const markTripEnded = async () => {
-      try {
-        if (inFlight.current) await inFlight.current
-        if (cancelled) return
-        const locationRef = doc(db, 'busLocations', busId)
-        const snapshot = await getDoc(locationRef)
-        if (!snapshot.exists() || cancelled) return
-        await setDoc(locationRef, { tripActive: false, updatedAt: serverTimestamp() }, { merge: true })
-      } catch (error) {
-        if (!cancelled) console.error('Could not mark the bus trip as ended:', error)
-      }
-    }
-    void markTripEnded()
-    return () => { cancelled = true }
-  }, [busId, enabled])
-
-  return { assignment, route, routeStops, nextStop, send, sharing: Boolean(busId && enabled), hasGps: Number.isFinite(lat) && Number.isFinite(lng) }
->>>>>>> ef1ba5ed931ec260e592311daa498c736b46e653
 }
