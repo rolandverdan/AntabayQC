@@ -122,7 +122,7 @@ export function AdminDataProvider({ children }) {
             const unsubscribe = onSnapshot(doc(db, 'busLocations', busId), (locationSnapshot) => {
               if (!active) return
               if (locationSnapshot.exists()) {
-                const location = serialize(locationSnapshot.data())
+                const location = serialize(locationSnapshot.data({ serverTimestamps: 'estimate' }))
                 publicBusLocations.set(busId, { ...location, id: location.id || busId, docId: busId })
               } else {
                 publicBusLocations.delete(busId)

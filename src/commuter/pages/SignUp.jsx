@@ -67,7 +67,7 @@ export default function SignUp() {
         <FormFeedback feedback={feedback} />
 
         <div className="space-y-3.5">
-          <Field label="Full name" required error={errors.name}><input className={inputClass(errors.name)} value={form.name} onChange={set('name')} autoComplete="name" placeholder="Juan Dela Cruz" /></Field>
+          <Field label="Full name" required error={errors.name}><input className={inputClass(errors.name)} value={form.name} onChange={set('name')} autoComplete="name" placeholder="Full name" /></Field>
           <div className="grid gap-3.5 sm:grid-cols-2">
             <Field label="Email" required error={errors.email}><input type="email" className={inputClass(errors.email)} value={form.email} onChange={set('email')} autoComplete="email" placeholder="you@email.com" /></Field>
             <Field label="Mobile number" error={errors.phone}><input className={inputClass(errors.phone)} value={form.phone} onChange={set('phone')} autoComplete="tel" inputMode="tel" placeholder="09171234567 (optional)" /></Field>

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { BusFront, Clock3, Gauge, MapPinned, Users } from 'lucide-react'
 import { useAdminData } from '../../admin/context/AdminDataContext.jsx'
 import MapView from '../../admin/components/MapView.jsx'
-import { busMarkerStyle, isFreshBusLocation, routeColor, routeStopMarks } from '../../admin/utils/geo.js'
+import { busMarkerStyle, routeColor, routeStopMarks } from '../../admin/utils/geo.js'
 import { OCCUPANCY, occupancyLevel } from '../../admin/utils/occupancy.js'
 import RouteChip from '../components/RouteChip.jsx'
 
@@ -10,16 +10,15 @@ export default function LiveTracking() {
   const { routes, buses, stopsById, routesById, busLocationsById, dataStatus, dataError } = useAdminData()
   const [selectedRoute, setSelectedRoute] = useState('all')
   const [selectedBusId, setSelectedBusId] = useState(null)
-  const [now, setNow] = useState(Date.now)
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 10_000)
-    return () => window.clearInterval(timer)
-  }, [])
 
   const runningBuses = useMemo(
-    () => buses.filter((bus) => bus.status === 'Active' && isFreshBusLocation(busLocationsById[bus.id], now)),
-    [buses, busLocationsById, now],
+    () => buses.filter((bus) => {
+      const location = busLocationsById[bus.id]
+      return location?.tripActive !== false
+        && Number.isFinite(location?.lat)
+        && Number.isFinite(location?.lng)
+    }),
+    [buses, busLocationsById],
   )
   const countFor = (routeId) => runningBuses.filter((b) => b.routeId === routeId).length
 
@@ -64,6 +63,7 @@ export default function LiveTracking() {
 
   const markers = visible.map(({ bus, location, live }) => {
     const hasPassengerCount = Number.isFinite(location.passengers)
+    const capacity = Number(bus.capacity)
     const style = busMarkerStyle({
       ...bus,
       passengers: hasPassengerCount ? location.passengers : null,
@@ -74,12 +74,30 @@ export default function LiveTracking() {
       lng: live.lng,
       ...style,
       color: hasPassengerCount ? style.color : '#64748b',
+      pulse: false,
       selected: bus.id === selected?.bus.id,
       tooltip: `${bus.id} · ${routesById[bus.routeId]?.name || bus.routeId}`,
+      info: {
+        route: `${bus.routeId} · ${routesById[bus.routeId]?.name || 'Route unavailable'}`,
+        model: bus.model || 'Unavailable',
+        plate: bus.plate || 'Unavailable',
+        speed: live.speed === null ? 'Unavailable' : `${live.speed} km/h`,
+        passengers: hasPassengerCount
+          ? Number.isFinite(capacity) && capacity > 0 ? `${location.passengers} / ${capacity}` : String(location.passengers)
+          : 'Unavailable',
+        seatsAvailable: hasPassengerCount && Number.isFinite(capacity) && capacity > 0
+          ? String(Math.max(0, capacity - location.passengers))
+          : 'Unavailable',
+        nextStop: live.nextStop?.name || 'Unavailable',
+        updatedAt: location.updatedAt
+          ? new Date(location.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+          : 'Unavailable',
+      },
     }
   })
 
   const focus = selected ? { lat: selected.live.lat, lng: selected.live.lng, key: selected.bus.id } : null
+  const mapFitKey = `${routes.length && Object.keys(stopsById).length ? 'ready' : 'loading'}:${selectedRoute}:${selectedBusId || ''}`
 
   const pickRoute = (id) => {
     setSelectedRoute(id)
@@ -147,7 +165,7 @@ export default function LiveTracking() {
           </p>
         </div>
         <div className="h-[46dvh] min-h-[300px] md:h-[460px]">
-          <MapView routes={shownRoutes} stops={selected && !focusRoute ? markStops : routeStops} stopMarks={stopMarks} buses={markers} onBusClick={setSelectedBusId} focus={focus} roadSnap className="h-full" />
+          <MapView routes={shownRoutes} stops={selected && !focusRoute ? markStops : routeStops} stopMarks={stopMarks} buses={markers} onBusClick={setSelectedBusId} focus={focus} fitKey={mapFitKey} roadSnap className="h-full" />
         </div>
       </div>
 
@@ -210,7 +228,7 @@ export default function LiveTracking() {
           </ul>
         ) : (
           <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm text-slate-500">
-            No recent GPS reports are available for {focusRoute?.id || 'this service'} right now. Bus positions and arrival estimates are not simulated; try another route or check the Timetable.
+            No conductor trips are currently sharing a GPS location for {focusRoute?.id || 'this service'}.
           </p>
         )}
       </div>

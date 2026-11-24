@@ -6,7 +6,7 @@ import { signOutFirebaseUser } from '../../firebase/auth.js'
 import { ensureUserProfile, getUserRole, watchUserProfile } from '../../firebase/userProfiles.js'
 import { saveCommuterProfile } from '../data/accounts.js'
 
-// MOCK ACCESS ONLY. A flag in browser storage is not security; anyone can edit it in dev tools.
+// Browser session state mirrors Firebase Authentication and is not used as a security boundary.
 const SESSION_KEY = 'antabayqc_commuter_session'
 const Ctx = createContext(null)
 
