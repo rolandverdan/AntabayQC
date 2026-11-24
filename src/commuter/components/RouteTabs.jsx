@@ -17,6 +17,7 @@ export default function RouteTabs() {
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white"><Clock3 size={16} /></span>
         <p className="min-w-0 leading-tight">
           <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-500">Service hours</span>
+          <span className="block text-sm font-bold text-navy">Daily · 6:00 AM – 9:00 PM <span className="hidden font-medium text-slate-500 sm:inline">· Mon – Sun, except holidays</span></span>
         </p>
       </div>
     </div>

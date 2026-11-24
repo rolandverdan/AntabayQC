@@ -116,6 +116,7 @@ export default function CommuterHome() {
             <span className="mx-2 font-normal text-white/40">|</span>
             {activeBuses} Live Bus{activeBuses === 1 ? '' : 'es'}
           </p>
+          <p className="mt-0.5 text-xs text-blue-100">Service hours: 6:00 AM – 9:00 PM, Monday – Sunday</p>
 
           <form onSubmit={search} role="search" className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 text-slate-700 shadow-sm focus-within:ring-2 focus-within:ring-white/70">
             <Search size={18} className="shrink-0 text-slate-400" />

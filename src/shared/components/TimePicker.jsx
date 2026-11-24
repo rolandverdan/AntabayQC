@@ -20,7 +20,13 @@ const label = (t) => `${pad(t.h)}:${pad(t.m)} ${t.pm ? 'PM' : 'AM'}`
 function Column({ title, items, isActive, onPick, format = pad, refKey }) {
   const ref = useRef(null)
   useEffect(() => {
-    ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'center' })
+    const list = ref.current
+    const selected = list?.querySelector('[aria-selected="true"]')
+    if (!list || !selected) return
+
+    const listRect = list.getBoundingClientRect()
+    const selectedRect = selected.getBoundingClientRect()
+    list.scrollTop += selectedRect.top + selectedRect.height / 2 - (listRect.top + list.clientHeight / 2)
   }, [refKey])
   return (
     <div className="min-w-0 flex-1">
