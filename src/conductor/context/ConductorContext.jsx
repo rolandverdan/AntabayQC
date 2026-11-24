@@ -23,6 +23,10 @@ function readPassengerTotals() {
   return { count: 0, entries: 0, exits: 0 }
 }
 
+// uid of the account the saved count and alerts belong to. A different account signing in on
+// this phone starts from zero with no alerts.
+const OWNER_KEY = 'antabayqc_conductor_owner_v1'
+
 const ALERTS_KEY = 'antabayqc_conductor_alerts_v1'
 const MAX_ALERTS = 50
 
@@ -90,6 +94,9 @@ export function ConductorProvider({ children }) {
     }
   }, [passengerTotals])
 
+  // Alerts raised on this phone (bus full, camera lost, trip started, SOS sent…). Newest first.
+  const [alerts, setAlerts] = useState(readAlerts)
+
   const login = useCallback((identifier, authDetails = {}) => {
     const next = { identifier, role: 'conductor', ...authDetails, at: Date.now() }
     try {
@@ -98,6 +105,16 @@ export function ConductorProvider({ children }) {
       /* ignore storage errors */
     }
     setSession(next)
+    try {
+      const owner = localStorage.getItem(OWNER_KEY)
+      if (authDetails.uid && owner !== authDetails.uid) {
+        localStorage.setItem(OWNER_KEY, authDetails.uid)
+        setPassengerTotals({ count: 0, entries: 0, exits: 0 })
+        setAlerts([])
+      }
+    } catch {
+      /* ignore storage errors */
+    }
     if (authDetails.firebaseAuthenticated) {
       setProfile((current) => ({
         ...current,
@@ -108,8 +125,6 @@ export function ConductorProvider({ children }) {
     }
   }, [])
 
-  // Alerts raised on this phone (bus full, camera lost, trip started, SOS sent…). Newest first.
-  const [alerts, setAlerts] = useState(readAlerts)
   useEffect(() => {
     try {
       localStorage.setItem(ALERTS_KEY, JSON.stringify(alerts))

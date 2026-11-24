@@ -9,7 +9,8 @@ import { routeProgressForPosition } from './useVehicleLocation.js'
 // Firestore rules only accept writes from the conductor assigned to that bus.
 
 const HEARTBEAT_MS = 15000 // send at least this often while there is something to report
-const MIN_GAP_MS = 5000 // never send more often than this (keeps Firestore writes and data use low)
+const MIN_GAP_MS = 5000 // GPS-only updates: never more often than this (keeps Firestore writes and data use low)
+const COUNT_GAP_MS = 1000 // a passenger count change goes out within about a second
 const CLEAR_WAIT_MS = 5000 // how long End trip waits for the server to confirm the live record is gone
 const HEADING_MIN_MOVE_KM = 0.01 // only update the heading after moving 10 m, so GPS jitter does not spin the bus icon
 
@@ -135,6 +136,7 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
     latest.current = record
   }, [busId, uid, lat, lng, speed, gpsAccuracy, nextStop, passengers, entries, exits, enabled])
 
+
   // 3. Send: right away when the passenger count changes, otherwise on a heartbeat.
   const lastSent = useRef({ at: 0, passengers: null })
   const inFlight = useRef(null) // the upload in progress, so End trip can wait for it
@@ -144,70 +146,72 @@ export default function useBusFeed({ uid, position, speed, gpsAccuracy, passenge
     if (!busId || !enabled) return undefined
     stopped.current = false
     lastSent.current = { at: 0, passengers: null } // send right away when a trip starts
-    const trySend = async () => {
+    const LEGACY_NOTE = 'GPS is updating, but trip status is not supported by the published Firestore rules. Deploy the latest Firestore rules to keep the bus visible until the trip ends.'
+    const refusedMessage = (error) => (error.code === 'permission-denied'
+      ? 'The server refused the update. Ask an admin to check that this account is assigned to this bus and that the latest Firestore rules are published.'
+      : error.message)
+
+    // `force`: send now if anything changed (used when the app goes to the background).
+    const trySend = async (force = false) => {
       const record = latest.current
       if (!record || inFlight.current || stopped.current) return
       const now = Date.now()
+      const since = now - lastSent.current.at
       const countChanged = record.passengers !== lastSent.current.passengers
-      const due = now - lastSent.current.at >= HEARTBEAT_MS
-      if (now - lastSent.current.at < MIN_GAP_MS || (!countChanged && !due)) return
+      const due = since >= HEARTBEAT_MS
+      if (!countChanged && !due && !force) return
+      if (since < (countChanged ? COUNT_GAP_MS : MIN_GAP_MS) && !force) return
       lastSent.current = { at: now, passengers: record.passengers }
       setSend((current) => ({ ...current, status: 'sending' }))
       const locationRef = doc(db, 'busLocations', record.busId)
-      const data = { ...record, updatedAt: serverTimestamp() }
-      if (legacyMode.current) data.tripActive = deleteField()
-      const request = setDoc(locationRef, data, { merge: true })
-      inFlight.current = request
-      try {
-        await request
-        setSend(legacyMode.current
-          ? {
-            status: 'error',
-            lastSentAt: Date.now(),
-            error: 'GPS is updating, but trip status is not supported by the published Firestore rules. Deploy the latest Firestore rules to keep the bus visible until the trip ends.',
+      const write = (legacy) => {
+        const data = { ...record, updatedAt: serverTimestamp() }
+        if (legacy) data.tripActive = deleteField()
+        return setDoc(locationRef, data, { merge: true })
+      }
+      // Only one upload at a time. Always cleared in `finally`, so one refused upload can never
+      // stop the feed for the rest of the trip.
+      inFlight.current = (async () => {
+        try {
+          await write(legacyMode.current)
+          setSend(legacyMode.current
+            ? { status: 'error', lastSentAt: Date.now(), error: LEGACY_NOTE }
+            : { status: 'sent', lastSentAt: Date.now(), error: '' })
+        } catch (error) {
+          // Published rules may not know `tripActive` yet: try once without it.
+          if (error.code === 'permission-denied' && !legacyMode.current) {
+            try {
+              await write(true)
+              legacyMode.current = true
+              setSend({ status: 'error', lastSentAt: Date.now(), error: LEGACY_NOTE })
+              return
+            } catch (legacyError) {
+              console.error('Live feed upload failed with both current and legacy Firestore rules:', legacyError)
+            }
+          } else {
+            console.error('Live feed upload failed:', error)
           }
-          : { status: 'sent', lastSentAt: Date.now(), error: '' })
-      } catch (error) {
-        if (error.code === 'permission-denied' && !legacyMode.current) {
-          legacyMode.current = true
-          const legacyData = { ...record, updatedAt: serverTimestamp() }
-          legacyData.tripActive = deleteField()
-          const legacyRequest = setDoc(locationRef, legacyData, { merge: true })
-          inFlight.current = legacyRequest
-          try {
-            await legacyRequest
-            setSend({
-              status: 'error',
-              lastSentAt: Date.now(),
-              error: 'GPS is updating, but trip status is not supported by the published Firestore rules. Deploy the latest Firestore rules to keep the bus visible until the trip ends.',
-            })
-            return
-          } catch (legacyError) {
-            console.error('Live feed upload failed with both current and legacy Firestore rules:', legacyError)
-            setSend((current) => ({
-              ...current,
-              status: 'error',
-              error: legacyError.code === 'permission-denied'
-                ? 'The server refused the update. Check that this account is assigned to this bus and that the latest Firestore rules are published.'
-                : legacyError.message,
-            }))
-            return
-          }
+          // Not delivered: retry the latest count on the next tick instead of waiting for the heartbeat.
+          lastSent.current = { ...lastSent.current, passengers: null }
+          setSend((current) => ({ ...current, status: 'error', error: refusedMessage(error) }))
         }
-        console.error('Live feed upload failed:', error)
-        setSend((current) => ({
-          ...current,
-          status: 'error',
-          error: error.code === 'permission-denied'
-            ? 'The server refused the update. Ask an admin to check that this account is assigned to this bus and that the latest Firestore rules are published.'
-            : error.message,
-        }))
+      })()
+      try {
+        await inFlight.current
       } finally {
-        if (inFlight.current === request) inFlight.current = null
+        inFlight.current = null
       }
     }
-    const timer = window.setInterval(trySend, 1000)
-    return () => window.clearInterval(timer)
+    const timer = window.setInterval(() => trySend(), 1000)
+    // Phones pause timers when the screen turns off or another app opens: send the latest count first.
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') trySend(true)
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onHide)
+    }
   }, [busId, enabled])
 
   // 4. End trip: stop uploading and delete busLocations/{busId}, so the bus disappears from the

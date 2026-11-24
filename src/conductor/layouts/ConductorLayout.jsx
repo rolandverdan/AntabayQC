@@ -26,6 +26,7 @@ export default function ConductorLayout() {
   const location = useVehicleLocation()
   // Start/End trip controls phone GPS and the live feed. The door cameras have their own buttons.
   const trip = useTrip({
+    uid: session?.uid || '',
     position: location.position,
     gpsAccuracy: location.gpsAccuracy,
     gpsStatus: location.gpsStatus,
