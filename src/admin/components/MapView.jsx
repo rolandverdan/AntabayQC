@@ -1,6 +1,6 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
-import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Popup, Tooltip, useMap } from 'react-leaflet'
 
 export const QC_CENTER = [14.65, 121.05]
 
@@ -94,19 +94,63 @@ const stopIcon = (n, state) => {
   })
 }
 
-const busIcon = (b) => {
-  const w = b.selected ? 48 : 42
+const busIcon = (img, color, dim, pulse, selected) => {
+  const w = selected ? 48 : 42
   const h = Math.round(w * 2.01)
-  const ring = b.selected ? 'drop-shadow(0 0 0 #193B70) drop-shadow(0 0 3px #193B70)' : 'drop-shadow(0 2px 3px rgba(0,0,0,.45))'
-  const dot = b.dim
+  const ring = selected ? 'drop-shadow(0 0 0 #193B70) drop-shadow(0 0 3px #193B70)' : 'drop-shadow(0 2px 3px rgba(0,0,0,.45))'
+  const dot = dim
     ? ''
-    : `<span class="${b.pulse ? 'pulse-red' : ''}" style="position:absolute;right:-5px;top:-5px;width:15px;height:15px;border-radius:9999px;background:${b.color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);"></span>`
+    : `<span class="${pulse ? 'pulse-red' : ''}" style="position:absolute;right:-5px;top:-5px;width:15px;height:15px;border-radius:9999px;background:${color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);"></span>`
   return L.divIcon({
     className: '',
     iconSize: [w, h],
     iconAnchor: [w / 2, h / 2],
-    html: `<div style="position:relative;width:${w}px;height:${h}px;transform:rotate(${Math.round(b.heading || 0)}deg);transform-origin:50% 50%;"><img src="${b.img}" alt="" draggable="false" style="width:100%;height:100%;display:block;filter:${ring}${b.dim ? ' saturate(.55) opacity(.75)' : ''};"/>${dot}</div>`,
+    html: `<div class="bus-marker-rotator" style="position:relative;width:${w}px;height:${h}px;transform-origin:50% 50%;"><img src="${img}" alt="" draggable="false" style="width:100%;height:100%;display:block;filter:${ring}${dim ? ' saturate(.55) opacity(.75)' : ''};"/>${dot}</div>`,
   })
+}
+
+function BusMarker({ bus, onBusClick }) {
+  const markerRef = useRef(null)
+  const icon = useMemo(
+    () => busIcon(bus.img, bus.color, bus.dim, bus.pulse, bus.selected),
+    [bus.color, bus.dim, bus.img, bus.pulse, bus.selected],
+  )
+
+  useEffect(() => {
+    const rotator = markerRef.current?.getElement()?.querySelector('.bus-marker-rotator')
+    if (rotator) rotator.style.transform = `rotate(${Math.round(bus.heading || 0)}deg)`
+  }, [bus.heading, icon])
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[bus.lat, bus.lng]}
+      icon={icon}
+      zIndexOffset={bus.selected ? 1000 : 500}
+      eventHandlers={{ click: () => onBusClick && onBusClick(bus.id) }}
+    >
+      <Tooltip direction="top" offset={[0, -40]}>{bus.tooltip || bus.id}</Tooltip>
+      {bus.info && (
+        <Popup>
+          <div className="min-w-52 space-y-2 text-sm">
+            <div>
+              <p className="font-bold text-navy">{bus.id}</p>
+              <p className="text-xs text-slate-500">{bus.info.route}</p>
+            </div>
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+              <dt className="text-slate-500">Model</dt><dd className="font-medium text-slate-800">{bus.info.model}</dd>
+              <dt className="text-slate-500">Plate</dt><dd className="font-medium text-slate-800">{bus.info.plate}</dd>
+              <dt className="text-slate-500">Speed</dt><dd className="font-medium text-slate-800">{bus.info.speed}</dd>
+              <dt className="text-slate-500">Passengers</dt><dd className="font-medium text-slate-800">{bus.info.passengers}</dd>
+              <dt className="text-slate-500">Seats available</dt><dd className="font-medium text-slate-800">{bus.info.seatsAvailable}</dd>
+              <dt className="text-slate-500">Next stop</dt><dd className="font-medium text-slate-800">{bus.info.nextStop}</dd>
+              <dt className="text-slate-500">Last update</dt><dd className="font-medium text-slate-800">{bus.info.updatedAt}</dd>
+            </dl>
+          </div>
+        </Popup>
+      )}
+    </Marker>
+  )
 }
 
 /**
@@ -115,9 +159,9 @@ const busIcon = (b) => {
  * stopMarks: { [stopId]: { n, state: 'passed' | 'next' | 'upcoming' } } numbers stops along one route
  * buses:  [{ id, lat, lng, img, heading, color (status dot), pulse, dim, selected, tooltip }]
  */
-export default function MapView({ stops = [], routes = [], buses = [], onBusClick, className = 'h-80', scrollWheelZoom = true, terminalLabels = false, focus = null, numbered = false, stopMarks = null, roadSnap = false, emptyMessage = '' }) {
+export default function MapView({ stops = [], routes = [], buses = [], onBusClick, className = 'h-80', scrollWheelZoom = true, terminalLabels = false, focus = null, numbered = false, stopMarks = null, roadSnap = false, emptyMessage = '', fitKey: fitKeyOverride = null }) {
   const fitPoints = stops.length ? stops : routes.flatMap((r) => r.points)
-  const fitKey = fitPoints.map((p) => `${p.lat},${p.lng}`).join('|')
+  const fitKey = fitKeyOverride ?? fitPoints.map((p) => `${p.lat},${p.lng}`).join('|')
 
   const showEmpty = !!emptyMessage && stops.length < 2
   return (
@@ -158,15 +202,11 @@ export default function MapView({ stops = [], routes = [], buses = [], onBusClic
         </CircleMarker>
       ))}
       {buses.map((b) => (
-        <Marker
+        <BusMarker
           key={b.id}
-          position={[b.lat, b.lng]}
-          icon={busIcon(b)}
-          zIndexOffset={b.selected ? 1000 : 500}
-          eventHandlers={{ click: () => onBusClick && onBusClick(b.id) }}
-        >
-          <Tooltip direction="top" offset={[0, -40]}>{b.tooltip || b.id}</Tooltip>
-        </Marker>
+          bus={b}
+          onBusClick={onBusClick}
+        />
       ))}
     </MapContainer>
     {showEmpty && (
